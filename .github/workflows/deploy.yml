@@ -1,5 +1,6 @@
-name: Deploy (Render + Cloudflare, plans gratuits)
-# Declenche a chaque push sur main (ou a la main). Ordre : tests -> migrations -> Render -> Worker -> test de fumee.
+name: Deploy (Render, plan gratuit)
+# Declenche a chaque push sur main (ou a la main). Ordre : tests -> migrations -> Render -> test de fumee.
+# Le routeur (Cloudflare Pages, edge/_worker.js) est depose a la main : il change rarement.
 on:
   push:
     branches: [main]
@@ -21,7 +22,6 @@ jobs:
       DJANGO_SETTINGS_MODULE: config.settings.production
       DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
       INTERNAL_JOB_SECRET: ${{ secrets.INTERNAL_JOB_SECRET }}
-      # Pooler Supabase en mode SESSION (les runners GitHub sont en IPv4 ; voir docs/DEPLOY_FREE.md)
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
       MONGODB_URL: ${{ secrets.MONGODB_URL }}
       MONGODB_DATABASE: ${{ vars.MONGODB_DATABASE }}
@@ -43,19 +43,6 @@ jobs:
       - uses: actions/checkout@v4
       - name: "Render : declencher le deploiement (Deploy Hook)"
         run: curl -fsS -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}" > /dev/null
-      - uses: actions/setup-node@v4
-        with: { node-version: 22, cache: npm }
-      - run: npm ci
-      - name: "Cloudflare : deployer le Worker routeur (plan gratuit, aucun Docker)"
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: deploy -c wrangler.router.jsonc
-          secrets: |
-            EDGE_SHARED_SECRET
-        env:
-          EDGE_SHARED_SECRET: ${{ secrets.EDGE_SHARED_SECRET }}
       - name: "Test de fumee (la construction Render + le reveil prennent plusieurs minutes)"
         run: |
           URL="${{ vars.PUBLIC_URL }}/ready/"
