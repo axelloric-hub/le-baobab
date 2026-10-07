@@ -7,6 +7,8 @@ from pathlib import Path
 
 import dj_database_url
 
+from .channel_layers import build_channel_layers
+
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 
@@ -121,7 +123,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 MONGODB_URL = env("MONGODB_URL", "mongodb://localhost:27017")
 MONGODB_DATABASE = env("MONGODB_DATABASE", "baobab")
 REDIS_URL = env("REDIS_URL", "redis://localhost:6379/0")
-CHANNEL_REDIS_URL = env("CHANNEL_REDIS_URL", "redis://localhost:6379/1")
+CHANNEL_REDIS_URL = env("CHANNEL_REDIS_URL", "redis://localhost:6379/1")  # vide => channel layer en memoire (une seule instance)
 REDIS_KEY_PREFIX = "baobab"
 FIELD_ENCRYPTION_KEY = env("FIELD_ENCRYPTION_KEY", "")
 
@@ -133,17 +135,7 @@ CACHES = {
         "TIMEOUT": 300,
     }
 }
-CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels_redis.core.RedisChannelLayer",
-        "CONFIG": {
-            "hosts": [CHANNEL_REDIS_URL],
-            "prefix": f"{REDIS_KEY_PREFIX}:asgi",
-            "capacity": 1000,
-            "expiry": 10,
-        },
-    }
-}
+CHANNEL_LAYERS = build_channel_layers(CHANNEL_REDIS_URL, REDIS_KEY_PREFIX)
 
 # --------------------------------------------------------------------- Auth / securite
 AUTH_PASSWORD_VALIDATORS = [

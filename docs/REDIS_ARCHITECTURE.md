@@ -26,7 +26,7 @@ Redis = **acceleration et temps reel, jamais verite**. Construction des cles uni
 `volatile-lru` + AOF `everysec` + TLS + mot de passe. Les verrous sont des **optimisations** : l'invariant est toujours garanti par une contrainte UNIQUE ou `select_for_update`.
 
 ## Limites assumees
-- **Offre gratuite (Render Key Value) : 25 Mo, sans persistance, eviction non maitrisee.** Acceptable parce que tout est reconstructible ; au-dela de quelques centaines d'utilisateurs actifs, baisser `TIMELINE_MAX` ou passer a une instance payante.
+- **Offre gratuite (Upstash) : 500 000 commandes/mois.** Chaque requete applicative coute plusieurs commandes (cache de permissions, limitation de debit, compteurs) : surveiller le quota. Le **channel layer WebSocket n'utilise pas Redis** en offre gratuite (memoire du processus, une seule instance) : Django Channels interroge Redis en permanence par connexion, ce qui epuiserait le quota.
 - `flush_counters` utilise `SCAN` : acceptable a l'echelle actuelle ; au-dela, tenir un set des IDs "sales".
 - Un seul `REDIS_URL` pour cache/verrous : separer du channel layer en production.
 - Sans `CONFIG`, le controle de la politique d'eviction est impossible sur certains services manages : verifier chez le fournisseur.

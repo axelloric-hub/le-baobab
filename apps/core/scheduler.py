@@ -38,7 +38,7 @@ def default_jobs() -> list[Job]:
 
     return [
         Job("relay-outbox", 3, lambda: relay_batch(500), singleton=False),
-        Job("flush-counters", 60, _command("flush_counters")),
+        Job("flush-counters", 300, _command("flush_counters")),  # 5 min : economise le quota de commandes d'un Redis gratuit
         Job("refresh-trending", 600, _command("refresh_materialized_views", "mv_trending_hashtags")),
         Job("refresh-platform", 3600, _command("refresh_materialized_views", "mv_platform_daily")),
         Job("refresh-metrics", 3600, _command("refresh_metrics", days=2)),

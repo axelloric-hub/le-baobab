@@ -9,7 +9,8 @@
 | Brique | Service | Limites a connaitre (sources : docs/pages publiques consultees en octobre 2026) |
 |---|---|---|
 | Django API **+ WebSocket** | **Render** web service gratuit | **veille apres 15 min** sans trafic, **~1 min** pour se reveiller (une nouvelle requete OU connexion WebSocket le reveille) ; **750 h/mois** pour tout le workspace = **un seul service 24h/24** ; systeme de fichiers ephemere ; Render peut le redemarrer a tout moment |
-| Redis (cache, WebSocket, compteurs) | **Render Key Value** gratuit | **25 Mo, aucune persistance** (perdu a chaque redemarrage) ; un seul par workspace |
+| Redis (cache, verrous, compteurs, idempotence) | **Upstash** gratuit (externe) | **500 000 commandes/mois**, 256 Mo, TLS par defaut, sans carte d'apres leur page ; au-dela du quota : a verifier |
+| WebSocket (channel layer) | **memoire du processus** | aucune base ; valable seulement avec **1 instance, 1 worker** (c'est le cas) ; perdu au redemarrage |
 | PostgreSQL | **Supabase** gratuit | **500 Mo**, projet **mis en pause apres 1 semaine d'inactivite** (reactivation manuelle) |
 | MongoDB | **Atlas M0** gratuit | quelques centaines de Mo (512 Mo) ; un seul cluster M0 par projet |
 | Routeur / CDN | **Cloudflare Workers** gratuit | quota quotidien de requetes (a verifier sur votre compte) ; adresse gratuite `xxx.workers.dev` |
@@ -29,7 +30,7 @@ Utilisateur --> Worker Cloudflare "baobab-router" (gratuit)
               Render : UN service "baobab-api" (Docker)
                  gunicorn + uvicorn : API REST + WebSocket (Channels) + planificateur interne
                  |        |         |
-          Supabase     Atlas M0   Render Key Value (Redis, interne)
+          Supabase     Atlas M0   Upstash (Redis, TLS)
           PostgreSQL   MongoDB
                  
                  tout le reste (/) --> Vercel (Next.js)
@@ -41,7 +42,7 @@ Utilisateur --> Worker Cloudflare "baobab-router" (gratuit)
 | Render #1 API + Render #2 WebSocket | **un seul** service Render (l'ASGI sert les deux) | `render.yaml`, `Dockerfile`, `docker/entrypoint.sh` |
 | Render #3 cron | thread interne : `apps/core/scheduler.py` (relais outbox toutes les 3 s, vues, purge...) | `apps/core/scheduler.py` |
 | Worker #2 proxy / load balancer | supprime (une seule instance gratuite) | — |
-| Supabase / MongoDB / Redis | idem (Redis = Key Value de Render) | — |
+| Supabase / MongoDB / Redis | idem (Redis = Upstash ; WebSocket en memoire) | — |
 
 **Pourquoi un thread plutot qu'un cron** : les evenements ne sont ecrits que pendant une requete, donc quand le service est eveille ; le thread les relaie dans les 3 secondes. Pendant la veille, rien n'est ecrit, rien n'est a relayer. Contrepartie : les jobs periodiques (vues de statistiques, purge) ne tournent que pendant l'activite.
 
@@ -50,6 +51,7 @@ Utilisateur --> Worker Cloudflare "baobab-router" (gratuit)
 ## 3. Creer les comptes (une fois)
 1. **GitHub** : un depot dont la **racine = le dossier du projet** (celui qui contient `Dockerfile` et `render.yaml`). Branche `main`.
 2. **Supabase** (supabase.com) : New project. Region proche de Render (**Frankfurt** si disponible). Notez le mot de passe.
+3. **Upstash** (upstash.com) : creer une base Redis (region proche, ex. Frankfurt). Copier l'adresse **`rediss://...`** (avec TLS) : ce sera `REDIS_URL`.
 3. **MongoDB Atlas** (mongodb.com/atlas) : cluster **M0** gratuit. Database Access : un utilisateur `baobab` (mot de passe fort). Network Access : voir l'avertissement ci-dessous.
 4. **Render** (render.com) : compte relie a GitHub.
 5. **Cloudflare** (cloudflare.com) : compte gratuit. Aucune carte necessaire pour les Workers (a confirmer a l'inscription).
@@ -83,7 +85,7 @@ python manage.py mongo_setup
 
 ### 4.4 Render
 1. Dashboard > **New > Blueprint** > choisir le depot : Render lit `render.yaml` et propose le service `baobab-api` + le Key Value `baobab-redis`.
-2. Renseignez les secrets demandes (`sync: false`) :
+2. Renseignez les secrets demandes (`sync: false`) (le Blueprint ne cree plus de base Redis : un workspace Render gratuit n'en admet qu'une) :
 
 | Variable | Valeur |
 |---|---|
@@ -93,6 +95,7 @@ python manage.py mongo_setup
 | `FIELD_ENCRYPTION_KEY` | `python -c "from cryptography.fernet import Fernet;print(Fernet.generate_key().decode())"` |
 | `DATABASE_URL` | l'URL du pooler Supabase (4.1) |
 | `MONGODB_URL` | l'URL Atlas |
+| `REDIS_URL` | l'adresse `rediss://...` d'Upstash |
 
 3. Dans `render.yaml`, remplacez `baobab-router.VOTRE-COMPTE.workers.dev` par l'adresse reelle de votre Worker (apres 4.5) puis poussez.
 4. Settings du service > **Deploy Hook** : copiez l'URL (ce sera `RENDER_DEPLOY_HOOK_URL`).
@@ -127,7 +130,8 @@ Vous avez deja PostgreSQL, MongoDB, Redis et Docker Desktop : `python manage.py 
 
 ## 6. Limites assumees
 - **Veille et reveil (~1 min)** ; WebSocket coupe a chaque redemarrage -> reconnexion cote client.
-- **Redis perdu a chaque redemarrage** : presence, non-lus chauds, timelines sont reconstruits (c'est le design), mais le fan-out repart de zero ; 25 Mo seulement (les timelines de nombreux utilisateurs peuvent le saturer : baisser `TIMELINE_MAX` dans `apps/social/feed.py`).
+- **Quota Upstash : 500 000 commandes/mois** (~16 000/jour). Un usage de demo tient largement ; surveiller le compteur du dashboard Upstash. Le planificateur ne fait que ~290 commandes/jour tant que le service est eveille.
+- **WebSocket en memoire** : les messages temps reel ne traversent pas plusieurs instances (inutile ici : une seule) ; tout est perdu au redemarrage et les clients doivent se reconnecter.
 - **Un seul service, une seule instance** : pas de montee en charge, pas d'environnement de staging (un 2e service depasserait les 750 h).
 - **Supabase 500 Mo / pause** ; **Atlas** ouvert sur `0.0.0.0/0`.
 - **Memoire** : l'offre gratuite de Render est petite ; `WEB_CONCURRENCY=1`. Je n'ai pas mesure la consommation reelle (a regarder dans le dashboard au premier deploiement).
