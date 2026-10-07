@@ -1,0 +1,63 @@
+name: CI
+on:
+  workflow_call:
+  pull_request:
+  push:
+    branches-ignore: [main]   # main est couverte par deploy.yml (qui rejoue ces controles)
+permissions:
+  contents: read
+concurrency:
+  group: "ci-${{ github.ref }}"
+  cancel-in-progress: true
+
+jobs:
+  backend-tests:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env: { POSTGRES_USER: baobab, POSTGRES_PASSWORD: baobab, POSTGRES_DB: baobab }
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U baobab" --health-interval 5s --health-timeout 5s --health-retries 10
+      redis:
+        image: redis:7
+        ports: ["6379:6379"]
+        options: --health-cmd "redis-cli ping" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DJANGO_SETTINGS_MODULE: config.settings.testing
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12", cache: pip, cache-dependency-path: requirements-dev.txt }
+      - run: pip install -r requirements-dev.txt
+      - run: python manage.py check
+      - name: "Migrations a jour ? (echoue si un modele a change sans migration)"
+        run: python manage.py makemigrations --check --dry-run
+      - run: python manage.py test
+
+  router-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npm run typecheck
+      - name: Valider la config du Worker (sans deploiement)
+        run: npx wrangler deploy -c wrangler.router.jsonc --dry-run --outdir /tmp/router
+
+  docker-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Construire l'image (linux/amd64) sans la publier
+        run: docker build --platform linux/amd64 -t baobab-backend:ci .
+      - name: "Demarrage de l'image et sonde de sante"
+        run: |
+          docker run -d --name b -p 8080:8080 \
+            -e DJANGO_SECRET_KEY="$(openssl rand -base64 64 | tr -d '\n')" -e INTERNAL_JOB_SECRET="$(openssl rand -hex 24)" \
+            -e DATABASE_URL=postgresql://x:x@localhost:5432/x -e DJANGO_ALLOWED_HOSTS=localhost \
+            baobab-backend:ci
+          for i in $(seq 1 30); do curl -fsS http://localhost:8080/health/ && break || sleep 1; done
+          curl -fsS http://localhost:8080/health/

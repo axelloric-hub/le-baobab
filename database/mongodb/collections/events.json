@@ -1,0 +1,29 @@
+{
+  "name": "events",
+  "purpose": "Evenements analytiques bruts (OLAP leger) : acteur, cible, metadonnees libres. Jamais utilises pour une decision transactionnelle.",
+  "read_pattern": "agregations par type/jour/acteur (dashboards admin, signaux de recommandation, tendances).",
+  "write_pattern": "insert (haut debit) ; replace_one upsert quand event_id fourni (relais outbox idempotent).",
+  "embedding": "acteur/cible = references {id,type} (pas de copie de profil : evite la derive).",
+  "sharding_future": "cle composee {type: 1, ts: 1} ou hashed actor.id selon le patron dominant ; collection time-series candidate (MongoDB 5+).",
+  "ttl": "expires_at (TTL=0) : retention par type definie dans analytics_event_type.retention_days.",
+  "jsonSchema": {
+    "bsonType": "object",
+    "required": ["type", "domain", "ts", "expires_at", "schema_version"],
+    "properties": {
+      "type": {"bsonType": "string"},
+      "domain": {"bsonType": "string"},
+      "actor": {"bsonType": ["object", "null"], "properties": {"id": {"bsonType": "string"}}},
+      "target": {"bsonType": ["object", "null"], "properties": {"type": {"bsonType": "string"}, "id": {"bsonType": "string"}}},
+      "meta": {"bsonType": "object"},
+      "ts": {"bsonType": "date"},
+      "expires_at": {"bsonType": "date"},
+      "schema_version": {"bsonType": "int"}
+    }
+  },
+  "indexes": [
+    {"name": "ttl_expires", "keys": [["expires_at", 1]], "expireAfterSeconds": 0, "why": "retention automatique"},
+    {"name": "type_ts", "keys": [["type", 1], ["ts", -1]], "why": "compter/lister un type d'evenement sur une fenetre"},
+    {"name": "actor_ts", "keys": [["actor.id", 1], ["ts", -1]], "partialFilterExpression": {"actor.id": {"$type": "string"}}, "why": "activite d'un utilisateur / signaux reco"},
+    {"name": "target_ts", "keys": [["target.type", 1], ["target.id", 1], ["ts", -1]], "partialFilterExpression": {"target.id": {"$type": "string"}}, "why": "historique d'un objet (post, cours, produit)"}
+  ]
+}

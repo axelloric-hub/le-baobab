@@ -1,0 +1,27 @@
+# Bases de donnees LOCALES pour tester (PostgreSQL + MongoDB + Redis). Lancer : docker compose -f docker-compose.dev.yml up -d
+# Ports volontairement differents des ports habituels (5432/27017/6379) pour ne pas entrer en conflit avec une installation locale.
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: baobab
+      POSTGRES_PASSWORD: baobab
+      POSTGRES_DB: baobab
+    ports: ["5433:5432"]
+    volumes: ["pgdata:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U baobab"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+  mongo:
+    image: mongo:7
+    ports: ["27018:27017"]
+    volumes: ["mongodata:/data/db"]
+  redis:
+    image: redis:7
+    command: ["redis-server", "--maxmemory-policy", "volatile-lru"]
+    ports: ["6380:6379"]
+volumes:
+  pgdata:
+  mongodata:

@@ -1,0 +1,17 @@
+.git
+.github
+node_modules
+workers
+wrangler.*.jsonc
+package*.json
+tsconfig.json
+**/__pycache__
+**/*.pyc
+.env
+.env.*
+!.env.example
+staticfiles
+docs
+tests
+**/tests
+requirements-dev.txt

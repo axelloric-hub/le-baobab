@@ -1,0 +1,26 @@
+name: Keep-alive (bases gratuites)
+# Supabase gratuit met le projet en PAUSE apres 1 semaine sans activite. Ce job touche PostgreSQL et MongoDB deux fois par semaine.
+on:
+  schedule:
+    - cron: "0 6 * * 1,4"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install "psycopg[binary]" pymongo
+      - name: Ping PostgreSQL et MongoDB
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          MONGODB_URL: ${{ secrets.MONGODB_URL }}
+        run: |
+          python - <<'PY'
+          import os, psycopg, pymongo
+          with psycopg.connect(os.environ["DATABASE_URL"], connect_timeout=20) as c:
+              print("postgres:", c.execute("select count(*) from accounts_user").fetchone()[0], "utilisateurs")
+          print("mongodb:", pymongo.MongoClient(os.environ["MONGODB_URL"], serverSelectionTimeoutMS=20000).admin.command("ping"))
+          PY

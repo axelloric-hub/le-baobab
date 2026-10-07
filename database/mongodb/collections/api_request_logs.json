@@ -1,0 +1,24 @@
+{
+  "name": "api_request_logs",
+  "purpose": "Journal des requetes API (haut volume, faible valeur individuelle) : observabilite et detection d'abus. PAS dans PostgreSQL (corriger la liste initiale du cahier des charges : APIRequestLog est un cas d'usage MongoDB+TTL).",
+  "read_pattern": "recherche par correlation_id (investigation), agregations par route/statut (Grafana).",
+  "write_pattern": "insert asynchrone echantillonne ; aucune lecture sur le chemin critique.",
+  "embedding": "documents plats.",
+  "sharding_future": "hashed correlation_id.",
+  "ttl": "30 jours (ts + TTL).",
+  "jsonSchema": {
+    "bsonType": "object",
+    "required": ["method", "path", "status", "duration_ms", "ts"],
+    "properties": {
+      "method": {"bsonType": "string"}, "path": {"bsonType": "string", "maxLength": 300}, "route": {"bsonType": "string"},
+      "status": {"bsonType": "int", "minimum": 100, "maximum": 599}, "duration_ms": {"bsonType": ["int", "long", "double"], "minimum": 0},
+      "user_id": {"bsonType": ["string", "null"]}, "ip": {"bsonType": ["string", "null"]}, "correlation_id": {"bsonType": "string"},
+      "ts": {"bsonType": "date"}
+    }
+  },
+  "indexes": [
+    {"name": "ttl_30d", "keys": [["ts", 1]], "expireAfterSeconds": 2592000, "why": "retention 30 j"},
+    {"name": "correlation", "keys": [["correlation_id", 1]], "why": "retrouver tous les logs d'une requete"},
+    {"name": "route_status_ts", "keys": [["route", 1], ["status", 1], ["ts", -1]], "why": "taux d'erreur par route"}
+  ]
+}

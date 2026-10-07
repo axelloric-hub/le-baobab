@@ -1,0 +1,49 @@
+# Blueprint Render - TOUT en plan GRATUIT. Dashboard Render > New > Blueprint > choisir le depot GitHub.
+# NON valide contre le schema de Render depuis mon environnement : Render signale toute erreur a l'import du Blueprint.
+services:
+  - type: web
+    name: baobab-api
+    runtime: docker            # utilise le Dockerfile du depot
+    dockerfilePath: ./Dockerfile
+    plan: free
+    region: frankfurt          # region la plus proche de l'Afrique parmi celles de Render (a confirmer)
+    healthCheckPath: /health/
+    autoDeploy: false          # le deploiement est declenche par GitHub Actions (apres tests + migrations)
+    envVars:
+      - key: DJANGO_SETTINGS_MODULE
+        value: config.settings.production
+      - key: SERVICE_ROLE      # API REST ET WebSocket dans UN SEUL service (750 h gratuites/mois = un seul service 24h/24)
+        value: api
+      - key: WEB_CONCURRENCY   # un seul worker : memoire limitee de l'offre gratuite
+        value: "1"
+      - key: ENABLE_IN_PROCESS_SCHEDULER   # remplace le cron (payant sur Render)
+        value: "true"
+      - key: LOG_JSON
+        value: "true"
+      - key: MONGODB_DATABASE
+        value: baobab
+      # A ADAPTER : adresse publique du Worker routeur (sans https://)
+      - key: DJANGO_ALLOWED_HOSTS
+        value: baobab-router.VOTRE-COMPTE.workers.dev
+      - key: CSRF_TRUSTED_ORIGINS
+        value: https://baobab-router.VOTRE-COMPTE.workers.dev
+      - key: CORS_ALLOWED_ORIGINS
+        value: https://le-baobab.vercel.app,https://baobab-router.VOTRE-COMPTE.workers.dev
+      # Redis gratuit de Render (reseau interne uniquement) : cache, compteurs, verrous ET channel layer WebSocket
+      - key: REDIS_URL
+        fromService: { type: keyvalue, name: baobab-redis, property: connectionString }
+      - key: CHANNEL_REDIS_URL
+        fromService: { type: keyvalue, name: baobab-redis, property: connectionString }
+      # Secrets : a saisir dans le dashboard Render (jamais dans ce fichier)
+      - { key: DJANGO_SECRET_KEY, sync: false }
+      - { key: DATABASE_URL, sync: false }
+      - { key: MONGODB_URL, sync: false }
+      - { key: FIELD_ENCRYPTION_KEY, sync: false }
+      - { key: INTERNAL_JOB_SECRET, sync: false }
+      - { key: EDGE_SHARED_SECRET, sync: false }
+
+  - type: keyvalue
+    name: baobab-redis
+    plan: free                 # 25 Mo, SANS persistance : tout est reconstructible depuis PostgreSQL (voir REDIS_ARCHITECTURE.md)
+    region: frankfurt
+    ipAllowList: []            # interne uniquement

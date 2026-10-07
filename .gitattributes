@@ -1,0 +1,12 @@
+# Fins de ligne : les scripts executes dans le conteneur Linux doivent rester en LF meme si Git tourne sous Windows.
+* text=auto
+*.sh text eol=lf
+Dockerfile text eol=lf
+*.py text eol=lf
+*.sql text eol=lf
+*.lua text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.json text eol=lf
+*.jsonc text eol=lf
+*.ts text eol=lf

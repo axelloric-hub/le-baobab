@@ -1,0 +1,44 @@
+// WORKER #3 : WebSocket (Django Channels, ASGI). Meme image Docker que l'API, SERVICE_ROLE=ws.
+// Deploiement : npx wrangler deploy -c wrangler.ws.jsonc [--env staging]
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "baobab-ws",
+  "main": "workers/ws/src/index.ts",
+  "compatibility_date": "2026-10-04",
+  "workers_dev": false,
+  "observability": { "enabled": true },
+
+  "containers": [
+    { "class_name": "WsContainer", "image": "./Dockerfile", "max_instances": 5, "instance_type": "standard-1" }
+  ],
+  "durable_objects": { "bindings": [{ "name": "WS", "class_name": "WsContainer" }] },
+  "exports": { "WsContainer": { "type": "durable-object", "storage": "sqlite" } },
+
+  "vars": {
+    "PUBLIC_HOST": "baobab.example.com",
+    "DJANGO_ALLOWED_HOSTS": "baobab.example.com,container",
+    "CSRF_TRUSTED_ORIGINS": "https://baobab.example.com",
+    "CORS_ALLOWED_ORIGINS": "https://le-baobab.vercel.app,https://baobab.example.com",
+    "MONGODB_DATABASE": "baobab",
+    "WS_INSTANCES": "2"
+  },
+
+  "env": {
+    "staging": {
+      "name": "baobab-ws-staging",
+      "workers_dev": false,
+      "observability": { "enabled": true },
+      "containers": [{ "class_name": "WsContainer", "image": "./Dockerfile", "max_instances": 1, "instance_type": "standard-1" }],
+      "durable_objects": { "bindings": [{ "name": "WS", "class_name": "WsContainer" }] },
+      "exports": { "WsContainer": { "type": "durable-object", "storage": "sqlite" } },
+      "vars": {
+        "PUBLIC_HOST": "staging.baobab.example.com",
+        "DJANGO_ALLOWED_HOSTS": "staging.baobab.example.com,container",
+        "CSRF_TRUSTED_ORIGINS": "https://staging.baobab.example.com",
+        "CORS_ALLOWED_ORIGINS": "https://le-baobab-staging.vercel.app,https://staging.baobab.example.com",
+        "MONGODB_DATABASE": "baobab_staging",
+        "WS_INSTANCES": "1"
+      }
+    }
+  }
+}

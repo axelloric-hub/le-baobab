@@ -1,0 +1,17 @@
+{
+  "name": "le-baobab-edge",
+  "private": true,
+  "type": "module",
+  "description": "Worker Cloudflare (plan gratuit) : routeur d'entree de LE BAOBAB (API/WebSocket -> Render, reste -> Vercel)",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "dev": "wrangler dev -c wrangler.router.jsonc",
+    "deploy": "wrangler deploy -c wrangler.router.jsonc"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "latest",
+    "typescript": "^5.6.0",
+    "wrangler": "^4"
+  }
+}

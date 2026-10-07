@@ -1,0 +1,56 @@
+// WORKER #2 : API Django (REST) + cron. Un conteneur par instance.
+// Deploiement : npx wrangler deploy -c wrangler.api.jsonc [--env staging]   (Docker requis si l'image est un Dockerfile)
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "baobab-api",
+  "main": "workers/api/src/index.ts",
+  "compatibility_date": "2026-10-04",
+  "workers_dev": false,
+  "observability": { "enabled": true },
+
+  "containers": [
+    {
+      "class_name": "ApiContainer",
+      "image": "./Dockerfile",
+      "max_instances": 10,
+      "instance_type": "standard-1"
+      // Placement (a activer apres verification de capacite ; AFR seul est interdit, il faut un 2e continent) :
+      // "constraints": { "regions": ["WEUR", "AFR"] }
+    }
+  ],
+  "durable_objects": { "bindings": [{ "name": "API", "class_name": "ApiContainer" }] },
+  "exports": { "ApiContainer": { "type": "durable-object", "storage": "sqlite" } },
+
+  // Cron triggers : les expressions DOIVENT correspondre aux cles de CRON_JOBS (workers/api/src/index.ts)
+  "triggers": { "crons": ["* * * * *", "*/10 * * * *", "0 * * * *"] },
+
+  "vars": {
+    "PUBLIC_HOST": "baobab.example.com",
+    "DJANGO_ALLOWED_HOSTS": "baobab.example.com,container",
+    "CSRF_TRUSTED_ORIGINS": "https://baobab.example.com",
+    "CORS_ALLOWED_ORIGINS": "https://le-baobab.vercel.app,https://baobab.example.com",
+    "MONGODB_DATABASE": "baobab",
+    "API_INSTANCES": "3"
+  },
+  // Secrets (jamais ici) : DJANGO_SECRET_KEY DATABASE_URL MONGODB_URL REDIS_URL CHANNEL_REDIS_URL FIELD_ENCRYPTION_KEY INTERNAL_JOB_SECRET
+
+  "env": {
+    "staging": {
+      "name": "baobab-api-staging",
+      "workers_dev": false,
+      "observability": { "enabled": true },
+      "containers": [{ "class_name": "ApiContainer", "image": "./Dockerfile", "max_instances": 2, "instance_type": "standard-1" }],
+      "durable_objects": { "bindings": [{ "name": "API", "class_name": "ApiContainer" }] },
+      "exports": { "ApiContainer": { "type": "durable-object", "storage": "sqlite" } },
+      "triggers": { "crons": ["* * * * *", "*/10 * * * *", "0 * * * *"] },
+      "vars": {
+        "PUBLIC_HOST": "staging.baobab.example.com",
+        "DJANGO_ALLOWED_HOSTS": "staging.baobab.example.com,container",
+        "CSRF_TRUSTED_ORIGINS": "https://staging.baobab.example.com",
+        "CORS_ALLOWED_ORIGINS": "https://le-baobab-staging.vercel.app,https://staging.baobab.example.com",
+        "MONGODB_DATABASE": "baobab_staging",
+        "API_INSTANCES": "1"
+      }
+    }
+  }
+}

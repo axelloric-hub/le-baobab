@@ -1,0 +1,69 @@
+name: Deploy (Render + Cloudflare, plans gratuits)
+# Declenche a chaque push sur main (ou a la main). Ordre : tests -> migrations -> Render -> Worker -> test de fumee.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  test:
+    uses: ./.github/workflows/ci.yml
+
+  migrate:
+    needs: test
+    runs-on: ubuntu-latest
+    env:
+      DJANGO_SETTINGS_MODULE: config.settings.production
+      DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
+      INTERNAL_JOB_SECRET: ${{ secrets.INTERNAL_JOB_SECRET }}
+      # Pooler Supabase en mode SESSION (les runners GitHub sont en IPv4 ; voir docs/DEPLOY_FREE.md)
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      MONGODB_URL: ${{ secrets.MONGODB_URL }}
+      MONGODB_DATABASE: ${{ vars.MONGODB_DATABASE }}
+      DB_SSL_REQUIRE: "true"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12", cache: pip, cache-dependency-path: requirements.txt }
+      - run: pip install -r requirements.txt
+      - name: "PostgreSQL : migrations (fonctions, triggers, vues incluses)"
+        run: python manage.py migrate --noinput
+      - name: "MongoDB : collections, validateurs, index"
+        run: python manage.py mongo_setup
+
+  deploy:
+    needs: migrate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: "Render : declencher le deploiement (Deploy Hook)"
+        run: curl -fsS -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}" > /dev/null
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - name: "Cloudflare : deployer le Worker routeur (plan gratuit, aucun Docker)"
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy -c wrangler.router.jsonc
+          secrets: |
+            EDGE_SHARED_SECRET
+        env:
+          EDGE_SHARED_SECRET: ${{ secrets.EDGE_SHARED_SECRET }}
+      - name: "Test de fumee (la construction Render + le reveil prennent plusieurs minutes)"
+        run: |
+          URL="${{ vars.PUBLIC_URL }}/ready/"
+          for i in $(seq 1 60); do
+            code=$(curl -s -o /tmp/ready.json -w '%{http_code}' "$URL" || true)
+            echo "tentative $i : HTTP $code"
+            if [ "$code" = "200" ]; then cat /tmp/ready.json; exit 0; fi
+            sleep 20
+          done
+          cat /tmp/ready.json || true
+          exit 1
