@@ -66,6 +66,9 @@ LOCAL_APPS = [
     "apps.moderation",
     "apps.integrations",
     "apps.analytics",
+    "apps.education",
+    "apps.assessments",
+    "apps.progress",
     "apps.dbobjects",  # DOIT rester en dernier : triggers/vues/fonctions SQL
 ]
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS

@@ -36,3 +36,32 @@ def message_mentions(ev):
     for uid in ev.payload.get("mentions", []):
         notify(recipient=User.objects.get(pk=uid), type_code="mention", actor=sender, target_type="message", target_id=ev.aggregate_id,
                data={"from": sender.username, "conversation": ev.payload["conversation"]}, dedupe_key=f"mn:{ev.aggregate_id}:{uid}")
+
+
+# ------------------------------------------------------------------ education
+@subscribe("SubmissionGraded")
+def submission_graded(ev):
+    grader = User.objects.get(pk=ev.payload["grader"])
+    for sid in ev.payload["students"]:
+        notify(recipient=User.objects.get(pk=sid), type_code="assignment_graded", actor=grader, target_type="submission", target_id=ev.aggregate_id,
+               data={"points": ev.payload["points"], "assignment": ev.payload["assignment"]}, dedupe_key=f"sg:{ev.event_id}:{sid}")
+
+
+@subscribe("CertificateIssued")
+def certificate_issued(ev):
+    notify(recipient=User.objects.get(pk=ev.payload["user"]), type_code="certificate_issued", target_type="certificate", target_id=ev.aggregate_id,
+           data={"course": ev.payload["course"]}, dedupe_key=f"ci:{ev.aggregate_id}")
+
+
+@subscribe("CourseEnrolled")
+def course_enrolled(ev):
+    student = User.objects.get(pk=ev.payload["user"])
+    for iid in ev.payload.get("instructors", []):
+        notify(recipient=User.objects.get(pk=iid), type_code="course_enrollment", actor=student, target_type="course", target_id=ev.payload["course"],
+               data={"student": student.username}, dedupe_key=f"ce:{ev.event_id}:{iid}")
+
+
+@subscribe("ClassroomInvitationSent")
+def classroom_invitation(ev):
+    notify(recipient=User.objects.get(pk=ev.payload["to"]), type_code="classroom_invitation", actor=User.objects.get(pk=ev.payload["by"]),
+           target_type="classroom", target_id=ev.payload["classroom"], dedupe_key=f"cinv:{ev.aggregate_id}")

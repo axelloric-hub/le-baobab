@@ -1463,6 +1463,489 @@ SyncState(id, provider, account, resource, cursor, etag, status, last_synced_at,
 
 **Index :** `syncstate_due_idx`
 
+## education
+
+**Source of truth :** PostgreSQL — classrooms, cours, modules/chapitres (prix par niveau), blocs de contenu, inscriptions, droits d'acces
+
+### `education_classroom` (Classroom)
+
+Classroom(id, slug, title, description, owner, privacy, is_paid, price_minor, currency, organization_ref, group, archived_at, created_at, updated_at)
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | UUIDField(32) | non | PK | (fonction) |
+| `slug` | SlugField(80) | non | oui |  |
+| `title` | CharField(160) | non |  |  |
+| `description` | TextField(5000) | non |  |  |
+| `owner` | FK -> accounts.User | non |  |  |
+| `privacy` | CharField(14) | non |  | public |
+| `is_paid` | BooleanField | non |  | False |
+| `price_minor` | PositiveIntegerField | oui |  |  |
+| `currency` | CharField(3) | non |  |  |
+| `organization_ref` | UUIDField(32) | oui |  |  |
+| `group` | FK -> community.Group | oui |  |  |
+| `archived_at` | DateTimeField | oui |  |  |
+| `created_at` | DateTimeField | non |  | (fonction) |
+| `updated_at` | DateTimeField | non |  | (fonction) |
+
+**Contraintes :** `chk_classroom_pricing` ; `chk_classroom_org_ref`
+
+**Index :** `classroom_discover_idx`
+
+### `education_classroom_member` (ClassroomMember)
+
+ClassroomMember(id, classroom, user, role, status, joined_at)
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | UUIDField(32) | non | PK | (fonction) |
+| `classroom` | FK -> education.Classroom | non |  |  |
+| `user` | FK -> accounts.User | non |  |  |
+| `role` | CharField(10) | non |  | student |
+| `status` | CharField(8) | non |  | active |
+| `joined_at` | DateTimeField | non |  | (fonction) |
+
+**Contraintes :** `uniq_classroom_member`
+
+**Index :** `classmember_user_idx` ; `classmember_pending_idx`
+
+### `education_classroom_invitation` (ClassroomInvitation)
+
+ClassroomInvitation(id, classroom, invited_user, invited_by, role, status, expires_at, created_at)
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | UUIDField(32) | non | PK | (fonction) |
+| `classroom` | FK -> education.Classroom | non |  |  |
+| `invited_user` | FK -> accounts.User | non |  |  |
+| `invited_by` | FK -> accounts.User | non |  |  |
+| `role` | CharField(10) | non |  | student |
+| `status` | CharField(9) | non |  | pending |
+| `expires_at` | DateTimeField | oui |  |  |
+| `created_at` | DateTimeField | non |  | (fonction) |
+
+**Contraintes :** `uniq_classinvite_pending`
+
+### `education_course` (Course)
+
+Course(id, classroom, slug, title, description, level, language, status, is_free, price_minor, currency, certificate_enabled, published_at, created_at, updated_at)
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | UUIDField(32) | non | PK | (fonction) |
+| `classroom` | FK -> education.Classroom | non |  |  |
+| `slug` | SlugField(80) | non |  |  |
+| `title` | CharField(160) | non |  |  |
+| `description` | TextField(10000) | non |  |  |
+| `level` | CharField(14) | non |  | beginner |
+| `language` | CharField(8) | non |  | fr |
+| `status` | CharField(10) | non |  | draft |
+| `is_free` | BooleanField | non |  | True |
+| `price_minor` | PositiveIntegerField | oui |  |  |
+| `currency` | CharField(3) | non |  |  |
+| `certificate_enabled` | BooleanField | non |  | True |
+| `published_at` | DateTimeField | oui |  |  |
+| `created_at` | DateTimeField | non |  | (fonction) |
+| `updated_at` | DateTimeField | non |  | (fonction) |
+| `skills` | M2M -> profiles.Skill | - | - | - |
+
+**Contraintes :** `uniq_course_slug` ; `chk_course_pricing` ; `chk_course_published_dated`
+
+**Index :** `course_published_idx` ; `course_classroom_idx`
+
+### `education_course_instructor` (CourseInstructor)
+
+CourseInstructor(id, course, user, role)
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | UUIDField(32) | non | PK | (fonction) |
+| `course` | FK -> education.Course | non |  |  |
+| `user` | FK -> accounts.User | non |  |  |
+| `role` | CharField(10) | non |  | assistant |
+
+**Contraintes :** `uniq_course_instructor`
+
+### `education_module` (Module)
+
+Module(id, course, position, title, description, is_free, price_minor, currency, is_published)
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | UUIDField(32) | non | PK | (fonction) |
+| `course` | FK -> education.Course | non |  |  |
+| `position` | PositiveSmallIntegerField | non |  |  |
+| `title` | CharField(160) | non |  |  |
+| `description` | TextField(3000) | non |  |  |
+| `is_free` | BooleanField | non |  | True |
+| `price_minor` | PositiveIntegerField | oui |  |  |
+| `currency` | CharField(3) | non |  |  |
+| `is_published` | BooleanField | non |  | False |
+
+**Contraintes :** `uniq_module_position` ; `chk_module_pricing`
+
+### `education_chapter` (Chapter)
+
+Chapter(id, module, position, title, estimated_minutes, is_free, price_minor, currency, is_published)
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | UUIDField(32) | non | PK | (fonction) |
+| `module` | FK -> education.Module | non |  |  |
+| `position` | PositiveSmallIntegerField | non |  |  |
+| `title` | CharField(160) | non |  |  |
+| `estimated_minutes` | PositiveSmallIntegerField | non |  | 10 |
+| `is_free` | BooleanField | non |  | True |
+| `price_minor` | PositiveIntegerField | oui |  |  |
+| `currency` | CharField(3) | non |  |  |
+| `is_published` | BooleanField | non |  | False |
+
+**Contraintes :** `uniq_chapter_position` ; `chk_chapter_pricing`
+
+### `education_content_block` (ContentBlock)
+
+Bloc de contenu extensible : un chapitre = une suite ordonnee de blocs de types varies.
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | UUIDField(32) | non | PK | (fonction) |
+| `chapter` | FK -> education.Chapter | non |  |  |
+| `position` | PositiveSmallIntegerField | non |  |  |
+| `kind` | CharField(12) | non |  |  |
+| `title` | CharField(160) | non |  |  |
+| `body` | TextField | non |  |  |
+| `storage_key` | CharField(400) | non |  |  |
+| `url` | CharField(600) | non |  |  |
+| `ref_id` | UUIDField(32) | oui |  |  |
+| `payload` | JSONField | non |  | (fonction) |
+| `duration_seconds` | PositiveIntegerField | oui |  |  |
+
+**Contraintes :** `uniq_block_position` ; `chk_block_text_body` ; `chk_block_file_source` ; `chk_block_link_https` ; `chk_block_ref`
+
+### `education_enrollment` (Enrollment)
+
+Enrollment(id, course, user, status, enrolled_at, completed_at)
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | UUIDField(32) | non | PK | (fonction) |
+| `course` | FK -> education.Course | non |  |  |
+| `user` | FK -> accounts.User | non |  |  |
+| `status` | CharField(10) | non |  | active |
+| `enrolled_at` | DateTimeField | non |  | (fonction) |
+| `completed_at` | DateTimeField | oui |  |  |
+
+**Contraintes :** `uniq_enrollment` ; `chk_enrollment_completed_dated`
+
+**Index :** `enrollment_user_idx`
+
+### `education_entitlement` (Entitlement)
+
+Droit d'acces accorde (achat, offre, abonnement). `grant_key` rend l'octroi IDEMPOTENT : un webhook de paiement rejoue
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | UUIDField(32) | non | PK | (fonction) |
+| `user` | FK -> accounts.User | non |  |  |
+| `scope` | CharField(10) | non |  |  |
+| `classroom` | FK -> education.Classroom | oui |  |  |
+| `course` | FK -> education.Course | oui |  |  |
+| `module` | FK -> education.Module | oui |  |  |
+| `chapter` | FK -> education.Chapter | oui |  |  |
+| `source` | CharField(12) | non |  |  |
+| `source_ref` | CharField(100) | non |  |  |
+| `grant_key` | CharField(200) | non |  |  |
+| `granted_at` | DateTimeField | non |  | (fonction) |
+| `expires_at` | DateTimeField | oui |  |  |
+| `revoked_at` | DateTimeField | oui |  |  |
+
+**Contraintes :** `chk_entitlement_single_target` ; `uniq_entitlement_grant_key`
+
+**Index :** `entitlement_user_idx` ; `entitlement_chapter_idx` ; `entitlement_module_idx` ; `entitlement_course_idx`
+
+## assessments
+
+**Source of truth :** PostgreSQL — quiz (correction auto), devoirs, groupes, grille de notation, notes
+
+### `assessments_quiz` (Quiz)
+
+Quiz(id, course, chapter, title, pass_percent, max_attempts, time_limit_seconds, is_published, created_at)
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | UUIDField(32) | non | PK | (fonction) |
+| `course` | FK -> education.Course | non |  |  |
+| `chapter` | FK -> education.Chapter | oui |  |  |
+| `title` | CharField(160) | non |  |  |
+| `pass_percent` | PositiveSmallIntegerField | non |  | 60 |
+| `max_attempts` | PositiveSmallIntegerField | non |  | 3 |
+| `time_limit_seconds` | PositiveIntegerField | oui |  |  |
+| `is_published` | BooleanField | non |  | False |
+| `created_at` | DateTimeField | non |  | (fonction) |
+
+**Contraintes :** `chk_quiz_pass_percent`
+
+### `assessments_question` (Question)
+
+Question(id, quiz, position, kind, prompt, points, explanation, answer_key)
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | UUIDField(32) | non | PK | (fonction) |
+| `quiz` | FK -> assessments.Quiz | non |  |  |
+| `position` | PositiveSmallIntegerField | non |  |  |
+| `kind` | CharField(10) | non |  |  |
+| `prompt` | TextField | non |  |  |
+| `points` | PositiveSmallIntegerField | non |  | 1 |
+| `explanation` | TextField | non |  |  |
+| `answer_key` | JSONField | non |  | (fonction) |
+
+**Contraintes :** `uniq_question_position` ; `chk_question_points`
+
+### `assessments_choice` (Choice)
+
+Choice(id, question, position, label, is_correct, correct_order)
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | UUIDField(32) | non | PK | (fonction) |
+| `question` | FK -> assessments.Question | non |  |  |
+| `position` | PositiveSmallIntegerField | non |  |  |
+| `label` | CharField(300) | non |  |  |
+| `is_correct` | BooleanField | non |  | False |
+| `correct_order` | PositiveSmallIntegerField | oui |  |  |
+
+**Contraintes :** `uniq_choice_position`
+
+### `assessments_quiz_attempt` (QuizAttempt)
+
+QuizAttempt(id, quiz, user, attempt_no, status, started_at, submitted_at, score, max_score, passed)
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | UUIDField(32) | non | PK | (fonction) |
+| `quiz` | FK -> assessments.Quiz | non |  |  |
+| `user` | FK -> accounts.User | non |  |  |
+| `attempt_no` | PositiveSmallIntegerField | non |  |  |
+| `status` | CharField(14) | non |  | in_progress |
+| `started_at` | DateTimeField | non |  | (fonction) |
+| `submitted_at` | DateTimeField | oui |  |  |
+| `score` | DecimalField | non |  | 0 |
+| `max_score` | DecimalField | non |  | 0 |
+| `passed` | BooleanField | non |  | False |
+
+**Contraintes :** `uniq_quiz_attempt` ; `chk_attempt_score_range`
+
+**Index :** `attempt_user_quiz_idx`
+
+### `assessments_attempt_answer` (AttemptAnswer)
+
+AttemptAnswer(id, attempt, question, selected, text, is_correct, points_awarded)
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | UUIDField(32) | non | PK | (fonction) |
+| `attempt` | FK -> assessments.QuizAttempt | non |  |  |
+| `question` | FK -> assessments.Question | non |  |  |
+| `selected` | JSONField | non |  | (fonction) |
+| `text` | TextField | non |  |  |
+| `is_correct` | BooleanField | oui |  |  |
+| `points_awarded` | DecimalField | non |  | 0 |
+
+**Contraintes :** `uniq_attempt_answer`
+
+### `assessments_assignment` (Assignment)
+
+Assignment(id, course, chapter, title, instructions, max_points, due_at, allow_late, max_attempts, is_group, is_published, created_at)
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | UUIDField(32) | non | PK | (fonction) |
+| `course` | FK -> education.Course | non |  |  |
+| `chapter` | FK -> education.Chapter | oui |  |  |
+| `title` | CharField(160) | non |  |  |
+| `instructions` | TextField | non |  |  |
+| `max_points` | PositiveSmallIntegerField | non |  | 20 |
+| `due_at` | DateTimeField | oui |  |  |
+| `allow_late` | BooleanField | non |  | True |
+| `max_attempts` | PositiveSmallIntegerField | non |  | 1 |
+| `is_group` | BooleanField | non |  | False |
+| `is_published` | BooleanField | non |  | False |
+| `created_at` | DateTimeField | non |  | (fonction) |
+
+**Contraintes :** `chk_assignment_points` ; `chk_assignment_attempts`
+
+### `assessments_rubric_criterion` (RubricCriterion)
+
+RubricCriterion(id, assignment, position, label, max_points)
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | UUIDField(32) | non | PK | (fonction) |
+| `assignment` | FK -> assessments.Assignment | non |  |  |
+| `position` | PositiveSmallIntegerField | non |  |  |
+| `label` | CharField(200) | non |  |  |
+| `max_points` | PositiveSmallIntegerField | non |  |  |
+
+**Contraintes :** `uniq_criterion_position` ; `chk_criterion_points`
+
+### `assessments_assignment_group` (AssignmentGroup)
+
+AssignmentGroup(id, assignment, name, created_at)
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | UUIDField(32) | non | PK | (fonction) |
+| `assignment` | FK -> assessments.Assignment | non |  |  |
+| `name` | CharField(100) | non |  |  |
+| `created_at` | DateTimeField | non |  | (fonction) |
+
+**Contraintes :** `uniq_agroup_name`
+
+### `assessments_assignment_group_member` (AssignmentGroupMember)
+
+AssignmentGroupMember(id, group, assignment, user)
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | BigAutoField | non | PK |  |
+| `group` | FK -> assessments.AssignmentGroup | non |  |  |
+| `assignment` | FK -> assessments.Assignment | non |  |  |
+| `user` | FK -> accounts.User | non |  |  |
+
+**Contraintes :** `uniq_one_group_per_assignment`
+
+### `assessments_submission` (AssignmentSubmission)
+
+AssignmentSubmission(id, assignment, user, group, submitted_by, attempt_no, status, text, attachments, is_late, submitted_at)
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | UUIDField(32) | non | PK | (fonction) |
+| `assignment` | FK -> assessments.Assignment | non |  |  |
+| `user` | FK -> accounts.User | oui |  |  |
+| `group` | FK -> assessments.AssignmentGroup | oui |  |  |
+| `submitted_by` | FK -> accounts.User | non |  |  |
+| `attempt_no` | PositiveSmallIntegerField | non |  | 1 |
+| `status` | CharField(10) | non |  | submitted |
+| `text` | TextField | non |  |  |
+| `attachments` | JSONField | non |  | (fonction) |
+| `is_late` | BooleanField | non |  | False |
+| `submitted_at` | DateTimeField | non |  | (fonction) |
+
+**Contraintes :** `chk_submission_owner` ; `uniq_submission_user_attempt` ; `uniq_submission_group_attempt`
+
+**Index :** `submission_assignment_idx`
+
+### `assessments_grade` (Grade)
+
+Grade(id, submission, grader, points, feedback, graded_at)
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | UUIDField(32) | non | PK | (fonction) |
+| `submission` | FK -> assessments.AssignmentSubmission | non | oui |  |
+| `grader` | FK -> accounts.User | oui |  |  |
+| `points` | DecimalField | non |  |  |
+| `feedback` | TextField | non |  |  |
+| `graded_at` | DateTimeField | non |  | (fonction) |
+
+**Contraintes :** `chk_grade_points`
+
+### `assessments_grade_criterion` (GradeCriterion)
+
+GradeCriterion(id, grade, criterion, points, comment)
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | BigAutoField | non | PK |  |
+| `grade` | FK -> assessments.Grade | non |  |  |
+| `criterion` | FK -> assessments.RubricCriterion | non |  |  |
+| `points` | DecimalField | non |  |  |
+| `comment` | CharField(500) | non |  |  |
+
+**Contraintes :** `uniq_grade_criterion`
+
+### `assessments_feedback` (Feedback)
+
+Fil de commentaires sur un rendu (en plus de la note).
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | UUIDField(32) | non | PK | (fonction) |
+| `submission` | FK -> assessments.AssignmentSubmission | non |  |  |
+| `author` | FK -> accounts.User | non |  |  |
+| `body` | TextField | non |  |  |
+| `created_at` | DateTimeField | non |  | (fonction) |
+
+**Index :** `feedback_submission_idx`
+
+## progress
+
+**Source of truth :** PostgreSQL — progression par chapitre (module/cours calcules en SQL), certificats verifiables
+
+### `progress_chapter_progress` (ChapterProgress)
+
+ChapterProgress(id, user, chapter, status, percent, time_spent_seconds, completed_at, created_at, updated_at)
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | BigAutoField | non | PK |  |
+| `user` | FK -> accounts.User | non |  |  |
+| `chapter` | FK -> education.Chapter | non |  |  |
+| `status` | CharField(12) | non |  | in_progress |
+| `percent` | PositiveSmallIntegerField | non |  | 0 |
+| `time_spent_seconds` | PositiveIntegerField | non |  | 0 |
+| `completed_at` | DateTimeField | oui |  |  |
+| `created_at` | DateTimeField | non |  | (fonction) |
+| `updated_at` | DateTimeField | non |  | (fonction) |
+
+**Contraintes :** `uniq_chapter_progress` ; `chk_progress_percent` ; `chk_progress_completed`
+
+**Index :** `chprogress_done_idx`
+
+### `progress_certificate_template` (CertificateTemplate)
+
+CertificateTemplate(id, name, body, is_active)
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | UUIDField(32) | non | PK | (fonction) |
+| `name` | CharField(100) | non | oui |  |
+| `body` | TextField | non |  |  |
+| `is_active` | BooleanField | non |  | True |
+
+### `progress_certificate` (Certificate)
+
+Certificate(id, user, course, template, verification_code, score_percent, issued_at, revoked_at, revocation_reason)
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | UUIDField(32) | non | PK | (fonction) |
+| `user` | FK -> accounts.User | non |  |  |
+| `course` | FK -> education.Course | non |  |  |
+| `template` | FK -> progress.CertificateTemplate | oui |  |  |
+| `verification_code` | CharField(20) | non | oui |  |
+| `score_percent` | DecimalField | oui |  |  |
+| `issued_at` | DateTimeField | non |  | (fonction) |
+| `revoked_at` | DateTimeField | oui |  |  |
+| `revocation_reason` | CharField(300) | non |  |  |
+
+**Contraintes :** `uniq_certificate_active`
+
+### `progress_certificate_verification` (CertificateVerification)
+
+Journal des verifications publiques (employeur qui controle un certificat).
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | BigAutoField | non | PK |  |
+| `certificate` | FK -> progress.Certificate | non |  |  |
+| `verified_at` | DateTimeField | non |  | (fonction) |
+| `ip_address` | GenericIPAddressField(39) | oui |  |  |
+
+**Index :** `certverif_cert_idx`
+
 ## analytics
 
 **Source of truth :** PostgreSQL + MongoDB — catalogue d'evenements + agregats (PG) ; evenements bruts (Mongo `events`)

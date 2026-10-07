@@ -19,6 +19,9 @@ TRUTH = {
     "social": ("PostgreSQL", "posts/commentaires/reactions/statuts ; MongoDB `post_cards` = read-model ; Redis = timeline + vues"),
     "notifications": ("PostgreSQL", "liste, preferences, livraisons ; Redis = compteur non-lus"), "audit": ("PostgreSQL", "journal inalterable (triggers)"),
     "moderation": ("PostgreSQL", "signalements, dossiers, sanctions, journal immuable"), "integrations": ("PostgreSQL", "comptes/contenus externes (tokens chiffres)"),
+    "education": ("PostgreSQL", "classrooms, cours, modules/chapitres (prix par niveau), blocs de contenu, inscriptions, droits d'acces"),
+    "assessments": ("PostgreSQL", "quiz (correction auto), devoirs, groupes, grille de notation, notes"),
+    "progress": ("PostgreSQL", "progression par chapitre (module/cours calcules en SQL), certificats verifiables"),
     "analytics": ("PostgreSQL + MongoDB", "catalogue d'evenements + agregats (PG) ; evenements bruts (Mongo `events`)"), "core": ("PostgreSQL", "outbox, idempotence"),
 }
 

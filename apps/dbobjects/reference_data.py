@@ -25,6 +25,10 @@ NOTIFICATION_TYPES = [
     ("group_join_approved", "social", ["in_app", "websocket"], False),
     ("moderation_notice", "system", ["in_app", "email"], True),
     ("security_alert", "system", ["in_app", "email", "push"], True),
+    ("classroom_invitation", "learning", ["in_app", "websocket", "push"], False),
+    ("course_enrollment", "learning", ["in_app", "websocket"], False),
+    ("assignment_graded", "learning", ["in_app", "websocket", "push"], False),
+    ("certificate_issued", "learning", ["in_app", "websocket", "email"], False),
 ]
 
 EVENT_TYPES = [

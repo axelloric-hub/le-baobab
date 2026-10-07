@@ -10,3 +10,4 @@ media/
 .pytest_cache/
 *.sqlite3
 .coverage
+dump.rdb

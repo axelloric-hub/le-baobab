@@ -8,6 +8,8 @@ _MAP = {
     "PostLiked": ("post_liked", "post"),
     "MessageSent": ("message_sent", "message"),
     "FriendshipCreated": ("friendship_created", "friendship"),
+    "CourseEnrolled": ("course_started", "enrollment"),
+    "ChapterCompleted": ("lesson_completed", "chapter"),
 }
 
 

@@ -22,7 +22,17 @@ Principe : triggers **courts, previsibles, sans logique metier** ; la logique es
 | `baobab_refresh_daily_metrics(day)` | UPSERT des agregats quotidiens | int | cron |
 | `baobab_housekeeping(batch)` | purge par lots : idempotence expiree, outbox traitee > 7 j, tentatives de connexion > 90 j | jsonb | cron |
 
-## Triggers (28)
+## Fonctions du domaine education (`006_education.sql`)
+| Nom | Objet | Retour |
+|---|---|---|
+| `baobab_chapter_unlocked(user, chapter)` | chapitre gratuit OU droit valide (non expire, non revoque) sur le chapitre, son module, son cours ou sa classroom | bool |
+| `baobab_module_progress(user, module)` / `baobab_course_progress(user, course)` | chapitres publies termines / total, pourcentage, temps passe (module/cours = **calcul**, aucune donnee derivee a maintenir) | table |
+| `baobab_quiz_best_percent(user, quiz)` | meilleur score en % parmi les tentatives corrigees | numeric |
+| `baobab_course_leaderboard(course, limit)` | classement (chapitres termines puis temps), egalites = meme rang | table |
+Vue `v_course_statistics` (inscriptions, taux d'achevement, certificats, droits actifs). Audit par trigger sur `education_entitlement`, `progress_certificate`, `assessments_grade`, `education_enrollment`.
+La regle d'acces payant a UNE seule definition (la fonction SQL) ; `apps.education.access` l'appelle, il n'y a pas de duplication Python.
+
+## Triggers (28 + 4 education)
 `trg_set_updated_at` (toutes tables), 8 compteurs, 3 messagerie, 3 append-only (`audit_log`, `audit_admin_action`, `moderation_action`), 6 audit de lignes (`accounts_user`, `profiles_profile`, `profiles_privacy`, `community_group_ban`, `community_group_role`, `moderation_restriction`).
 
 ## Vues

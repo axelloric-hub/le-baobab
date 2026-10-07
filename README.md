@@ -4,8 +4,8 @@ African Developer Platform — Connect · Learn · Build · Grow.
 Monolithe modulaire Django (DRF + Channels) sur **PostgreSQL (Supabase) + MongoDB (Atlas) + Redis**, deploye **gratuitement** : Render (Django) + Cloudflare Worker (routeur) + GitHub Actions.
 
 ## Etat
-Tranche 1 livree : core, accounts, profiles, friends, community, messaging, social (posts, statuts, feed hybride), notifications, audit, moderation, integrations, analytics — **151 tests**, migrations SQL (fonctions/triggers/vues) incluses.
-**Pas encore realise** : education/LMS, marketplace/paiements, jobs/freelance/portfolio/companies, advertising, AI Gateway, couche API REST. Voir `docs/DATABASE_REVIEW.md` (scores honnetes, tous sous 90 sur au moins un axe).
+Livre : core, accounts, profiles, friends, community, messaging, social (posts, statuts, feed hybride), notifications, audit, moderation, integrations, analytics, **education (classrooms, cours payants par module/chapitre), assessments (quiz, devoirs), progress (progression, certificats)** — **204 tests**, migrations SQL (fonctions/triggers/vues) incluses. Migrations et `/ready/` valides sur de vrais Supabase, Atlas et Upstash.
+**Pas encore realise** : marketplace/paiements, jobs/freelance/portfolio/companies, advertising, AI Gateway, couche API REST. Voir `docs/DATABASE_REVIEW.md` (scores honnetes, tous sous 90 sur au moins un axe).
 
 ## Demarrage local
 ```bash

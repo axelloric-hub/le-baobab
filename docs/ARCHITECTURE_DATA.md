@@ -60,6 +60,15 @@ Regles appliquees : pas de FK entre domaines "lointains" (references par UUID : 
 Extractions probables dans l'ordre : `messaging` (WebSocket intensif) -> `notifications` -> `analytics` -> `advertising`.
 Les evenements de l'outbox deviennent alors des messages vers un broker (Queues Cloudflare, Kafka, ...) sans reecrire les producteurs.
 
+## 5 bis. Domaine Education : decisions
+- **Prix a trois niveaux** (cours, module, chapitre) + classroom payante. `Chapter.is_free` est l'**autorite** ; un droit sur le chapitre, son module, son cours ou sa classroom le debloque. Un module payant peut contenir des chapitres gratuits (apercu) et inversement. CHECK en base : gratuit => pas de prix ; payant => prix > 0 et devise.
+- **Droits idempotents** (`grant_key` UNIQUE) : un webhook de paiement rejoue ne cree jamais deux droits. Le futur domaine marketplace n'appelle que `grant_entitlement`.
+- **Decision d'acces explicite** (`access_decision`) : `not_published`, `membership_required`, `classroom_payment_required`, `enroll_required`, `payment_required` — l'API sait quoi proposer a l'utilisateur.
+- **Progression** : une seule table de verite (`ChapterProgress`) ; module/cours sont calcules en SQL. Pourcentage monotone, temps plafonne par appel.
+- **Certificats** : un certificat valide par (utilisateur, cours) garanti par la base ; code public verifiable (limite par IP, aucune donnee privee exposee) ; emis seulement si le cours est termine ET tous les quiz publies sont reussis (reaction a l'evenement `QuizPassed`, sans import circulaire).
+- **Quiz** : correction automatique (choix unique/multiple, vrai/faux, texte normalise sans accents ni casse, mise en ordre) ; code = correction manuelle ; les bonnes reponses ne sortent jamais par les serializers (teste).
+- **Devoirs** : individuels ou en groupe (un groupe par eleve et par devoir, garanti en base), plusieurs tentatives numerotees sous verrou, retard marque ou refuse, grille de notation (somme des criteres = total).
+
 ## 6. Perimetre de cette tranche
-Implemente : core, accounts, profiles, friends, community, messaging, social, notifications, audit, moderation, integrations, analytics.
-**Non implemente (tranches suivantes)** : education/LMS, marketplace/paiements, jobs/freelance/portfolio/companies, advertising, AI Gateway.
+Implemente : core, accounts, profiles, friends, community, messaging, social, notifications, audit, moderation, integrations, analytics, **education, assessments, progress**.
+**Non implemente (tranches suivantes)** : marketplace/paiements, jobs/freelance/portfolio/companies, advertising, AI Gateway.
