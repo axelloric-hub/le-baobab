@@ -39,3 +39,29 @@ class InternalJobTests(BaobabTestCase):
         ts = str(int(time.time()))
         r = APIClient().post("/internal/jobs/relay-outbox/", HTTP_X_INTERNAL_TIMESTAMP=ts, HTTP_X_INTERNAL_SIGNATURE=sign("", ts, "relay-outbox"))
         self.assertEqual(r.status_code, 403)
+
+
+@override_settings(CRON_JOB_TOKEN="t" * 32, INTERNAL_JOB_SECRET=SECRET)
+class CronTokenTests(BaobabTestCase):
+    def post(self, name="housekeeping", auth="Bearer " + "t" * 32):
+        extra = {"HTTP_AUTHORIZATION": auth} if auth else {}
+        return APIClient().post(f"/internal/jobs/{name}/", **extra)
+
+    def test_fixed_bearer_token_runs_a_job_and_the_all_tick(self):
+        self.assertEqual(self.post().status_code, 200)
+        r = self.post("all")
+        self.assertEqual((r.status_code, r.json()["job"]), (200, "all"))
+        self.assertIn("relay-outbox", r.json()["executed"])
+
+    def test_wrong_missing_or_user_jwt_is_refused(self):
+        self.assertEqual(self.post(auth="Bearer " + "x" * 32).status_code, 403)
+        self.assertEqual(self.post(auth=None).status_code, 403)
+        self.assertEqual(self.post(auth="Bearer eyJhbGciOi.fake.jwt").status_code, 403)
+
+    @override_settings(CRON_JOB_TOKEN="court")
+    def test_a_too_short_token_is_never_accepted(self):
+        self.assertEqual(self.post(auth="Bearer court").status_code, 403)
+
+    @override_settings(CRON_JOB_TOKEN="")
+    def test_empty_token_disables_the_mode(self):
+        self.assertEqual(self.post(auth="Bearer ").status_code, 403)

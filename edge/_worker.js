@@ -1,3 +1,6 @@
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+
 // workers/router/src/index.ts
 var ORIGIN_PREFIXES = ["/api/", "/admin/", "/static/", "/health/", "/ready/"];
 var STRIP = ["x-forwarded-for", "x-forwarded-host", "x-forwarded-proto", "x-internal-timestamp", "x-internal-signature", "x-edge-secret", "x-client-ip"];
@@ -8,6 +11,7 @@ function hardened(request) {
   if (!/^[A-Za-z0-9-]{8,64}$/.test(incoming)) headers.set("x-request-id", crypto.randomUUID().replaceAll("-", ""));
   return new Request(request, { headers });
 }
+__name(hardened, "hardened");
 function toOrigin(request, env) {
   const url = new URL(request.url);
   const headers = new Headers(request.headers);
@@ -17,13 +21,15 @@ function toOrigin(request, env) {
   headers.set("x-forwarded-host", env.PUBLIC_HOST);
   return new Request(new URL(url.pathname + url.search, env.ORIGIN_URL), new Request(request, { headers }));
 }
+__name(toOrigin, "toOrigin");
 var index_default = {
   async fetch(request, env) {
     const url = new URL(request.url);
     const req = hardened(request);
     const requestId = req.headers.get("x-request-id");
-    if (url.pathname.startsWith("/internal/")) return new Response("Not found", { status: 404 });
-    const toDjango = url.pathname === "/ws" || url.pathname.startsWith("/ws/") || url.pathname === "/admin" || ORIGIN_PREFIXES.some((p) => url.pathname.startsWith(p));
+    const isJobCall = request.method === "POST" && /^\/internal\/jobs\/[a-z-]+\/$/.test(url.pathname);
+    if (url.pathname.startsWith("/internal/") && !isJobCall) return new Response("Not found", { status: 404 });
+    const toDjango = isJobCall || url.pathname === "/ws" || url.pathname.startsWith("/ws/") || url.pathname === "/admin" || ORIGIN_PREFIXES.some((p) => url.pathname.startsWith(p));
     if (toDjango) {
       try {
         const response2 = await fetch(toOrigin(req, env));
@@ -45,3 +51,4 @@ var index_default = {
 export {
   index_default as default
 };
+//# sourceMappingURL=index.js.map

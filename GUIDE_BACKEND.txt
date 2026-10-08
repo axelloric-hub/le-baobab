@@ -6,25 +6,53 @@ lues automatiquement dans le code : elles ne peuvent pas diverger de la
 realite.
 
 ==============================================================================
-0. A LIRE EN PREMIER : CE QUI EXISTE ET CE QUI N'EXISTE PAS
+0. A LIRE EN PREMIER : CE QUI EXISTE
 ==============================================================================
-IL N'Y A PAS D'API REST METIER. Aucune URL du type /api/products/ ou
-/api/orders/ n'existe. Ce qui existe est une couche de SERVICES Python (des
-fonctions qui appliquent les regles metier), des modeles, des migrations SQL
-et des moteurs. Une couche API (vues + URLs) reste a ecrire par-dessus :
-chaque vue appellera simplement un service. Les serializers (validation
-d'entree, forme de sortie) existent deja pour la plupart des domaines.
+Le backend expose une API REST versionnee (271 endpoints sous /api/v1/) et
+deux WebSocket. Chaque endpoint est une fonction decoree @endpoint (fichier
+apps/<app>/api.py) : elle valide l'entree, applique l'authentification,
+appelle UN service (la logique metier, decrite plus bas, testee), puis
+formate la sortie. La liste detaillee et exacte de tous les endpoints
+(corps, parametres, droits) est dans ENDPOINTS_POUR_DEV_BACKEND.txt ; les
+scenarios de test dans INSOMNIA_TESTS.md ; ce qui reste a faire dans
+RESTE_A_FAIRE.md ; ce qu'il ne faut pas oublier avant la production dans
+A_NE_PAS_OUBLIER.md.
 
-Ce qui est ACCESSIBLE par le reseau aujourd'hui (liste complete) :
-  GET  /health/                    sonde de vie (Render l'appelle). Ouvert.
-  GET  /ready/                     verifie PostgreSQL + MongoDB + Redis. Reponse JSON, 200 ou 503.
-  POST /internal/jobs/<nom>/       declenche un job planifie. Signature HMAC obligatoire. Invisible depuis l'exterieur (le routeur Cloudflare le bloque).
-  /admin/                          interface d'administration Django (tous les modeles, certains en lecture seule).
-  GET  /api/schema/  /api/docs/    schema OpenAPI et page Swagger (ne decrivent que ce qui existe : presque rien pour l'instant).
-  WS   /ws/conversations/<id>/     WebSocket de chat (JWT dans ?token=). Membres de la conversation uniquement.
-  WS   /ws/notifications/          WebSocket de notifications personnelles (JWT dans ?token=).
+Endpoints par domaine :
+  core             1 endpoints
+  accounts        11 endpoints
+  storage          6 endpoints
+  profiles        15 endpoints
+  friends         16 endpoints
+  community       18 endpoints
+  messaging       10 endpoints
+  social          24 endpoints
+  notifications    5 endpoints
+  moderation       4 endpoints
+  integrations     3 endpoints
+  analytics        1 endpoints
+  education       27 endpoints
+  assessments     17 endpoints
+  progress         3 endpoints
+  marketplace     27 endpoints
+  payments         9 endpoints
+  companies       14 endpoints
+  portfolio       12 endpoints
+  jobs            26 endpoints
+  advertising     22 endpoints
 
-Tout le reste (inscription, panier, achat, candidature, etc.) existe sous forme de FONCTIONS PYTHON decrites plus bas.
+Hors /api/v1 :
+  GET  /health/                    sonde de vie (Render l'appelle).
+  GET  /ready/                     verifie PostgreSQL + MongoDB + Redis. Ne revele aucun interrupteur de test.
+  POST /internal/jobs/<nom>/       declenche un job planifie (signature HMAC) ; invisible depuis l'exterieur.
+  /admin/                          interface d'administration Django.
+  WS   /ws/conversations/<id>/ et /ws/notifications/   (JWT dans ?token=) : protocole dans ENDPOINTS_POUR_DEV_BACKEND.txt.
+
+Regles transverses de l'API (a connaitre avant de modifier quoi que ce soit) :
+  - Les fichiers ne passent JAMAIS par l'API : URL signee d'envoi -> le client envoie au bucket -> confirmation verifiee cote serveur.
+  - Isolation des comptes : un identifiant d'une autre personne renvoie 404 (jamais son contenu) ; les fichiers ne sont references que par leur identifiant et leur proprietaire.
+  - Format d'erreur unique {error:{code,message,fields}} ; le frontend se base sur error.code.
+  - AUCUN fournisseur de paiement n'est branche ; l'OTP peut etre affiche a l'ecran EN PHASE DE TEST uniquement (voir A_NE_PAS_OUBLIER.md).
 
 ==============================================================================
 1. ARCHITECTURE EN BREF
@@ -61,22 +89,19 @@ regles, ecrit en base dans une transaction et publie les evenements. Elle
 leve une erreur claire quand une regle est violee (DomainError et ses sous-
 classes, avec un champ .code utilisable par l'API).
 
-Erreurs a convertir en reponses HTTP quand l'API existera :
+Erreurs (converties automatiquement en reponses HTTP : voir apps.core.exceptions.api_exception_handler) :
   DomainError (422)  regle metier violee         PermissionDeniedError (403)  droit insuffisant
   ConflictError (409) doublon / etat incompatible RateLimitedError (429)       trop de requetes
   IdempotencyConflictError (409)  meme cle d'idempotence avec un contenu different
-(le gestionnaire apps.core.exceptions.api_exception_handler le fait deja pour les vues DRF)
+  InvalidCredentialsError (401)   PaymentRequiredError (402, contenu payant)
 
-Exemple dans la console Django (python manage.py shell) :
-  from apps.accounts.services import register_user
+Exemple dans la console Django (python manage.py shell) : appeler un service directement.
   from apps.marketplace import services as M
-  u = register_user(email='ada@example.com', username='ada', password='Un-mot-de-passe-solide!')
-  M.add_to_cart(u, variante_id, 2)
-  commande = M.checkout(u, idempotency_key='cle-unique-du-clic')
+  M.add_to_cart(utilisateur, variante_id, 2) ; commande = M.checkout(utilisateur, idempotency_key='cle-unique')
 
-Quand vous ecrirez une vue DRF, le schema est toujours le meme :
-  1. un serializer valide les donnees d'entree ; 2. la vue appelle UN service ; 3. un serializer de lecture formate la reponse.
-  Ne mettez jamais de logique metier dans la vue : elle est dans le service (c'est ce qui est teste).
+Ajouter un endpoint (3 etapes) : 1. ecrire la fonction dans apps/<app>/api.py avec @endpoint('resume', auth=..., body={...}) ;
+  2. l'enregistrer dans apps/<app>/urls.py avec route('chemin/', GET=..., POST=...) ; 3. python scripts/gen_api_docs.py (la doc et la collection Insomnia se mettent a jour).
+  Ne mettez jamais de logique metier dans l'endpoint : elle est dans le service. Un meme objet de champ ne doit pas servir deux fois dans un corps (garde au demarrage).
 
 ==============================================================================
 3. LES DOMAINES, UN PAR UN (fonctions publiques lues dans le code)
@@ -143,9 +168,10 @@ Modeles (5) : UUIDModel, TimeStampedModel, SoftDeleteModel, OutboxEvent, Idempot
 ------------------------------------------------------------------------------
 ACCOUNTS
 ------------------------------------------------------------------------------
-Comptes : inscription, suspension, anonymisation (droit a l'effacement),
+Comptes : inscription, confirmation par OTP e-mail (SMTP), connexion JWT,
+mot de passe oublie, suspension, anonymisation (droit a l'effacement),
 appareils, historique de connexion.
-Modeles (5) : User, SecuritySettings, Device, LoginHistory, LoginAttempt
+Modeles (6) : User, SecuritySettings, Device, LoginHistory, LoginAttempt, EmailOTP
 
   [accounts/services.py]
     register_user(*, email: str, username: str, password: str, display_name: str | None=None)
@@ -155,6 +181,42 @@ Modeles (5) : User, SecuritySettings, Device, LoginHistory, LoginAttempt
     anonymize_user(*, user: User)
         Droit a l'effacement : on garde la ligne (integrite referentielle des
         paiements/audit) mais on
+
+  [accounts/otp.py]
+    emails_sent_today()
+    issue_otp(email: str, purpose: str, *, ip: str | None=None)
+    verify_otp(email: str, purpose: str, code: str)
+        Consomme le code ou leve une erreur ; le compteur d'essais est
+        persiste MEME en cas d'echec (l'erreur est levee hors transaction).
+
+------------------------------------------------------------------------------
+STORAGE
+------------------------------------------------------------------------------
+Fichiers : le contenu ne passe JAMAIS par l'API (URL signees vers un bucket
+S3-compatible) ; registre des fichiers, proprietaire, quotas, verification a
+la fin d'envoi.
+Modeles (1) : StoredFile
+
+  [storage/services.py]
+    safe_filename(name: str)
+    is_public(purpose: str)
+    request_upload(user, *, purpose: str, filename: str, content_type: str, size_bytes: int)
+    complete_upload(user, file_id)
+        Le client affirme avoir envoye le fichier : on NE LE CROIT PAS, on
+        interroge le bucket (existence, taille, type).
+    resolve_owned(user, file_id, purposes: tuple[str, ...])
+        Convertit un identifiant de fichier fourni par le client en fichier DE
+        CET UTILISATEUR, verifie et du bon usage (anti-IDOR).
+    signed_url(key: str, filename: str | None=None)
+        URL de lecture a duree courte. L'AUTORISATION est a la charge de
+        l'appelant (acces au cours, licence, visibilite du post...).
+    download_url(viewer, file_id)
+        Lecture directe : proprietaire, ou n'importe qui pour un usage public
+        (avatar, logo...). Sinon None (-> 404).
+    delete_file(user, file_id)
+    expire_pending(batch: int=200)
+        Job : les envois jamais confirmes apres 24 h sont supprimes (libere le
+        quota et le bucket).
 
 ------------------------------------------------------------------------------
 PROFILES
@@ -167,6 +229,14 @@ Modeles (10) : Country, Skill, Interest, Profession, Profile, UserSkill, UserInt
     bootstrap_profile(user: User, display_name: str)
     wipe_profile(user: User)
         Efface les donnees personnelles du profil lors de l'anonymisation.
+    update_profile(user, *, fields: dict, avatar=..., cover=..., country_code=..., profession_slug=...)
+    replace_skills(user, items: list[dict])
+        items = [{"slug", "level", "years_experience"?}] : remplace la liste
+        complete (idempotent).
+    replace_interests(user, slugs: list[str])
+    add_social_link(user, *, provider: str, url: str, handle: str='')
+    update_privacy(user, **fields)
+    update_preferences(user, **fields)
 
 ------------------------------------------------------------------------------
 FRIENDS
@@ -200,6 +270,9 @@ Modeles (6) : Friendship, Follow, CloseFriend, Block, Mute, Restriction
     users_hidden_from(user_id)
         Utilisateurs a exclure de TOUT contenu montre a `user_id` (blocages
         dans les deux sens).
+    visibility_allows(viewer_id, owner_id, visibility: str)
+        Regle de confidentialite UNIQUE (profil, portfolio...) : public /
+        abonnes / amis / prive, blocages prioritaires.
 
 ------------------------------------------------------------------------------
 COMMUNITY
@@ -219,6 +292,8 @@ Modeles (11) : Community, Group, GroupPermission, GroupRole, GroupMember, GroupI
     leave_group(user, group: Group)
     ban_member(group: Group, actor, target, reason: str='', expires_at=None)
     mute_member(group: Group, actor, target, duration: timedelta, reason: str='')
+    create_community(owner, *, name: str, slug: str, description: str='', privacy: str='public')
+    create_channel(group: Group, actor, *, name: str, slug: str, type: str='discussion', topic: str='')
 
   [community/selectors.py]
     get_membership(user_id, group_id)
@@ -296,6 +371,9 @@ Modeles (20) : Post, PostMedia, Hashtag, PostHashtag, PostMention, PostAudience,
     archive_expired_statuses(batch: int=1000)
         Job periodique : marque comme archives les statuts expires (pas de
         DELETE : l'historique/moderation reste).
+    delete_comment(comment_id, actor, reason: str='')
+        L'auteur du commentaire, l'auteur du post ou un moderateur du groupe
+        peut le supprimer.
 
   [social/selectors.py]
     visible_posts(viewer_id)
@@ -338,6 +416,9 @@ Modeles (5) : NotificationType, NotificationTemplate, NotificationPreference, No
         Compteur Redis (rapide) ; reconstruit depuis PostgreSQL si absent
         (eviction/restart).
     mark_read(user, notification_ids=None)
+    set_preference(user, type_code: str | None, channel: str, enabled: bool)
+        Active/desactive un canal pour un type (ou pour tous si type_code est
+        None). Les types critiques (securite, paiement) ne se desactivent pas.
 
 ------------------------------------------------------------------------------
 AUDIT
@@ -476,6 +557,8 @@ Modeles (13) : Quiz, Question, Choice, QuizAttempt, AttemptAnswer, Assignment, R
     submit_assignment(assignment_id, user, *, text: str='', attachments: list[dict] | None=None)
     grade_submission(submission_id, grader, *, points: Decimal | int | None=None, criteria: list[dict] | None=None, feedback: str='')
     add_feedback(submission_id, author, body: str)
+    set_quiz_published(quiz_id, actor, published: bool)
+    ensure_quiz_access(user, quiz: Quiz)
 
 ------------------------------------------------------------------------------
 PROGRESS
@@ -535,6 +618,7 @@ Modeles (18) : Store, ProductCategory, Product, ProductVariant, ProductMedia, Pr
         Avis reserve aux ACHETEURS (achat paye, non integralement rembourse).
         Un avis par utilisateur et par produit.
     toggle_wishlist(user, product_id)
+    add_media(product: Product, actor, *, storage_key: str, kind: str='image')
 
   [marketplace/money.py]
     allocate(total: int, weights: list[int])
@@ -588,6 +672,7 @@ Modeles (7) : Company, CompanyMember, CompanyVerification, CompanySocialLink, Co
     set_social_link(company: Company, actor, *, provider: str, url: str)
     add_project(company: Company, actor, **fields)
     add_service(company: Company, actor, **fields)
+    update_company(company: Company, actor, *, fields: dict, logo_key=..., cover_key=...)
 
 ------------------------------------------------------------------------------
 PORTFOLIO
@@ -607,6 +692,11 @@ Modeles (9) : Portfolio, Project, ProjectMedia, ProjectLink, Repository, Experie
     add_platform_certificate(user, certificate_id)
         Affiche un certificat LE BAOBAB : il doit appartenir a l'utilisateur
         et etre valide (ni revoque). Ainsi 'verifiable' ne se falsifie pas.
+    update_portfolio(user, **fields)
+    delete_entry(user, kind: str, entry_id)
+        Supprime UNE entree de MON portfolio (le filtre de proprietaire est
+        dans la requete : l'entree d'un autre est introuvable).
+    add_project_media(user, project_id, *, storage_key: str, kind: str='image')
 
   [portfolio/selectors.py]
     can_view_portfolio(viewer, owner_id)
@@ -690,7 +780,7 @@ Modeles (12) : Advertiser, AdAccount, AdAccountTransaction, Audience, AudienceMe
         (eligible, bonus). ET entre les regles obligatoires ; les regles
         souples n'excluent personne mais ajoutent leur poids.
 
-Total : 249 fonctions publiques de services/selecteurs/moteurs.
+Total : 279 fonctions publiques de services/selecteurs/moteurs.
 
 ==============================================================================
 4. EVENEMENTS (qui les publie, qui les ecoute)
@@ -760,6 +850,7 @@ Le relais des evenements tourne tout seul toutes les 3 secondes tant que le serv
 5. COMMANDES DE GESTION (python manage.py <commande>)
 ==============================================================================
   check_databases              Verifie PostgreSQL (tables, index, fonctions, triggers), MongoDB (collections, index) et Redis (scripts, config).
+  ensure_admin                 Cree l'administrateur initial depuis ADMIN_EMAIL / ADMIN_PASSWORD / ADMIN_USERNAME (ignore si ADMIN_EMAIL est vide).
   flush_counters               Draine les compteurs de vues Redis (GETDEL atomique) vers social_post.view_count. A planifier toutes les minutes.
   housekeeping                 Maintenance : purge technique par lots (SQL) + archivage des statuts expires. A planifier toutes les heures.
   mongo_setup                  Cree/Met a jour collections, validateurs JSON Schema et index MongoDB (idempotent).
@@ -768,7 +859,7 @@ Le relais des evenements tourne tout seul toutes les 3 secondes tant que le serv
   relay_outbox                 Relaie les evenements de l'outbox vers les consommateurs (Mongo, Redis, notifications, analytics). Process unique ou N workers (SKIP LOCKED).
 
   migrate                      cree/met a jour les tables, fonctions, triggers, vues et donnees de reference.
-  test                         lance les 312 tests (PostgreSQL et Redis reels requis).
+  test                         lance toute la suite de tests (PostgreSQL et Redis reels requis).
 
 ==============================================================================
 6. JOBS PLANIFIES (planificateur interne, uniquement pendant que le service est eveille)
@@ -781,6 +872,7 @@ Le relais des evenements tourne tout seul toutes les 3 secondes tant que le serv
   housekeeping         toutes les  3600 s   un seul worker a la fois
   ads-settle           toutes les   300 s   un seul worker a la fois
   ads-recover          toutes les   900 s   un seul worker a la fois
+  storage-cleanup      toutes les  3600 s   un seul worker a la fois
   expire-orders        toutes les   600 s   un seul worker a la fois
 
 Ils sont aussi declenchables de l'exterieur par POST /internal/jobs/<nom>/ (signature HMAC) : relay-outbox, flush-counters, refresh-metrics, refresh-trending, housekeeping.
@@ -896,6 +988,30 @@ PAYMENT_WEBHOOK_SECRET_MOBILE_MONEY=
 PAYMENT_WEBHOOK_SECRET_CARD=
 PAYMENT_WEBHOOK_SECRET_MANUAL=
 
+# ======================= API : SMTP, OTP, STOCKAGE (voir docs et A_NE_PAS_OUBLIER.md) =======================
+# ---- SMTP (envoi des codes OTP). Sans EMAIL_HOST, l'envoi echoue proprement et le code est renvoye a l'ecran si OTP_DEBUG_ECHO=true.
+EMAIL_HOST=
+EMAIL_PORT=587
+EMAIL_HOST_USER=
+EMAIL_HOST_PASSWORD=
+EMAIL_USE_TLS=true
+EMAIL_USE_SSL=false
+DEFAULT_FROM_EMAIL=LE BAOBAB <no-reply@votre-domaine.com>
+OTP_EMAIL_DAILY_LIMIT=25
+# ---- INTERRUPTEURS DE TEST : TOUS A false EN PRODUCTION ----
+OTP_DEBUG_ECHO=false
+PAYMENTS_SIMULATION_ENABLED=false
+STORAGE_FAKE_AUTO_COMPLETE=false
+# ---- Stockage de fichiers : bucket S3-compatible (Cloudflare R2, Supabase Storage...). Les fichiers ne passent JAMAIS par l'API.
+STORAGE_BACKEND=s3
+STORAGE_ENDPOINT_URL=https://<id-du-compte>.r2.cloudflarestorage.com
+STORAGE_BUCKET=
+STORAGE_ACCESS_KEY_ID=
+STORAGE_SECRET_ACCESS_KEY=
+STORAGE_REGION=auto
+USER_STORAGE_QUOTA_BYTES=524288000
+JWT_ACCESS_LIFETIME_MINUTES=15
+
 ==============================================================================
 9. REGLES ET PIEGES A CONNAITRE
 ==============================================================================
@@ -946,21 +1062,19 @@ PAYMENT_WEBHOOK_SECRET_MANUAL=
 
 
 ==============================================================================
-10. CE QUI MANQUE (honnete)
+10. CE QUI MANQUE (honnete) : details dans RESTE_A_FAIRE.md
 ==============================================================================
-  - Couche API REST : vues et URLs (a ecrire par-dessus les services).
-  - Authentification cote API : l'inscription et le modele d'utilisateur
-  existent, mais pas les points d'entree de
-  connexion/inscription/rafraichissement du JWT.
   - Fournisseur de paiement reel (creation de sessions, remboursement chez
-  le fournisseur).
-  - AI Gateway (acces IA en lecture seule aux donnees).
-  - Envoi reel des e-mails et notifications push (les lignes de livraison
-  sont creees, rien ne les envoie).
-  - Stockage de fichiers : seules des cles de stockage sont conservees ;
-  aucune URL signee n'est generee.
-  - Verification d'e-mail, reinitialisation de mot de passe, double
+  le fournisseur, versements aux vendeurs).
+  - GitHub, GitLab, TikTok, YouTube, LinkedIn (OAuth, synchronisation,
+  embeds) ; AI Gateway.
+  - E-mails de notification et reçus (seul l'OTP envoie reellement un
+  e-mail) ; notifications push.
+  - Antivirus et empreinte calculee cote serveur pour les fichiers ;
+  certificats PDF ; video en streaming.
+  - Schema OpenAPI complet, metriques, tests de charge, double
   authentification.
-  - Metriques et tableau de bord (Grafana) ; tests de charge.
+  - Les interrupteurs de TEST (OTP a l'ecran, simulation de paiement, faux
+  bucket) doivent etre coupes avant la production : A_NE_PAS_OUBLIER.md.
 
 Fin du guide.

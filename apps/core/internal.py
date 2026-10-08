@@ -34,6 +34,26 @@ class InternalJobView(APIView):
     throttle_classes: list = []
 
     def post(self, request, name: str):
+        if not self._authentic(request, name):
+            return Response({"error": {"code": "forbidden", "message": "Acces refuse."}}, status=403)
+        if name == "all":
+            from apps.core.scheduler import default_jobs, run_due
+
+            return Response({"job": "all", "executed": run_due(default_jobs(), {}, time.monotonic())})
+        if name not in JOBS:
+            return Response({"error": {"code": "unknown_job", "message": "Job inconnu."}}, status=404)
+        command, kwargs = JOBS[name]
+        out = io.StringIO()
+        call_command(command, stdout=out, **kwargs)
+        return Response({"job": name, "output": out.getvalue().strip()[:2000]})
+
+    @staticmethod
+    def _authentic(request, name: str) -> bool:
+        """Deux modes : jeton fixe (Authorization: Bearer <CRON_JOB_TOKEN>, pour cron-job.org) OU signature HMAC datee (Worker)."""
+        token = settings.CRON_JOB_TOKEN
+        bearer = request.headers.get("Authorization", "")
+        if token and len(token) >= 24 and bearer.startswith("Bearer "):
+            return hmac.compare_digest(bearer[7:].encode(), token.encode())
         secret = settings.INTERNAL_JOB_SECRET
         ts = request.headers.get("X-Internal-Timestamp", "")
         sig = request.headers.get("X-Internal-Signature", "")
@@ -41,11 +61,4 @@ class InternalJobView(APIView):
             fresh = abs(time.time() - int(ts)) <= MAX_SKEW_SECONDS
         except ValueError:
             fresh = False
-        if not secret or not fresh or not hmac.compare_digest(sig, sign(secret, ts, name)):
-            return Response({"error": {"code": "forbidden", "message": "Signature invalide."}}, status=403)
-        if name not in JOBS:
-            return Response({"error": {"code": "unknown_job", "message": "Job inconnu."}}, status=404)
-        command, kwargs = JOBS[name]
-        out = io.StringIO()
-        call_command(command, stdout=out, **kwargs)
-        return Response({"job": name, "output": out.getvalue().strip()[:2000]})
+        return bool(secret) and fresh and hmac.compare_digest(sig, sign(secret, ts, name))

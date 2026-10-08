@@ -14,7 +14,7 @@
   "vars": {
     "ORIGIN_URL": "https://baobab-api.onrender.com",
     "FRONTEND_ORIGIN": "https://le-baobab.vercel.app",
-    "PUBLIC_HOST": "baobab-router.VOTRE-COMPTE.workers.dev"
+    "PUBLIC_HOST": "baobab-router.pages.dev"
   }
   // Secret (jamais ici) : EDGE_SHARED_SECRET  (npx wrangler secret put EDGE_SHARED_SECRET -c wrangler.router.jsonc)
 }

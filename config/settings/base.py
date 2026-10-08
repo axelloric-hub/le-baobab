@@ -209,6 +209,7 @@ STORAGES = {
 
 # Jobs planifies : le Worker Cloudflare (cron trigger) appelle /internal/jobs/<nom>/ signe en HMAC.
 INTERNAL_JOB_SECRET = env("INTERNAL_JOB_SECRET", "")
+CRON_JOB_TOKEN = env("CRON_JOB_TOKEN", "")  # jeton fixe pour un cron externe (cron-job.org) ; vide = desactive
 # Secret partage avec le Worker routeur : refuse tout acces direct a l'origine (vide = desactive).
 EDGE_SHARED_SECRET = env("EDGE_SHARED_SECRET", "")
 # Planificateur interne (thread) : a activer sur le SEUL service web ; voir apps/core/scheduler.py.

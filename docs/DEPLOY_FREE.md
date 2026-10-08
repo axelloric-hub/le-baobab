@@ -157,3 +157,26 @@ Vous avez deja PostgreSQL, MongoDB, Redis et Docker Desktop : `python manage.py 
 
 ## 8. Quand vous aurez un peu de budget
 Par ordre d'effet : Render **Starter (7 $/mois)** supprime la veille (et le reveil d'une minute) ; Supabase **Pro (25 $/mois)** supprime la pause. Rien dans le code ne change.
+
+
+## Variables propres a votre installation (a ne JAMAIS mettre dans le depot)
+`DJANGO_ALLOWED_HOSTS`, `CSRF_TRUSTED_ORIGINS` et `CORS_ALLOWED_ORIGINS` dependent de VOTRE adresse publique. Elles sont declarees `sync: false` dans `render.yaml` : Render ne les ecrase jamais.
+Saisissez-les une fois dans Render > Environment (valeurs : `baobab-router.pages.dev` sans https:// ; `https://baobab-router.pages.dev` pour les deux autres). Symptome si elles sont fausses : `/ready/` repond **HTTP 400** et les journaux contiennent `Invalid HTTP_HOST header`.
+Regle du projet : aucun fichier du depot ne contient de valeur propre a votre installation (un test le verifie).
+
+## Taches planifiees avec cron-job.org (garde aussi Render eveille)
+Le serveur a un planificateur interne, mais Render gratuit s'endort apres 15 min : plus rien ne tourne. Un cron externe regle les deux problemes.
+
+1. Generer un jeton : `python -c "import secrets;print(secrets.token_urlsafe(32))"`.
+2. Render > Environment : ajouter `CRON_JOB_TOKEN` = ce jeton (>= 24 caracteres). Redemarrer.
+3. Redeployer le routeur (`routeur-pages.zip`) : il laisse maintenant passer **POST /internal/jobs/<nom>/** (tout le reste de `/internal/` reste en 404).
+4. cron-job.org > *Create cronjob* :
+   - URL : `https://baobab-router.pages.dev/internal/jobs/all/`
+   - Schedule : toutes les **5 minutes** (en phase de jugement ; 15 min suffit sinon)
+   - *Advanced* > Request method : **POST** ; Headers : `Authorization` = `Bearer <votre jeton>`
+   - Timeout : 30 s (le 1er appel apres un sommeil de Render peut prendre ~30-50 s : l'echec de ce premier appel est normal, le suivant reussit)
+5. Verifier : un appel renvoie `{"job":"all","executed":["relay-outbox", ...]}`. Sans jeton ou avec un mauvais jeton : **403**.
+
+`/internal/jobs/all/` execute toutes les taches echues (relais d'evenements, compteurs, vues, publicite, expiration des commandes, nettoyage des fichiers). Chaque tache a son propre rythme (verrou Redis) : appeler plus souvent ne les lance pas plus souvent.
+Taches individuelles (optionnel) : `relay-outbox`, `flush-counters`, `refresh-metrics`, `refresh-trending`, `housekeeping`.
+Limite : cron-job.org gratuit = intervalle minimal 1 min ; chaque appel reveille Render (750 h gratuites/mois = un service 24 h/24, donc OK).

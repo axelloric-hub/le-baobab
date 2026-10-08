@@ -39,9 +39,11 @@ export default {
     const req = hardened(request);
     const requestId = req.headers.get("x-request-id")!;
 
-    if (url.pathname.startsWith("/internal/")) return new Response("Not found", { status: 404 }); // jamais expose
+    // /internal/ n'est jamais expose, SAUF le declencheur de taches (POST /internal/jobs/<nom>/) : Django exige un jeton (Bearer) ou une signature HMAC.
+    const isJobCall = request.method === "POST" && /^\/internal\/jobs\/[a-z-]+\/$/.test(url.pathname);
+    if (url.pathname.startsWith("/internal/") && !isJobCall) return new Response("Not found", { status: 404 });
 
-    const toDjango = url.pathname === "/ws" || url.pathname.startsWith("/ws/") || url.pathname === "/admin" || ORIGIN_PREFIXES.some((p) => url.pathname.startsWith(p));
+    const toDjango = isJobCall || url.pathname === "/ws" || url.pathname.startsWith("/ws/") || url.pathname === "/admin" || ORIGIN_PREFIXES.some((p) => url.pathname.startsWith(p));
     if (toDjango) {
       try {
         const response = await fetch(toOrigin(req, env)); // un Upgrade: websocket est relaye tel quel
