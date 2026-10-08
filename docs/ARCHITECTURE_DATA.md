@@ -69,6 +69,17 @@ Les evenements de l'outbox deviennent alors des messages vers un broker (Queues 
 - **Quiz** : correction automatique (choix unique/multiple, vrai/faux, texte normalise sans accents ni casse, mise en ordre) ; code = correction manuelle ; les bonnes reponses ne sortent jamais par les serializers (teste).
 - **Devoirs** : individuels ou en groupe (un groupe par eleve et par devoir, garanti en base), plusieurs tentatives numerotees sous verrou, retard marque ou refuse, grille de notation (somme des criteres = total).
 
+## 5 ter. Commerce, recrutement, publicite : decisions
+- **Argent en entiers** (plus petite unite), jamais de flottants. Publicite : depense en **micro-unites** (le CPM par impression ne perd aucun centime) ; le reste fractionnaire est reporte d'un reglement au suivant.
+- **Prix figes** : `OrderItem` copie titre, SKU et prix ; changer un prix ne reecrit jamais l'historique. Remise repartie au centime (methode du plus grand reste) ; commission arrondie en faveur du vendeur.
+- **Aucun surstock** : `CHECK stock >= 0`, variantes verrouillees dans un ordre fixe (pas d'interblocage). Teste avec 8 achats simultanes pour 3 unites.
+- **Paiement** : un seul paiement reussi par commande (index unique partiel) ; montant et devise recontroles ; paiement tardif sur commande annulee signale (`PaymentOrphaned`), jamais ignore ; webhook : signature HMAC obligatoire (secret vide = refus), deduplication par `event_id`.
+- **Grand livre** : ecritures signees, en ecriture seule, lot a somme nulle verifie a la validation (trigger differe). Remboursements = ecritures inverses proportionnelles.
+- **Marketplace <-> education sans import** : un achat publie `OrderPaid` ; le domaine education accorde le droit (idempotent) ; un remboursement complet publie `OrderRefunded` et le droit est revoque. La cible vendable est validee par un registre (`core.registries`).
+- **Candidatures** : machine a etats (matrice de transitions), historique inalterable, une candidature par (offre, candidat) garantie en base. **Entretiens** : exclusion de chevauchement + reservation sous verrou.
+- **Publicite** : verites separees. Redis = plafonds de frequence et garde-fous de budget (reconstructibles, initialises depuis PostgreSQL) ; MongoDB = evenements bruts (TTL 60 j, IP jamais en clair) ; **PostgreSQL = reglements** (`AdSettlement`, unique par lot) et portefeuille. Reglement : RENAME atomique des accumulateurs vers un lot, application en base idempotente, lot rejouable apres plantage. Panne de Redis : au pire sous-facturation, jamais de facturation en double ni de dette.
+- **Vie privee** : ciblage restreint par `CHECK` a 12 criteres autorises (aucune donnee sensible) ; l'utilisateur peut refuser la publicite personnalisee (il ne recoit alors que des annonces sans ciblage) ; aucune annonce ne diffuse sans validation humaine (`CHECK active => reviewed_at`).
+
 ## 6. Perimetre de cette tranche
-Implemente : core, accounts, profiles, friends, community, messaging, social, notifications, audit, moderation, integrations, analytics, **education, assessments, progress**.
-**Non implemente (tranches suivantes)** : marketplace/paiements, jobs/freelance/portfolio/companies, advertising, AI Gateway.
+Implemente : core, accounts, profiles, friends, community, messaging, social, notifications, audit, moderation, integrations, analytics, education, assessments, progress, **marketplace, payments, companies, portfolio, jobs (emplois + freelance), advertising**.
+**Non implemente** : AI Gateway (acces IA en lecture seule), couche API REST (vues/URLs), integration d'un fournisseur de paiement reel (seule la reception d'un webhook signe existe), partitionnement active.

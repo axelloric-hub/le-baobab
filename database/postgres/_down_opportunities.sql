@@ -1,0 +1,10 @@
+DROP VIEW IF EXISTS v_company_statistics, v_job_statistics;
+ALTER TABLE IF EXISTS jobs_interview_slot DROP CONSTRAINT IF EXISTS excl_slot_no_overlap;
+DROP TRIGGER IF EXISTS trg_company_requires_owner_member ON companies_member;
+DROP TRIGGER IF EXISTS trg_company_requires_owner_company ON companies_company;
+DROP TRIGGER IF EXISTS trg_application_history_immutable ON jobs_application_status_event;
+DROP TRIGGER IF EXISTS trg_audit_company_member ON companies_member;
+DROP TRIGGER IF EXISTS trg_audit_company_verification ON companies_verification;
+DROP TRIGGER IF EXISTS trg_audit_offer ON jobs_offer;
+DROP TRIGGER IF EXISTS trg_audit_contract ON jobs_contract;
+DROP FUNCTION IF EXISTS baobab_job_funnel(uuid), baobab_company_requires_owner();

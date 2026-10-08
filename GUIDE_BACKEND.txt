@@ -1,0 +1,966 @@
+LE BAOBAB - GUIDE DU BACKEND (genere a partir du code)
+==============================================================================
+Ce fichier decrit TOUT ce qui a ete construit cote serveur et comment s'en
+servir. Les listes de fonctions, d'evenements, de commandes et de jobs sont
+lues automatiquement dans le code : elles ne peuvent pas diverger de la
+realite.
+
+==============================================================================
+0. A LIRE EN PREMIER : CE QUI EXISTE ET CE QUI N'EXISTE PAS
+==============================================================================
+IL N'Y A PAS D'API REST METIER. Aucune URL du type /api/products/ ou
+/api/orders/ n'existe. Ce qui existe est une couche de SERVICES Python (des
+fonctions qui appliquent les regles metier), des modeles, des migrations SQL
+et des moteurs. Une couche API (vues + URLs) reste a ecrire par-dessus :
+chaque vue appellera simplement un service. Les serializers (validation
+d'entree, forme de sortie) existent deja pour la plupart des domaines.
+
+Ce qui est ACCESSIBLE par le reseau aujourd'hui (liste complete) :
+  GET  /health/                    sonde de vie (Render l'appelle). Ouvert.
+  GET  /ready/                     verifie PostgreSQL + MongoDB + Redis. Reponse JSON, 200 ou 503.
+  POST /internal/jobs/<nom>/       declenche un job planifie. Signature HMAC obligatoire. Invisible depuis l'exterieur (le routeur Cloudflare le bloque).
+  /admin/                          interface d'administration Django (tous les modeles, certains en lecture seule).
+  GET  /api/schema/  /api/docs/    schema OpenAPI et page Swagger (ne decrivent que ce qui existe : presque rien pour l'instant).
+  WS   /ws/conversations/<id>/     WebSocket de chat (JWT dans ?token=). Membres de la conversation uniquement.
+  WS   /ws/notifications/          WebSocket de notifications personnelles (JWT dans ?token=).
+
+Tout le reste (inscription, panier, achat, candidature, etc.) existe sous forme de FONCTIONS PYTHON decrites plus bas.
+
+==============================================================================
+1. ARCHITECTURE EN BREF
+==============================================================================
+  PostgreSQL (Supabase) = source de verite de tout ce qui compte (comptes,
+  argent, droits, contenus). Les regles les plus importantes sont dans la
+  base elle-meme (contraintes, triggers) : elles tiennent meme si le code
+  applicatif se trompe.
+
+  MongoDB (Atlas) = 4 collections seulement : cartes de publications pour le
+  feed (post_cards), evenements analytiques (events), journal de requetes
+  (api_request_logs), evenements publicitaires (ad_events). Tout est
+  reconstructible ou a duree de vie limitee.
+
+  Redis (Upstash) = accelerateur, jamais verite : verrous, limites de debit,
+  plafonds de frequence publicitaire, compteurs de vues, timelines. Chaque
+  cle a une duree de vie.
+
+  Evenements (outbox) : quand une action reussit, elle ecrit un evenement
+  DANS LA MEME transaction. Un relais le transmet ensuite (notifications,
+  droits d'acces apres achat, analytique, cartes du feed). Si un maillon est
+  en panne, l'evenement est rejoue.
+
+  Les domaines ne s'importent pas entre eux : ils communiquent par
+  evenements et par registres (ex. un achat accorde un droit d'acces a un
+  cours sans que le commerce connaisse l'education).
+
+
+==============================================================================
+2. COMMENT UTILISER LES SERVICES
+==============================================================================
+Un service est une fonction Python. Elle verifie les droits, applique les
+regles, ecrit en base dans une transaction et publie les evenements. Elle
+leve une erreur claire quand une regle est violee (DomainError et ses sous-
+classes, avec un champ .code utilisable par l'API).
+
+Erreurs a convertir en reponses HTTP quand l'API existera :
+  DomainError (422)  regle metier violee         PermissionDeniedError (403)  droit insuffisant
+  ConflictError (409) doublon / etat incompatible RateLimitedError (429)       trop de requetes
+  IdempotencyConflictError (409)  meme cle d'idempotence avec un contenu different
+(le gestionnaire apps.core.exceptions.api_exception_handler le fait deja pour les vues DRF)
+
+Exemple dans la console Django (python manage.py shell) :
+  from apps.accounts.services import register_user
+  from apps.marketplace import services as M
+  u = register_user(email='ada@example.com', username='ada', password='Un-mot-de-passe-solide!')
+  M.add_to_cart(u, variante_id, 2)
+  commande = M.checkout(u, idempotency_key='cle-unique-du-clic')
+
+Quand vous ecrirez une vue DRF, le schema est toujours le meme :
+  1. un serializer valide les donnees d'entree ; 2. la vue appelle UN service ; 3. un serializer de lecture formate la reponse.
+  Ne mettez jamais de logique metier dans la vue : elle est dans le service (c'est ce qui est teste).
+
+==============================================================================
+3. LES DOMAINES, UN PAR UN (fonctions publiques lues dans le code)
+==============================================================================
+
+------------------------------------------------------------------------------
+CORE
+------------------------------------------------------------------------------
+Briques communes : identifiants UUID, outbox (evenements fiables),
+idempotence, Redis (verrous, limites de debit, compteurs), acces MongoDB,
+planificateur interne, jobs signes.
+Modeles (5) : UUIDModel, TimeStampedModel, SoftDeleteModel, OutboxEvent, IdempotencyRecord
+
+  [core/outbox.py]
+    publish_event(event_type: str, aggregate_type: str, aggregate_id: Any, payload: dict | None=None)
+        A appeler DANS la transaction metier. Refuse d'etre appele hors
+        transaction.
+    subscribe(event_type: str)
+    relay_batch(batch_size: int=100)
+        Relaie un lot. SELECT ... FOR UPDATE SKIP LOCKED => plusieurs workers
+        sans collision.
+
+  [core/idempotency.py]
+    hash_request(payload: Any)
+    run_idempotent(scope: str, key: str, payload: Any, operation: Callable[[], dict], ttl_hours: int=24)
+        Execute `operation` AU PLUS UNE FOIS par (scope,key). Rejoue la
+        reponse enregistree sinon.
+
+  [core/redis.py]
+    get_redis()
+    rate_limit(scope: str, ident, limit: int, window_s: int)
+        Fenetre glissante. Retourne (autorise, restant, retry_after_ms).
+    distributed_lock(resource: str, ident, ttl_s: int=K.TTL_LOCK_DEFAULT, wait_s: float=0)
+        Verrou SET NX PX + liberation compare-and-delete. Leve ConflictError
+        si non obtenu.
+    capped_incr(key: str, cap: int, ttl_s: int)
+    incr_counter(kind: str, ident, by: int=1)
+    drain_counter(kind: str, ident)
+        Lit-et-remet-a-zero atomiquement (GETDEL) pour flush vers PostgreSQL.
+    idempotency_acquire(scope: str, key: str, request_hash: str)
+    idempotency_complete(scope: str, key: str, request_hash: str, response: dict)
+    idempotency_release(scope: str, key: str)
+    heartbeat(user_id)
+    is_online(user_id)
+    set_typing(conversation_id, user_id)
+    who_is_typing(conversation_id)
+
+  [core/scheduler.py]
+    default_jobs()
+    redis_claim(job: Job)
+        Vrai si CE worker doit executer le job pour l'intervalle courant.
+    run_due(jobs: list[Job], last_run: dict[str, float], now: float, claim: Callable[[Job], bool]=redis_claim)
+        Execute les jobs echus. Fonction pure vis-a-vis du temps (testable).
+        Une erreur n'arrete jamais les autres jobs.
+    start_in_background()
+
+  [core/internal.py]
+    sign(secret: str, timestamp: str, name: str)
+
+  [core/registries.py]
+    register_entitlement_target_validator(fn: Callable)
+    entitlement_target_allowed(scope: str, target_id, actor)
+
+------------------------------------------------------------------------------
+ACCOUNTS
+------------------------------------------------------------------------------
+Comptes : inscription, suspension, anonymisation (droit a l'effacement),
+appareils, historique de connexion.
+Modeles (5) : User, SecuritySettings, Device, LoginHistory, LoginAttempt
+
+  [accounts/services.py]
+    register_user(*, email: str, username: str, password: str, display_name: str | None=None)
+        Cree User + SecuritySettings + Profile + preferences par defaut, et
+        emet UserRegistered
+    suspend_user(*, user: User, reason: str, until=None)
+    anonymize_user(*, user: User)
+        Droit a l'effacement : on garde la ligne (integrite referentielle des
+        paiements/audit) mais on
+
+------------------------------------------------------------------------------
+PROFILES
+------------------------------------------------------------------------------
+Profil public, competences, interets, metiers, pays, parametres de
+confidentialite et preferences.
+Modeles (10) : Country, Skill, Interest, Profession, Profile, UserSkill, UserInterest, SocialLink, UserPreferences, PrivacySettings
+
+  [profiles/services.py]
+    bootstrap_profile(user: User, display_name: str)
+    wipe_profile(user: User)
+        Efface les donnees personnelles du profil lors de l'anonymisation.
+
+------------------------------------------------------------------------------
+FRIENDS
+------------------------------------------------------------------------------
+Graphe social : demandes d'amis, abonnements, amis proches, blocages,
+sourdines.
+Modeles (6) : Friendship, Follow, CloseFriend, Block, Mute, Restriction
+
+  [friends/services.py]
+    send_friend_request(requester, target)
+    respond_to_request(friendship_id, responder, accept: bool)
+    remove_friend(user, other)
+    follow(follower, followee)
+    unfollow(follower, followee)
+    block_user(blocker, blocked)
+        Le blocage purge amitie, abonnements (dans les deux sens), amis
+        proches, restrictions.
+    unblock_user(blocker, blocked)
+    add_close_friend(owner, friend)
+    mute_user(muter, muted, scope: str=Mute.Scope.ALL, expires_at=None)
+
+  [friends/selectors.py]
+    friendship_between(a, b)
+    friend_ids(user_id)
+        IDs des amis acceptes, en UNE requete (BitmapOr sur les deux index
+        partiels).
+    are_friends(a, b)
+    is_blocked_either_way(a, b)
+    follower_ids(user_id)
+    pending_requests_for(user_id)
+    users_hidden_from(user_id)
+        Utilisateurs a exclure de TOUT contenu montre a `user_id` (blocages
+        dans les deux sens).
+
+------------------------------------------------------------------------------
+COMMUNITY
+------------------------------------------------------------------------------
+Communautes, groupes (roles et permissions par groupe, invitations,
+demandes, bannissements), channels.
+Modeles (11) : Community, Group, GroupPermission, GroupRole, GroupMember, GroupInvitation, GroupJoinRequest, GroupBan, GroupMute, Channel, ChannelMember
+
+  [community/services.py]
+    create_group(*, owner, name: str, slug: str, community=None, privacy=Group.Privacy.PUBLIC, join_policy=Group.JoinPolicy.OPEN, description: str='')
+        Cree le groupe, ses roles par defaut et inscrit le createur comme
+        owner.
+    join_group(user, group: Group)
+    review_join_request(request_id, reviewer, approve: bool)
+    invite_user(group: Group, inviter, invited_user, ttl_days: int=14)
+    respond_to_invitation(invitation_id, user, accept: bool)
+    leave_group(user, group: Group)
+    ban_member(group: Group, actor, target, reason: str='', expires_at=None)
+    mute_member(group: Group, actor, target, duration: timedelta, reason: str='')
+
+  [community/selectors.py]
+    get_membership(user_id, group_id)
+    is_banned(user_id, group_id)
+    is_muted(user_id, group_id)
+    permissions_of(user_id, group_id)
+        Permissions effectives. Cache Redis 2 min (TTL court : l'invalidation
+        explicite fait le reste).
+    invalidate_permissions(user_id, group_id)
+    can(user_id, group_id, permission: str)
+    can_view_group_content(user_id, group: Group)
+
+------------------------------------------------------------------------------
+MESSAGING
+------------------------------------------------------------------------------
+Conversations directes et de groupe, messages numerotes sans trou,
+lecture/non-lus, reactions, fils de discussion, WebSocket.
+Modeles (8) : Conversation, ConversationMember, Message, MessageAttachment, MessageReaction, MessageEditHistory, MessageDeletion, Mention
+
+  [messaging/services.py]
+    get_or_create_direct(user, other)
+    create_group_conversation(creator, members: Iterable, title: str='')
+    send_message(*, conversation_id, sender, body: str='', kind: str=Message.Kind.TEXT, reply_to_id=None, thread_root_id=None, client_msg_id=None, attachments: list[dict] | None=None, metadata: dict | None=None)
+        Ecrit le message (seq attribue par trigger), mentions, pieces jointes,
+        evenement outbox. Idempotent sur client_msg_id.
+    mark_read(conversation_id, user, up_to_seq: int)
+    mark_delivered(conversation_id, user, up_to_seq: int)
+    edit_message(message_id, editor, new_body: str)
+    delete_message(message_id, actor, *, for_everyone: bool, reason: str='')
+    toggle_reaction(message_id, user, emoji: str)
+        Retourne True si ajoutee, False si retiree.
+
+  [messaging/selectors.py]
+    membership(user_id, conversation_id)
+    is_member(user_id, conversation_id)
+    inbox(user_id)
+        Boite de reception triee par activite, unread calcule en SQL =
+        message_seq - last_read_seq (O(1)/ligne).
+    history(conversation_id, user_id)
+        Messages visibles par l'utilisateur (hors supprimes pour tous / pour
+        lui), prets pour curseur (-seq).
+    thread(root_id, user_id)
+    read_receipt_summary(conversation_id, seq: int)
+        Nombre de membres ayant lu au moins jusqu'a `seq`.
+
+------------------------------------------------------------------------------
+SOCIAL
+------------------------------------------------------------------------------
+Publications (texte, code, sondage...), commentaires, reactions, partages,
+statuts ephemeres, feed hybride.
+Modeles (20) : Post, PostMedia, Hashtag, PostHashtag, PostMention, PostAudience, PostReaction, Comment, CommentReaction, Share, Save, Poll, PollOption, PollVote, PostEditHistory, Status, StatusAudience, StatusView, StatusReaction, StatusReply
+
+  [social/services.py]
+    extract_hashtags(text: str)
+    create_post(*, author, kind: str=Post.Kind.TEXT, body: str='', title: str='', visibility: str | None=None, group=None, payload: dict | None=None, media: Iterable[dict]=(), audience_user_ids: Iterable=(), poll: dict | None=None, ref_type: str='', ref_id=None)
+        Cree un post complet (media, hashtags, mentions, audience, sondage) +
+        evenement outbox PostCreated, atomiquement.
+    edit_post(post_id, editor, *, body: str | None=None, title: str | None=None, payload: dict | None=None)
+    delete_post(post_id, actor, reason: str='')
+    react_to_post(post_id, user, reaction_type: str | None)
+        Pose/change/retire (type=None) la reaction. Idempotent ; compteur
+        maintenu par trigger.
+    add_comment(post_id, author, body: str, parent_id=None)
+    react_to_comment(comment_id, user, reaction_type: str | None)
+    share_post(post_id, user, comment: str='', visibility: str=Visibility.PUBLIC)
+    save_post(post_id, user, collection: str='')
+    unsave_post(post_id, user)
+    record_view(post_id, viewer_id, *, dedup_ttl: int=3600)
+        Vue = signal a fort volume : JAMAIS une ligne PostgreSQL. Redis (dedup
+        1h/viewer + compteur) -> flush periodique
+    vote_poll(poll_post_id, user, option_ids: list)
+    create_status(*, author, kind: str=Status.Kind.TEXT, body: str='', visibility: str | None=None, storage_key: str='', mime_type: str='', link_url: str='', style: dict | None=None, audience_user_ids: Iterable=(), ttl: timedelta=STATUS_TTL)
+    view_status(status_id, viewer)
+    react_to_status(status_id, user, emoji: str)
+    archive_expired_statuses(batch: int=1000)
+        Job periodique : marque comme archives les statuts expires (pas de
+        DELETE : l'historique/moderation reste).
+
+  [social/selectors.py]
+    visible_posts(viewer_id)
+        Posts publies, non supprimes, que `viewer_id` peut voir (visibilite +
+        blocages). Anonyme => public seulement.
+    can_view_post(viewer_id, post_id)
+    active_statuses_for(viewer_id)
+        Statuts non expires, non supprimes, visibles par le viewer.
+
+  [social/feed.py]
+    rank_score(*, age_hours: float, reactions: int, comments: int, shares: int, affinity: float=0.0, sponsored_boost: float=0.0)
+        score = (1 + engagement) x decroissance(24 h) x (1 + affinite) +
+        boost. Pure et deterministe.
+    fanout_post(post_id)
+        Pousse le post dans les timelines. Retourne le nombre de timelines
+        alimentees (0 si mode pull).
+    rebuild_timeline(user_id, days: int=7)
+        Reconstruction depuis PostgreSQL (cold start, eviction, failover).
+    get_feed(user_id, limit: int=30, before: float | None=None, now: datetime | None=None)
+    build_card(post: Post)
+    project_post_card(post_id)
+    delete_post_card(post_id)
+    update_card_counters(post_id)
+    hydrate(post_ids: Iterable[str])
+        Cartes dans l'ordre demande. Carte absente (perte Mongo, retard
+        outbox) => reconstruction a la volee depuis PG.
+
+------------------------------------------------------------------------------
+NOTIFICATIONS
+------------------------------------------------------------------------------
+Notifications in-app/WebSocket/e-mail/push, preferences, compteur de non-
+lus.
+Modeles (5) : NotificationType, NotificationTemplate, NotificationPreference, Notification, NotificationDelivery
+
+  [notifications/services.py]
+    notify(*, recipient, type_code: str, actor=None, target_type: str='', target_id=None, data: dict | None=None, dedupe_key: str='')
+        Cree la notification in-app (verite) et les lignes de livraison par
+        canal actif. Retourne None si ignoree
+    unread_count(user_id)
+        Compteur Redis (rapide) ; reconstruit depuis PostgreSQL si absent
+        (eviction/restart).
+    mark_read(user, notification_ids=None)
+
+------------------------------------------------------------------------------
+AUDIT
+------------------------------------------------------------------------------
+Journal d'audit inalterable, actions d'administration, evenements de
+securite et systeme.
+Modeles (4) : AuditLog, AdminAction, SecurityEvent, SystemEvent
+
+  [audit/services.py]
+    audit_context(actor_id=None, ip: str | None=None)
+        Expose acteur/IP aux triggers SQL (set_config local a la transaction)
+        et RESTAURE l'etat precedent a la sortie :
+    record(*, actor, action: str, object_type: str, object_id: Any, old: dict | None=None, new: dict | None=None, ip: str | None=None, user_agent: str='')
+    admin_action(*, admin, action: str, target_type: str, target_id: Any, reason: str, payload: dict | None=None)
+    security_event(*, event_type: str, user=None, severity: str=SecurityEvent.Severity.INFO, ip: str | None=None, data: dict | None=None)
+    system_event(*, component: str, message: str, level: str=SystemEvent.Level.INFO, data: dict | None=None)
+
+------------------------------------------------------------------------------
+MODERATION
+------------------------------------------------------------------------------
+Signalements, dossiers, actions (masquer, retirer, suspendre, bannir),
+strikes, restrictions.
+Modeles (6) : ReportReason, ModerationCase, Report, ModerationAction, ContentViolation, UserRestriction
+
+  [moderation/services.py]
+    report_content(*, reporter, target_type: str, target_id, reason_code: str, details: str='')
+    apply_action(*, moderator, case: ModerationCase, action: str, reason: str, expires_at: datetime | None=None, policy_code: str='', points: int=1)
+        Applique une decision : effet sur la cible (via hooks), trace
+        immuable, sanction, strikes, cloture du dossier.
+    active_restrictions(user_id, kind: str | None=None)
+
+  [moderation/registry.py]
+    register(target_type: str, hooks: ModerationHooks)
+    get(target_type: str)
+    registered_types()
+
+------------------------------------------------------------------------------
+INTEGRATIONS
+------------------------------------------------------------------------------
+Comptes et contenus externes (GitHub, GitLab, TikTok, YouTube, LinkedIn) :
+jetons chiffres, embeds officiels uniquement.
+Modeles (7) : ExternalProvider, ExternalAccount, ExternalAuthor, ExternalContent, ExternalVideo, EmbedMetadata, SyncState
+
+------------------------------------------------------------------------------
+ANALYTICS
+------------------------------------------------------------------------------
+Catalogue d'evenements, collecte vers MongoDB, agregats quotidiens,
+pipelines d'agregation.
+Modeles (2) : EventType, DailyMetric
+
+  [analytics/events.py]
+    track(event_type: str, *, actor_id=None, target_type: str='', target_id=None, metadata: dict[str, Any] | None=None, occurred_at: datetime | None=None, event_id: str | None=None)
+        Retourne False si type inconnu/inactif. `event_id` rend l'ecriture
+        idempotente (relais outbox at-least-once).
+
+  [analytics/pipelines.py]
+    trending_hashtags(since: datetime, limit: int=20)
+        post_cards -> hashtags les plus utilises (public) sur la fenetre,
+        pondere par l'engagement. Index: recent_public.
+    top_posts_by_engagement(since: datetime, limit: int=20)
+    top_authors_by_engagement(since: datetime, limit: int=20)
+    daily_event_counts(event_type: str, since: datetime)
+        events -> nombre par jour. Index: type_ts.
+    daily_active_actors(since: datetime)
+        DAU : deux $group (jour+acteur puis jour) -> memoire bornee,
+        contrairement a un $addToSet geant.
+    user_interest_signals(actor_id: str, since: datetime)
+        Signaux bruts par type d'evenement pour UN utilisateur (entree du
+        futur moteur de recommandation). Index: actor_ts.
+    run(coll: str, pipeline: list[dict[str, Any]])
+
+------------------------------------------------------------------------------
+EDUCATION
+------------------------------------------------------------------------------
+Classrooms, cours, modules, chapitres (gratuits ou payants a chaque niveau),
+blocs de contenu, inscriptions, droits d'acces.
+Modeles (10) : Classroom, ClassroomMember, ClassroomInvitation, Course, CourseInstructor, Module, Chapter, ContentBlock, Enrollment, Entitlement
+
+  [education/services.py]
+    create_classroom(*, owner, title: str, slug: str, privacy: str=Classroom.Privacy.PUBLIC, description: str='', is_paid: bool=False, price_minor: int | None=None, currency: str='', organization_ref=None, group=None)
+    join_classroom(user, classroom: Classroom)
+        public -> actif ; private -> en attente d'approbation ; invite_only /
+        organization -> invitation obligatoire.
+    review_member(classroom: Classroom, actor, member_id, approve: bool)
+    ban_member(classroom: Classroom, actor, user)
+    leave_classroom(user, classroom: Classroom)
+    invite_to_classroom(classroom: Classroom, inviter, invited_user, role: str='student', ttl_days: int=14)
+    respond_to_classroom_invitation(invitation_id, user, accept: bool)
+    create_course(*, classroom: Classroom, creator, title: str, slug: str, description: str='', level: str='beginner', language: str='fr', is_free: bool=True, price_minor: int | None=None, currency: str='', certificate_enabled: bool=True)
+    add_instructor(course: Course, actor, user)
+    add_module(course: Course, actor, *, title: str, is_free: bool=True, price_minor: int | None=None, currency: str='', description: str='')
+    add_chapter(module: Module, actor, *, title: str, is_free: bool=True, price_minor: int | None=None, currency: str='', estimated_minutes: int=10)
+    add_block(chapter: Chapter, actor, *, kind: str, title: str='', body: str='', storage_key: str='', url: str='', ref_id=None, payload: dict | None=None, duration_seconds: int | None=None)
+    publish_course(course: Course, actor)
+        Un cours publie doit etre utilisable : au moins un chapitre, et un
+        module payant doit vendre au moins un chapitre payant.
+    enroll(user, course: Course)
+        Idempotent. Refuse : cours non publie, classroom privee sans adhesion
+        active, classroom payante sans droit.
+    drop_enrollment(user, course: Course)
+    grant_entitlement(user, scope: str, target, *, source: str, source_ref: str='', grant_key: str='', expires_at=None, granted_by=None)
+        IDEMPOTENT par `grant_key` : rejouer un webhook de paiement ne cree
+        jamais deux droits. Retourne (droit, cree?).
+    revoke_entitlement(entitlement_id, *, by)
+    revoke_entitlements_by_prefix(prefix: str)
+        Revocation SYSTEME (remboursement) des droits dont la cle
+        d'idempotence commence par `prefix` ; l'historique reste.
+    sellable_target(scope: str, target_id, actor)
+        La cible existe-t-elle et `actor` peut-il la vendre ? (utilise par le
+        domaine marketplace via le registre).
+
+  [education/access.py]
+    is_course_staff(user, course: Course)
+    has_classroom_entitlement(user, classroom_id)
+    chapter_payment_unlocked(user_id, chapter_id)
+    access_decision(user, chapter: Chapter)
+
+------------------------------------------------------------------------------
+ASSESSMENTS
+------------------------------------------------------------------------------
+Quiz a correction automatique, devoirs (individuels ou en groupe), grille de
+notation, notes.
+Modeles (13) : Quiz, Question, Choice, QuizAttempt, AttemptAnswer, Assignment, RubricCriterion, AssignmentGroup, AssignmentGroupMember, AssignmentSubmission, Grade, GradeCriterion, Feedback
+
+  [assessments/services.py]
+    create_quiz(course: Course, actor, *, title: str, pass_percent: int=60, max_attempts: int=3, time_limit_seconds: int | None=None, chapter=None)
+    add_question(quiz: Quiz, actor, *, kind: str, prompt: str, points: int=1, choices: list[dict] | None=None, accepted: list[str] | None=None, explanation: str='')
+        Valide la COHERENCE de la question selon son type avant ecriture.
+    start_attempt(user, quiz_id)
+    submit_attempt(user, attempt_id, answers: dict)
+        answers = {question_id: {"selected": [choice_id...], "text": "..."}}.
+        Hors delai : note 0 (la tentative est consommee).
+    grade_code_answer(attempt_id, question_id, grader, *, correct: bool)
+    create_assignment(course: Course, actor, *, title: str, instructions: str='', max_points: int=20, due_at=None, allow_late: bool=True, max_attempts: int=1, is_group: bool=False, criteria: list[dict] | None=None, chapter=None)
+    create_group(assignment_id, creator, member_users: list, name: str)
+    submit_assignment(assignment_id, user, *, text: str='', attachments: list[dict] | None=None)
+    grade_submission(submission_id, grader, *, points: Decimal | int | None=None, criteria: list[dict] | None=None, feedback: str='')
+    add_feedback(submission_id, author, body: str)
+
+------------------------------------------------------------------------------
+PROGRESS
+------------------------------------------------------------------------------
+Progression par chapitre, achevement de cours, certificats verifiables
+publiquement.
+Modeles (4) : ChapterProgress, CertificateTemplate, Certificate, CertificateVerification
+
+  [progress/services.py]
+    course_progress(user, course)
+    module_progress(user, module)
+    record_progress(user, chapter_id, *, percent: int, seconds: int=0)
+        Monotone : le pourcentage ne recule jamais, le temps ne fait que
+        s'accumuler. Exige l'acces au chapitre.
+    complete_chapter(user, chapter_id)
+    try_issue_certificate(user, course: Course)
+        Emet le certificat si : option activee, cours termine, tous les quiz
+        publies reussis. Idempotent (un certificat valide par cours).
+    verify_certificate(code: str, ip: str | None=None)
+        Verification PUBLIQUE : ne renvoie ni e-mail ni identifiant interne.
+        Limitee par IP (anti devinette de codes).
+    revoke_certificate(certificate_id, *, by, reason: str)
+
+------------------------------------------------------------------------------
+MARKETPLACE
+------------------------------------------------------------------------------
+Boutiques, produits et variantes, versions d'applications, panier,
+commandes, coupons, licences, telechargements, avis.
+Modeles (18) : Store, ProductCategory, Product, ProductVariant, ProductMedia, ProductEntitlementTarget, ProductRelease, DigitalAsset, Cart, CartItem, Coupon, Order, OrderItem, License, Download, CouponRedemption, Review, Wishlist
+
+  [marketplace/services.py]
+    create_store(owner, *, name: str, slug: str, description: str='')
+    create_product(store: Store, actor, *, kind: str, slug: str, title: str, license_type: str='personal', description: str='', category=None)
+    add_variant(product: Product, actor, *, sku: str, name: str, price_minor: int, currency: str, stock: int | None=None)
+    add_entitlement_target(product: Product, actor, *, scope: str, target_id)
+        Ce que l'achat debloque. Le domaine proprietaire de la cible
+        (education) confirme qu'elle existe et que l'acteur peut la vendre.
+    add_release(product: Product, actor, *, version: str, platform: str='any', assets: list[dict], changelog: str='', requirements: str='', installation_instructions: str='')
+    publish_product(product: Product, actor)
+    create_coupon(actor, *, code: str, kind: str, value: int, currency: str='', store: Store | None=None, max_redemptions: int | None=None, per_user_limit: int=1, min_subtotal_minor: int=0, ends_at=None)
+    add_to_cart(user, variant_id, quantity: int=1)
+    set_cart_quantity(user, variant_id, quantity: int)
+    checkout(user, *, idempotency_key: str, coupon_code: str='')
+        Panier -> commande. IDEMPOTENT par cle ; prix figes ; stock decremente
+        sous verrou (jamais de surstock) ; remise repartie au centime.
+    cancel_order(order_id, *, by=None, reason: str='')
+        Annule une commande NON PAYEE : restitue le stock et le coupon. (Un
+        paiement qui arriverait ensuite est traite par payments.)
+    expire_pending_orders(batch: int=200)
+        Job : annule les commandes impayees depuis plus de
+        PENDING_ORDER_TTL_HOURS (rend le stock et les coupons).
+    issue_license(item: OrderItem)
+    authorize_download(user, asset_id, *, ip: str | None=None)
+        Retourne la cle de stockage SI l'utilisateur detient une licence
+        ACTIVE du produit. Journalise ; limite le debit (anti-aspiration).
+    create_review(user, product_id, *, rating: int, title: str='', body: str='')
+        Avis reserve aux ACHETEURS (achat paye, non integralement rembourse).
+        Un avis par utilisateur et par produit.
+    toggle_wishlist(user, product_id)
+
+  [marketplace/money.py]
+    allocate(total: int, weights: list[int])
+        Repartit `total` proportionnellement aux poids (methode du plus grand
+        reste) : la somme des parts == total, au centime pres.
+    platform_fee(amount: int, bps: int)
+        Commission en points de base (1000 = 10 %), arrondie vers le bas :
+        l'arrondi profite au vendeur.
+    percent_of(amount: int, percent: int)
+
+------------------------------------------------------------------------------
+PAYMENTS
+------------------------------------------------------------------------------
+Paiements, grand livre equilibre, remboursements, reception de webhooks
+signes.
+Modeles (4) : Payment, LedgerEntry, Refund, WebhookEvent
+
+  [payments/services.py]
+    start_payment(user, order_id, provider: str)
+        Idempotent : un paiement 'initie' existant pour (commande,
+        fournisseur) est renvoye tel quel.
+    attach_provider_ref(payment_id, provider_ref: str)
+        Appele apres l'ouverture de la session chez le fournisseur.
+    pay_free_order(user, order_id)
+    record_payment_result(provider: str, provider_ref: str, status: str, *, amount_minor: int, currency: str)
+        Point d'entree UNIQUE des resultats de paiement (webhooks). Idempotent
+        ; recontrole montant et devise ; gere un paiement tardif.
+    ingest_webhook(provider: str, body: bytes, signature: str)
+        Webhook fournisseur : signature HMAC-SHA256 OBLIGATOIRE (secret vide
+        => refus), deduplication par event_id, puis traitement.
+    request_refund(user, order_item_id, *, reason: str, amount_minor: int | None=None)
+    process_refund(refund_id, *, by, approve: bool)
+        Decision d'un administrateur. Approbation = reversement comptable
+        PROPORTIONNEL (acheteur recredite, vendeur et plateforme debites).
+
+------------------------------------------------------------------------------
+COMPANIES
+------------------------------------------------------------------------------
+Entreprises, membres et roles, verification, liens, projets, services.
+Modeles (7) : Company, CompanyMember, CompanyVerification, CompanySocialLink, CompanyProject, CompanyService, CompanyProductRef
+
+  [companies/services.py]
+    member_role(user, company: Company)
+    require_role(user, company: Company, roles: tuple[str, ...])
+    create_company(creator, *, name: str, slug: str, **fields)
+    add_member(company: Company, actor, user, role: str='employee', title: str='')
+    change_role(company: Company, actor, user, role: str)
+    remove_member(company: Company, actor, user)
+    submit_verification(company: Company, actor, *, method: str, evidence: dict | None=None)
+    review_verification(verification_id, reviewer, *, approve: bool, notes: str='')
+    set_social_link(company: Company, actor, *, provider: str, url: str)
+    add_project(company: Company, actor, **fields)
+    add_service(company: Company, actor, **fields)
+
+------------------------------------------------------------------------------
+PORTFOLIO
+------------------------------------------------------------------------------
+Portfolio d'un developpeur : projets, depots, experiences, formations,
+realisations, certificats.
+Modeles (9) : Portfolio, Project, ProjectMedia, ProjectLink, Repository, Experience, Education, Achievement, CertificateEntry
+
+  [portfolio/services.py]
+    ensure_portfolio(user)
+    create_project(user, *, slug: str, title: str, description: str='', role: str='', started_on=None, ended_on=None, technologies=(), links: list[dict] | None=None)
+    add_project_link(user, project_id, *, kind: str, url: str, provider: str='')
+    register_repository(user, *, provider: str, full_name: str, url: str, **extra)
+    add_experience(user, **fields)
+    add_education(user, **fields)
+    add_achievement(user, **fields)
+    add_platform_certificate(user, certificate_id)
+        Affiche un certificat LE BAOBAB : il doit appartenir a l'utilisateur
+        et etre valide (ni revoque). Ainsi 'verifiable' ne se falsifie pas.
+
+  [portfolio/selectors.py]
+    can_view_portfolio(viewer, owner_id)
+
+------------------------------------------------------------------------------
+JOBS
+------------------------------------------------------------------------------
+Offres d'emploi, candidatures (machine a etats), entretiens, offres
+d'embauche, freelance (propositions, contrats, jalons).
+Modeles (12) : JobCategory, Job, JobSkill, JobApplication, ApplicationStatusEvent, InterviewSlot, Interview, Offer, FreelancerProfile, Proposal, Contract, Milestone
+
+  [jobs/services.py]
+    can_manage_job(user, job: Job)
+    create_job(poster, *, title: str, description: str, job_type: str, contract_type: str, company: Company | None=None, skills: list[dict] | None=None, salary: dict | None=None, **fields)
+    publish_job(job: Job, actor)
+    close_job(job: Job, actor, *, filled: bool=False)
+    apply(job_id, applicant, *, cover_letter: str='', cv_storage_key: str='', project_ids=(), **fields)
+    transition_application(app_id, actor, to_status: str, note: str='')
+    create_slot(actor, job: Job, *, starts_at, ends_at)
+    book_slot(app_id, slot_id, actor, *, mode: str='video', location: str='')
+    make_offer(app_id, actor, *, amount_minor: int, currency: str, period: str='month', start_date=None, valid_days: int=7)
+    respond_to_offer(offer_id, applicant, *, accept: bool)
+    upsert_freelancer_profile(user, **fields)
+    submit_proposal(job_id, freelancer, *, cover_letter: str, bid_minor: int, currency: str, delivery_days: int)
+    accept_proposal(proposal_id, client, *, milestones: list[dict] | None=None)
+    advance_milestone(milestone_id, actor, action: str)
+        start / submit : par le prestataire ; approve : par le client. Quand
+        tous les jalons sont valides, le contrat est termine.
+    terminate_contract(contract_id, actor)
+
+------------------------------------------------------------------------------
+ADVERTISING
+------------------------------------------------------------------------------
+Annonceurs, portefeuille prepaye, campagnes, ciblage (liste blanche),
+diffusion, evenements, reglement des depenses.
+Modeles (12) : Advertiser, AdAccount, AdAccountTransaction, Audience, AudienceMembership, Campaign, AdSet, TargetingRule, Creative, Advertisement, AdSettlement, AdUserPreference
+
+  [advertising/services.py]
+    create_advertiser(owner, *, name: str, currency: str, company_ref=None)
+    top_up(account_id, actor, *, amount_minor: int, reference: str)
+        Recharge IDEMPOTENTE par `reference` (identifiant de paiement) : un
+        webhook rejoue ne credite jamais deux fois.
+    create_campaign(account: AdAccount, actor, *, name: str, starts_at, daily_budget_minor: int, total_budget_minor: int, ends_at=None, objective: str='traffic')
+    create_ad_set(campaign: Campaign, actor, *, name: str, bid_minor: int, placements: list[str], billing_model: str='cpc', frequency_cap_per_day: int=3, audience: Audience | None=None, rules: list[dict] | None=None)
+    create_creative(advertiser: Advertiser, actor, *, headline: str, destination_url: str, kind: str='text', body: str='', media_key: str='', cta_label: str='')
+    create_ad(ad_set: AdSet, creative: Creative, actor)
+    submit_for_review(ad: Advertisement, actor)
+    review_ad(ad_id, reviewer, *, approve: bool, notes: str='')
+        Aucune annonce ne diffuse sans validation humaine (CHECK en base :
+        active => reviewed_at).
+    activate_campaign(campaign: Campaign, actor)
+    pause_campaign(campaign: Campaign, actor)
+    add_to_audience(audience: Audience, actor, users)
+    set_personalization(user, enabled: bool)
+
+  [advertising/delivery.py]
+    build_context(user, extra: dict | None=None)
+        Construit le contexte depuis le profil. `extra` : signaux fournis par
+        l'analytique (categories suivies, types de contenu consultes).
+    budget_available(campaign: Campaign, need_micro: int)
+    reserve_budget(campaign: Campaign, cost_micro: int)
+        Reservation ATOMIQUE (INCRBY puis controle, annulation si depassement)
+        : deux evenements simultanes ne peuvent pas depasser le plafond.
+    select_ads(user, placement: str, *, limit: int=1, now: datetime | None=None, extra: dict | None=None)
+        Annonces eligibles (ciblage, audience, budget, plafond de frequence)
+        classees par valeur attendue par impression.
+    record_impression(ad_id, user, placement: str, impression_id: str)
+        Retourne True si l'impression est comptee. Faux si : doublon, plafond
+        de frequence atteint, budget epuise, annonce non diffusable.
+    record_click(impression_id: str, user, *, ip: str | None=None)
+    record_conversion(impression_id: str, user)
+    settle()
+        Deplace atomiquement (RENAME) les accumulateurs vers un lot, puis
+        l'applique en base. Un plantage entre les deux laisse le lot
+    recover_settlements()
+        Rejoue les lots restes en attente (apres un plantage). Idempotent.
+
+  [advertising/targeting.py]
+    rule_matches(rule: Rule, ctx: UserContext)
+    evaluate(rules: Iterable[Rule], ctx: UserContext)
+        (eligible, bonus). ET entre les regles obligatoires ; les regles
+        souples n'excluent personne mais ajoutent leur poids.
+
+Total : 249 fonctions publiques de services/selecteurs/moteurs.
+
+==============================================================================
+4. EVENEMENTS (qui les publie, qui les ecoute)
+==============================================================================
+  AdAccountOutOfFunds              publie par: advertising    ecoute par: (personne pour l instant)
+  AdReviewed                       publie par: advertising    ecoute par: (personne pour l instant)
+  AdSubmitted                      publie par: advertising    ecoute par: (personne pour l instant)
+  ApplicationStatusChanged         publie par: jobs           ecoute par: notifications
+  AssignmentSubmitted              publie par: assessments    ecoute par: (personne pour l instant)
+  CertificateIssued                publie par: progress       ecoute par: notifications
+  ChapterCompleted                 publie par: progress       ecoute par: (personne pour l instant)
+  ClassroomCreated                 publie par: education      ecoute par: (personne pour l instant)
+  ClassroomInvitationSent          publie par: education      ecoute par: notifications
+  CommentCreated                   publie par: social         ecoute par: notifications, social
+  CompanyCreated                   publie par: companies      ecoute par: (personne pour l instant)
+  CompanyVerificationReviewed      publie par: companies      ecoute par: (personne pour l instant)
+  ContentReported                  publie par: moderation     ecoute par: (personne pour l instant)
+  ContractCompleted                publie par: jobs           ecoute par: (personne pour l instant)
+  CourseCompleted                  publie par: progress       ecoute par: (personne pour l instant)
+  CourseEnrolled                   publie par: education      ecoute par: notifications
+  CoursePublished                  publie par: education      ecoute par: (personne pour l instant)
+  EntitlementGranted               publie par: education      ecoute par: (personne pour l instant)
+  EntitlementRevoked               publie par: education      ecoute par: (personne pour l instant)
+  FriendRequestSent                publie par: friends        ecoute par: notifications
+  FriendshipCreated                publie par: friends        ecoute par: (personne pour l instant)
+  GroupCreated                     publie par: community      ecoute par: (personne pour l instant)
+  GroupMemberBanned                publie par: community      ecoute par: (personne pour l instant)
+  GroupMemberJoined                publie par: community      ecoute par: (personne pour l instant)
+  GroupMemberLeft                  publie par: community      ecoute par: (personne pour l instant)
+  InterviewScheduled               publie par: jobs           ecoute par: notifications
+  JobApplied                       publie par: jobs           ecoute par: notifications
+  JobPublished                     publie par: jobs           ecoute par: (personne pour l instant)
+  MessageDeleted                   publie par: messaging      ecoute par: (personne pour l instant)
+  MessageEdited                    publie par: messaging      ecoute par: (personne pour l instant)
+  MessageSent                      publie par: messaging      ecoute par: notifications
+  ModerationActionApplied          publie par: moderation     ecoute par: (personne pour l instant)
+  OfferAnswered                    publie par: jobs           ecoute par: (personne pour l instant)
+  OfferSent                        publie par: jobs           ecoute par: notifications
+  OrderCancelled                   publie par: marketplace    ecoute par: (personne pour l instant)
+  OrderCreated                     publie par: marketplace    ecoute par: (personne pour l instant)
+  OrderPaid                        publie par: payments       ecoute par: education, notifications
+  OrderRefunded                    publie par: payments       ecoute par: education, notifications
+  PaymentOrphaned                  publie par: payments       ecoute par: (personne pour l instant)
+  PostCreated                      publie par: social         ecoute par: social
+  PostDeleted                      publie par: social         ecoute par: social
+  PostEdited                       publie par: social         ecoute par: social
+  PostLiked                        publie par: social         ecoute par: notifications, social
+  PostShared                       publie par: social         ecoute par: social
+  ProductPublished                 publie par: marketplace    ecoute par: (personne pour l instant)
+  ProposalAccepted                 publie par: jobs           ecoute par: notifications
+  ProposalReceived                 publie par: jobs           ecoute par: notifications
+  QuizPassed                       publie par: assessments    ecoute par: progress
+  StatusCreated                    publie par: social         ecoute par: (personne pour l instant)
+  SubmissionGraded                 publie par: assessments    ecoute par: notifications
+  UserAnonymized                   publie par: accounts       ecoute par: (personne pour l instant)
+  UserBlocked                      publie par: friends        ecoute par: (personne pour l instant)
+  UserFollowed                     publie par: friends        ecoute par: (personne pour l instant)
+  UserRegistered                   publie par: accounts       ecoute par: (personne pour l instant)
+  UserSuspended                    publie par: accounts       ecoute par: (personne pour l instant)
+
+NB : le domaine 'analytics' ecoute AUSSI (enregistrement dynamique, non detecte ci-dessus) : UserRegistered, PostCreated, PostLiked, MessageSent,
+     FriendshipCreated, CourseEnrolled, ChapterCompleted, OrderPaid, JobApplied -> ils alimentent la collection MongoDB 'events'.
+     Le domaine 'progress' ecoute QuizPassed (emission du certificat). Le domaine 'education' ecoute OrderPaid/OrderRefunded (acces aux cours).
+Le relais des evenements tourne tout seul toutes les 3 secondes tant que le service est eveille (planificateur interne).
+
+==============================================================================
+5. COMMANDES DE GESTION (python manage.py <commande>)
+==============================================================================
+  check_databases              Verifie PostgreSQL (tables, index, fonctions, triggers), MongoDB (collections, index) et Redis (scripts, config).
+  flush_counters               Draine les compteurs de vues Redis (GETDEL atomique) vers social_post.view_count. A planifier toutes les minutes.
+  housekeeping                 Maintenance : purge technique par lots (SQL) + archivage des statuts expires. A planifier toutes les heures.
+  mongo_setup                  Cree/Met a jour collections, validateurs JSON Schema et index MongoDB (idempotent).
+  refresh_materialized_views   REFRESH MATERIALIZED VIEW CONCURRENTLY (lecture non bloquee). trending: toutes les 10 min ; platform_daily: horaire.
+  refresh_metrics              Recalcule les agregats quotidiens (analytics_daily_metric) : baobab_refresh_daily_metrics(jour). Idempotent.
+  relay_outbox                 Relaie les evenements de l'outbox vers les consommateurs (Mongo, Redis, notifications, analytics). Process unique ou N workers (SKIP LOCKED).
+
+  migrate                      cree/met a jour les tables, fonctions, triggers, vues et donnees de reference.
+  test                         lance les 312 tests (PostgreSQL et Redis reels requis).
+
+==============================================================================
+6. JOBS PLANIFIES (planificateur interne, uniquement pendant que le service est eveille)
+==============================================================================
+  relay-outbox         toutes les     3 s   sans barriere (verrou SQL SKIP LOCKED)
+  flush-counters       toutes les   300 s   un seul worker a la fois
+  refresh-trending     toutes les   600 s   un seul worker a la fois
+  refresh-platform     toutes les  3600 s   un seul worker a la fois
+  refresh-metrics      toutes les  3600 s   un seul worker a la fois
+  housekeeping         toutes les  3600 s   un seul worker a la fois
+  ads-settle           toutes les   300 s   un seul worker a la fois
+  ads-recover          toutes les   900 s   un seul worker a la fois
+  expire-orders        toutes les   600 s   un seul worker a la fois
+
+Ils sont aussi declenchables de l'exterieur par POST /internal/jobs/<nom>/ (signature HMAC) : relay-outbox, flush-counters, refresh-metrics, refresh-trending, housekeeping.
+
+==============================================================================
+7. FONCTIONS ET TRIGGERS POSTGRESQL (database/postgres/)
+==============================================================================
+  [001_common.sql]
+    baobab_set_updated_at                updated_at fiable meme pour les UPDATE hors ORM (bulk, SQL brut, scripts d'admin).
+    baobab_forbid_mutation               Table append-only : interdit UPDATE/DELETE. Exception unique : mettre a NULL des colonnes 
+    baobab_attach_updated_at_triggers    (Re)attache le trigger updated_at a TOUTE table publique possedant une colonne updated_at.
+  [002_counters.sql]
+    baobab_trg_post_reaction             
+    baobab_trg_comment_count             
+    baobab_trg_comment_reaction          
+    baobab_trg_share_count               
+    baobab_trg_save_count                
+    baobab_trg_poll_vote                 
+    baobab_trg_hashtag_count             
+    baobab_trg_group_member_count        
+  [003_messaging.sql]
+    baobab_message_assign_seq            
+    baobab_message_thread_counter        
+    baobab_message_immutable_keys        seq et conversation sont immuables apres insertion (l'ordre ne doit jamais changer).
+  [004_audit.sql]
+    baobab_audit_row                     
+  [005_domain_queries.sql]
+    baobab_are_friends                   
+    baobab_group_has_permission          
+    baobab_feed_score                    Meme formule que apps.social.feed.rank_score (test de parite dans tests/).
+    baobab_unread_count                  
+    baobab_user_stats                    
+    baobab_recount_post_counters         Reconstruction des compteurs denormalises (apres incident, restauration partielle, import)
+    baobab_refresh_daily_metrics         Agregats quotidiens (idempotent : UPSERT). Appele par `manage.py refresh_metrics` (cron).
+    baobab_housekeeping                  Maintenance : purge bornee (par lots) des donnees techniques expirees.
+  [006_education.sql]
+    baobab_chapter_unlocked              Le chapitre est-il debloque cote PAIEMENT ? Gratuit, ou droit valide sur le chapitre, son 
+    baobab_module_progress               Progression d'un module : seuls les chapitres PUBLIES d'un module PUBLIE comptent.
+    baobab_course_progress               
+    baobab_quiz_best_percent             Meilleur score (en %) d'un utilisateur sur un quiz, parmi les tentatives corrigees.
+    baobab_course_leaderboard            Classement d'un cours : chapitres termines puis temps passe (egalites -> meme rang).
+  [007_commerce.sql]
+    baobab_trg_review_rating             Note moyenne : compteurs derives maintenus par trigger (insert / update de la note / delet
+    baobab_ledger_check_batch            INVARIANT COMPTABLE : tout lot d'ecritures somme a ZERO et ne melange pas les devises. Ver
+    baobab_order_ledger_balance          Solde de toutes les ecritures d'une commande : DOIT valoir 0 (charges et remboursements co
+    baobab_store_revenue                 Revenus d'une boutique sur une periode, calcules depuis le GRAND LIVRE (la verite), pas de
+  [008_opportunities.sql]
+    baobab_company_requires_owner        Une entreprise a TOUJOURS au moins un proprietaire : verifie A LA VALIDATION de la transac
+    baobab_job_funnel                    Entonnoir de recrutement d'une offre : nombre de candidatures par statut.
+  [009_advertising.sql]
+    baobab_adwallet_check                INVARIANT : le solde du portefeuille == somme de son journal. Verifie A LA VALIDATION de l
+    baobab_campaign_settled_micro        Depense reglee d'une campagne, en micro-unites.
+
+Triggers DIFFERES (verifies au moment de valider la transaction : une transaction incoherente est refusee) :
+  trg_ledger_balanced          chaque lot du grand livre somme a zero
+  trg_adwallet_check_*         solde du portefeuille publicitaire == somme de son journal
+  trg_company_requires_owner_* une entreprise a toujours un proprietaire
+
+==============================================================================
+8. VARIABLES D'ENVIRONNEMENT
+==============================================================================
+# ---- Django ----
+DJANGO_SETTINGS_MODULE=config.settings.development
+DJANGO_SECRET_KEY=
+DJANGO_DEBUG=false
+DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1
+CSRF_TRUSTED_ORIGINS=
+CORS_ALLOWED_ORIGINS=http://localhost:3000
+
+# ---- PostgreSQL (Supabase = Postgres manage ; utiliser le pooler "session" 5432 pour Django) ----
+DATABASE_URL=postgresql://user:password@host:5432/postgres
+# Connexion DIRECTE (ou pooler session) utilisee uniquement par `migrate` en CI
+DATABASE_URL_MIGRATIONS=
+DB_CONN_MAX_AGE=60
+DB_SSL_REQUIRE=true
+# Informatif (non requis par Django, Supabase reste un simple Postgres)
+SUPABASE_PROJECT_URL=
+SUPABASE_SERVICE_ROLE_KEY=
+
+# ---- MongoDB ----
+MONGODB_URL=mongodb+srv://user:password@cluster/?retryWrites=true&w=majority
+MONGODB_DATABASE=baobab
+
+# ---- Redis (db0 cache, db1 channel layer, db2 queues/locks) ----
+REDIS_URL=redis://localhost:6379/0
+# Laisser VIDE pour utiliser un channel layer en memoire (une seule instance, offre gratuite).
+CHANNEL_REDIS_URL=redis://localhost:6379/1
+
+# ---- JWT ----
+JWT_ACCESS_LIFETIME_MINUTES=15
+JWT_REFRESH_LIFETIME_DAYS=14
+
+# ---- Jobs planifies (cron Cloudflare -> /internal/jobs/*) : secret partage, >= 32 caracteres (python -c "import secrets;print(secrets.token_hex(32))") ----
+INTERNAL_JOB_SECRET=
+
+# ---- Edge : secret partage avec le Worker routeur (refuse tout acces direct a l'origine). Vide = desactive.
+EDGE_SHARED_SECRET=
+# ---- Planificateur interne (remplace le cron) : a activer sur le SEUL service web
+ENABLE_IN_PROCESS_SCHEDULER=false
+
+# ---- Chiffrement des tokens OAuth tiers (cle Fernet : python -c "from cryptography.fernet import Fernet;print(Fernet.generate_key().decode())") ----
+FIELD_ENCRYPTION_KEY=
+
+# ---- Observabilite ----
+LOG_LEVEL=INFO
+LOG_JSON=true
+
+# ---- Commerce : commission plateforme (points de base, 1000 = 10 %) et delai d'expiration des commandes impayees
+PLATFORM_FEE_BPS=1000
+PENDING_ORDER_TTL_HOURS=24
+# ---- Secrets de signature des webhooks de paiement, un par fournisseur. VIDE = tous les webhooks de ce fournisseur sont REFUSES (jamais de non-signe).
+PAYMENT_WEBHOOK_SECRET_MOBILE_MONEY=
+PAYMENT_WEBHOOK_SECRET_CARD=
+PAYMENT_WEBHOOK_SECRET_MANUAL=
+
+==============================================================================
+9. REGLES ET PIEGES A CONNAITRE
+==============================================================================
+  - ARGENT : toujours des entiers dans la plus petite unite (XAF : 1, EUR :
+  centimes). Jamais de decimaux.
+
+  - COMMANDE : le prix est COPIE dans la commande. Changer un prix ensuite
+  ne change pas l'historique. Une cle d'idempotence est OBLIGATOIRE au
+  checkout (une cle = une commande, meme si le client clique deux fois).
+
+  - PAIEMENT : un seul paiement reussi par commande. Le resultat arrive par
+  webhook signe (payments.services.ingest_webhook). Sans secret configure
+  pour un fournisseur, ses webhooks sont tous refuses. AUCUN fournisseur
+  n'est branche : creer la session de paiement chez Orange/MTN/carte reste a
+  ecrire.
+
+  - ACCES AUX COURS : Chapter.is_free decide si un chapitre est payant. Un
+  droit (Entitlement) sur le chapitre, le module, le cours ou la classroom
+  le debloque. Le droit est accorde AUTOMATIQUEMENT apres un achat
+  (evenement OrderPaid) et retire apres un remboursement complet.
+
+  - VERROUS : les services qui verrouillent des lignes le font dans un ordre
+  fixe. Ne les appelez pas depuis une transaction qui a deja verrouille
+  d'autres lignes dans un ordre different.
+
+  - SUPPRESSION : les contenus ont une suppression 'douce' (deleted_at). Les
+  donnees financieres, les journaux et l'audit ne se suppriment jamais (la
+  base l'interdit).
+
+  - CONFIDENTIALITE : la visibilite d'un post/portfolio/statut est calculee
+  en SQL (amis, abonnes, groupe, blocages). Passez toujours par les
+  selecteurs (social.selectors.visible_posts,
+  portfolio.selectors.can_view_portfolio), jamais par un filtre ecrit a la
+  main.
+
+  - PUBLICITE : le ciblage est limite a 12 criteres autorises (la base
+  refuse tout autre). Une annonce ne diffuse qu'apres validation humaine.
+  L'utilisateur peut refuser la personnalisation
+  (advertising.services.set_personalization).
+
+  - WEBSOCKET : un seul worker et une seule instance (offre gratuite) : le
+  temps reel ne passe pas entre plusieurs instances. A la mise en veille,
+  les clients doivent se reconnecter.
+
+  - SERIALIZERS : ceux de lecture ne montrent jamais les commissions, le net
+  vendeur, le stock exact, les encheres, les budgets, les bonnes reponses
+  des quiz. Utilisez-les pour toute reponse destinee a un client.
+
+
+==============================================================================
+10. CE QUI MANQUE (honnete)
+==============================================================================
+  - Couche API REST : vues et URLs (a ecrire par-dessus les services).
+  - Authentification cote API : l'inscription et le modele d'utilisateur
+  existent, mais pas les points d'entree de
+  connexion/inscription/rafraichissement du JWT.
+  - Fournisseur de paiement reel (creation de sessions, remboursement chez
+  le fournisseur).
+  - AI Gateway (acces IA en lecture seule aux donnees).
+  - Envoi reel des e-mails et notifications push (les lignes de livraison
+  sont creees, rien ne les envoie).
+  - Stockage de fichiers : seules des cles de stockage sont conservees ;
+  aucune URL signee n'est generee.
+  - Verification d'e-mail, reinitialisation de mot de passe, double
+  authentification.
+  - Metriques et tableau de bord (Grafana) ; tests de charge.
+
+Fin du guide.

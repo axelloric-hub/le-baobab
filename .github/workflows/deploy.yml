@@ -22,6 +22,7 @@ jobs:
       DJANGO_SETTINGS_MODULE: config.settings.production
       DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
       INTERNAL_JOB_SECRET: ${{ secrets.INTERNAL_JOB_SECRET }}
+      # Pooler Supabase en mode SESSION (les runners GitHub sont en IPv4 ; voir docs/DEPLOY_FREE.md)
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
       MONGODB_URL: ${{ secrets.MONGODB_URL }}
       MONGODB_DATABASE: ${{ vars.MONGODB_DATABASE }}

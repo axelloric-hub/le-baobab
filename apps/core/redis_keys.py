@@ -42,3 +42,8 @@ def dedup(scope: str, ident) -> str: return _k("dedup", scope, ident)
 def pubsub_channel(name: str) -> str: return _k("pubsub", name)
 def celebrity_authors() -> str: return _k("feed", "celebrities")  # set d'auteurs 'pull' (audience > seuil de fan-out)
 def sched(job: str) -> str: return _k("sched", job)  # barriere "deja execute pour cet intervalle" du planificateur interne
+def ad_gate_day(campaign, day) -> str: return _k("ad", "gate", campaign, day)          # depense du jour (micro) : plafond de budget temps reel
+def ad_gate_total(campaign) -> str: return _k("ad", "gate_total", campaign)            # depense cumulee (micro), initialisee depuis PostgreSQL
+def ad_acc(ad, day) -> str: return _k("ad", "acc", ad, day)                            # accumulateur a regler (hash impressions/clics/conversions/depense)
+def ad_settling(batch, ad, day) -> str: return _k("ad", "settling", batch, ad, day)    # lot en cours de reglement (rejouable)
+def ad_dedupe(kind, ident) -> str: return _k("ad", "dedupe", kind, ident)

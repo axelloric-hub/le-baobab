@@ -16,12 +16,21 @@
 - **En-tetes** : HSTS, cookies Secure/HttpOnly/SameSite, `X_FRAME_OPTIONS=DENY`, nosniff.
 - **Injection** : ORM parametre partout ; SQL brut uniquement avec parametres ; requetes Mongo construites sans entree utilisateur non typee.
 
+## Securite financiere et publicitaire (implemente et teste)
+- **Webhooks de paiement** : signature HMAC-SHA256 obligatoire, comparaison a temps constant, secret vide = tout refuser, deduplication par `event_id`, montant et devise recontroles ; une signature invalide est journalisee (`SecurityEvent`).
+- **Grand livre / portefeuille / journaux** : ecriture seule (triggers) et equilibres verifies par la base au commit ; l'admin les affiche en lecture seule.
+- **Anti-fraude publicitaire** : clic uniquement sur une impression connue du meme utilisateur (fenetre 24 h), un clic par impression, 30 clics/min/utilisateur, IP stockee sous forme d'empreinte tronquee.
+- **Ciblage** : liste blanche de 12 criteres imposee par `CHECK` ; opt-out de la personnalisation ; validation humaine avant diffusion.
+- **Licences et telechargements** : licence active obligatoire, 20 telechargements/min, journalises. **Avis** reserves aux acheteurs.
+- **Serializers** : aucune commission, net vendeur, stock exact, enchere, budget ni regle de ciblage dans une reponse destinee au client (teste).
+
 ## Non fait / a faire avant la production
 - **Pas de test d'intrusion**, pas d'analyse de dependances automatisee (ajouter `pip-audit`/Dependabot).
 - **Pas de Row Level Security PostgreSQL** (l'application est la barriere). A envisager pour le futur AI Gateway.
 - **Le 2FA** est un champ (`SecuritySettings`) : aucun flux n'est implemente.
 - **Limitation de debit au bord** (Cloudflare WAF / Rate Limiting rules) : a configurer dans le dashboard Cloudflare.
 - **Atlas ouvert sur 0.0.0.0/0** (IP de sortie de l'hebergeur gratuit non fixes) : compense par mot de passe aleatoire long et TLS ; a restreindre des qu'une IP fixe existe.
+- **Aucun fournisseur de paiement n'est integre** : seule la reception de webhooks signes existe ; la creation de sessions de paiement chez Orange/MTN/carte reste a ecrire.
 - **Verification d'e-mail, reinitialisation de mot de passe, OAuth login** : couche API non realisee.
 - **Chiffrement** : seules les colonnes OAuth sont chiffrees au niveau applicatif ; le reste repose sur le chiffrement au repos du fournisseur.
 - **Ciblage publicitaire** : aucune donnee sensible n'est prevue ; a re-evaluer a l'implementation du domaine advertising.

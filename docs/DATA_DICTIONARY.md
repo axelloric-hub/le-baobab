@@ -1946,6 +1946,1105 @@ Journal des verifications publiques (employeur qui controle un certificat).
 
 **Index :** `certverif_cert_idx`
 
+## marketplace
+
+**Source of truth :** PostgreSQL — catalogue, panier, commandes (prix figes), licences, avis
+
+### `marketplace_store` (Store)
+
+Store(id, owner, slug, name, description, status, company_ref, created_at, updated_at)
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | UUIDField(32) | non | PK | (fonction) |
+| `owner` | FK -> accounts.User | non |  |  |
+| `slug` | SlugField(80) | non | oui |  |
+| `name` | CharField(120) | non |  |  |
+| `description` | TextField(5000) | non |  |  |
+| `status` | CharField(10) | non |  | active |
+| `company_ref` | UUIDField(32) | oui |  |  |
+| `created_at` | DateTimeField | non |  | (fonction) |
+| `updated_at` | DateTimeField | non |  | (fonction) |
+
+### `marketplace_category` (ProductCategory)
+
+ProductCategory(id, slug, name, parent)
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | BigAutoField | non | PK |  |
+| `slug` | SlugField(80) | non | oui |  |
+| `name` | CharField(100) | non |  |  |
+| `parent` | FK -> marketplace.ProductCategory | oui |  |  |
+
+### `marketplace_product` (Product)
+
+Product(id, store, category, kind, slug, title, description, status, license_type, documentation_url, rating_count, rating_sum, published_at, created_at, updated_at)
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | UUIDField(32) | non | PK | (fonction) |
+| `store` | FK -> marketplace.Store | non |  |  |
+| `category` | FK -> marketplace.ProductCategory | oui |  |  |
+| `kind` | CharField(16) | non |  |  |
+| `slug` | SlugField(80) | non |  |  |
+| `title` | CharField(160) | non |  |  |
+| `description` | TextField(20000) | non |  |  |
+| `status` | CharField(10) | non |  | draft |
+| `license_type` | CharField(10) | non |  | personal |
+| `documentation_url` | CharField(200) | non |  |  |
+| `rating_count` | PositiveIntegerField | non |  | 0 |
+| `rating_sum` | PositiveIntegerField | non |  | 0 |
+| `published_at` | DateTimeField | oui |  |  |
+| `created_at` | DateTimeField | non |  | (fonction) |
+| `updated_at` | DateTimeField | non |  | (fonction) |
+| `skills` | M2M -> profiles.Skill | - | - | - |
+
+**Contraintes :** `uniq_product_slug` ; `chk_product_published_dated` ; `chk_product_rating_bounds`
+
+**Index :** `product_browse_idx` ; `product_store_idx`
+
+### `marketplace_variant` (ProductVariant)
+
+ProductVariant(id, product, sku, name, price_minor, currency, is_default, is_active, stock)
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | UUIDField(32) | non | PK | (fonction) |
+| `product` | FK -> marketplace.Product | non |  |  |
+| `sku` | CharField(60) | non | oui |  |
+| `name` | CharField(100) | non |  |  |
+| `price_minor` | PositiveIntegerField | non |  |  |
+| `currency` | CharField(3) | non |  |  |
+| `is_default` | BooleanField | non |  | False |
+| `is_active` | BooleanField | non |  | True |
+| `stock` | IntegerField | oui |  |  |
+
+**Contraintes :** `chk_variant_currency` ; `chk_variant_stock_nonneg` ; `uniq_variant_default`
+
+### `marketplace_product_media` (ProductMedia)
+
+ProductMedia(id, product, kind, storage_key, position)
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | UUIDField(32) | non | PK | (fonction) |
+| `product` | FK -> marketplace.Product | non |  |  |
+| `kind` | CharField(10) | non |  | image |
+| `storage_key` | CharField(400) | non |  |  |
+| `position` | PositiveSmallIntegerField | non |  | 0 |
+
+**Contraintes :** `uniq_productmedia_position`
+
+### `marketplace_entitlement_target` (ProductEntitlementTarget)
+
+Ce qu'un achat DEBLOQUE dans un autre domaine (ex. cours/module/chapitre). Reference par id : marketplace ne connait pas education.
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | UUIDField(32) | non | PK | (fonction) |
+| `product` | FK -> marketplace.Product | non |  |  |
+| `scope` | CharField(10) | non |  |  |
+| `target_id` | UUIDField(32) | non |  |  |
+
+**Contraintes :** `uniq_entitlement_target` ; `chk_target_scope`
+
+### `marketplace_release` (ProductRelease)
+
+Version d'une application/logiciel : changelog, prerequis, instructions d'installation.
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | UUIDField(32) | non | PK | (fonction) |
+| `product` | FK -> marketplace.Product | non |  |  |
+| `version` | CharField(40) | non |  |  |
+| `platform` | CharField(20) | non |  | any |
+| `changelog` | TextField | non |  |  |
+| `requirements` | TextField | non |  |  |
+| `installation_instructions` | TextField | non |  |  |
+| `is_latest` | BooleanField | non |  | False |
+| `published_at` | DateTimeField | non |  | (fonction) |
+
+**Contraintes :** `uniq_release` ; `uniq_release_latest`
+
+### `marketplace_digital_asset` (DigitalAsset)
+
+DigitalAsset(id, release, filename, storage_key, size_bytes, checksum_sha256)
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | UUIDField(32) | non | PK | (fonction) |
+| `release` | FK -> marketplace.ProductRelease | non |  |  |
+| `filename` | CharField(255) | non |  |  |
+| `storage_key` | CharField(400) | non |  |  |
+| `size_bytes` | BigIntegerField | non |  |  |
+| `checksum_sha256` | CharField(64) | non |  |  |
+
+**Contraintes :** `chk_asset_size` ; `chk_asset_checksum`
+
+### `marketplace_cart` (Cart)
+
+Cart(id, user, updated_at)
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | UUIDField(32) | non | PK | (fonction) |
+| `user` | FK -> accounts.User | non | oui |  |
+| `updated_at` | DateTimeField | non |  | (fonction) |
+
+### `marketplace_cart_item` (CartItem)
+
+CartItem(id, cart, variant, quantity)
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | BigAutoField | non | PK |  |
+| `cart` | FK -> marketplace.Cart | non |  |  |
+| `variant` | FK -> marketplace.ProductVariant | non |  |  |
+| `quantity` | PositiveSmallIntegerField | non |  | 1 |
+
+**Contraintes :** `uniq_cartitem` ; `chk_cartitem_qty`
+
+### `marketplace_coupon` (Coupon)
+
+Coupon(id, code, kind, value, currency, store, min_subtotal_minor, max_redemptions, per_user_limit, used_count, starts_at, ends_at, is_active)
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | UUIDField(32) | non | PK | (fonction) |
+| `code` | CharField(40) | non |  |  |
+| `kind` | CharField(8) | non |  |  |
+| `value` | PositiveIntegerField | non |  |  |
+| `currency` | CharField(3) | non |  |  |
+| `store` | FK -> marketplace.Store | oui |  |  |
+| `min_subtotal_minor` | PositiveIntegerField | non |  | 0 |
+| `max_redemptions` | PositiveIntegerField | oui |  |  |
+| `per_user_limit` | PositiveSmallIntegerField | non |  | 1 |
+| `used_count` | PositiveIntegerField | non |  | 0 |
+| `starts_at` | DateTimeField | non |  | (fonction) |
+| `ends_at` | DateTimeField | oui |  |  |
+| `is_active` | BooleanField | non |  | True |
+
+**Contraintes :** `uniq_coupon_code_ci` ; `chk_coupon_value` ; `chk_coupon_period` ; `chk_coupon_usage`
+
+### `marketplace_order` (Order)
+
+Order(id, user, number, status, currency, subtotal_minor, discount_minor, total_minor, coupon, idempotency_key, created_at, updated_at, paid_at, cancelled_at)
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | UUIDField(32) | non | PK | (fonction) |
+| `user` | FK -> accounts.User | non |  |  |
+| `number` | CharField(24) | non | oui |  |
+| `status` | CharField(20) | non |  | pending |
+| `currency` | CharField(3) | non |  |  |
+| `subtotal_minor` | PositiveBigIntegerField | non |  |  |
+| `discount_minor` | PositiveBigIntegerField | non |  | 0 |
+| `total_minor` | PositiveBigIntegerField | non |  |  |
+| `coupon` | FK -> marketplace.Coupon | oui |  |  |
+| `idempotency_key` | CharField(100) | non |  |  |
+| `created_at` | DateTimeField | non |  | (fonction) |
+| `updated_at` | DateTimeField | non |  | (fonction) |
+| `paid_at` | DateTimeField | oui |  |  |
+| `cancelled_at` | DateTimeField | oui |  |  |
+
+**Contraintes :** `chk_order_totals` ; `chk_order_paid_dated` ; `uniq_order_idempotency`
+
+**Index :** `order_user_idx` ; `order_pending_idx`
+
+### `marketplace_order_item` (OrderItem)
+
+OrderItem(id, order, product, variant, store, title, sku, unit_price_minor, quantity, line_total_minor, discount_minor, platform_fee_minor, seller_net_minor, refunded_minor)
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | UUIDField(32) | non | PK | (fonction) |
+| `order` | FK -> marketplace.Order | non |  |  |
+| `product` | FK -> marketplace.Product | non |  |  |
+| `variant` | FK -> marketplace.ProductVariant | non |  |  |
+| `store` | FK -> marketplace.Store | non |  |  |
+| `title` | CharField(160) | non |  |  |
+| `sku` | CharField(60) | non |  |  |
+| `unit_price_minor` | PositiveIntegerField | non |  |  |
+| `quantity` | PositiveSmallIntegerField | non |  |  |
+| `line_total_minor` | PositiveBigIntegerField | non |  |  |
+| `discount_minor` | PositiveBigIntegerField | non |  | 0 |
+| `platform_fee_minor` | PositiveBigIntegerField | non |  | 0 |
+| `seller_net_minor` | PositiveBigIntegerField | non |  | 0 |
+| `refunded_minor` | PositiveBigIntegerField | non |  | 0 |
+
+**Contraintes :** `chk_item_line_total` ; `chk_item_discount` ; `chk_item_split` ; `chk_item_refund_cap`
+
+**Index :** `orderitem_store_idx` ; `orderitem_product_idx`
+
+### `marketplace_license` (License)
+
+License(id, user, product, order_item, key, seats, status, issued_at, revoked_at)
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | UUIDField(32) | non | PK | (fonction) |
+| `user` | FK -> accounts.User | non |  |  |
+| `product` | FK -> marketplace.Product | non |  |  |
+| `order_item` | FK -> marketplace.OrderItem | non | oui |  |
+| `key` | CharField(40) | non | oui |  |
+| `seats` | PositiveSmallIntegerField | non |  | 1 |
+| `status` | CharField(8) | non |  | active |
+| `issued_at` | DateTimeField | non |  | (fonction) |
+| `revoked_at` | DateTimeField | oui |  |  |
+
+**Index :** `license_active_idx`
+
+### `marketplace_download` (Download)
+
+Download(id, license, asset, ip_address, created_at)
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | BigAutoField | non | PK |  |
+| `license` | FK -> marketplace.License | non |  |  |
+| `asset` | FK -> marketplace.DigitalAsset | non |  |  |
+| `ip_address` | GenericIPAddressField(39) | oui |  |  |
+| `created_at` | DateTimeField | non |  | (fonction) |
+
+**Index :** `download_license_idx`
+
+### `marketplace_coupon_redemption` (CouponRedemption)
+
+CouponRedemption(id, coupon, user, order, created_at)
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | BigAutoField | non | PK |  |
+| `coupon` | FK -> marketplace.Coupon | non |  |  |
+| `user` | FK -> accounts.User | non |  |  |
+| `order` | FK -> marketplace.Order | non | oui |  |
+| `created_at` | DateTimeField | non |  | (fonction) |
+
+**Index :** `redemption_user_idx`
+
+### `marketplace_review` (Review)
+
+Review(id, product, user, order_item, rating, title, body, created_at)
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | UUIDField(32) | non | PK | (fonction) |
+| `product` | FK -> marketplace.Product | non |  |  |
+| `user` | FK -> accounts.User | non |  |  |
+| `order_item` | FK -> marketplace.OrderItem | non |  |  |
+| `rating` | PositiveSmallIntegerField | non |  |  |
+| `title` | CharField(120) | non |  |  |
+| `body` | TextField(5000) | non |  |  |
+| `created_at` | DateTimeField | non |  | (fonction) |
+
+**Contraintes :** `uniq_review` ; `chk_review_rating`
+
+**Index :** `review_product_idx`
+
+### `marketplace_wishlist` (Wishlist)
+
+Wishlist(id, user, product, created_at)
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | BigAutoField | non | PK |  |
+| `user` | FK -> accounts.User | non |  |  |
+| `product` | FK -> marketplace.Product | non |  |  |
+| `created_at` | DateTimeField | non |  | (fonction) |
+
+**Contraintes :** `uniq_wishlist`
+
+## payments
+
+**Source of truth :** PostgreSQL — paiements, grand livre equilibre et inalterable, remboursements, webhooks dedoublonnes
+
+### `payments_payment` (Payment)
+
+Payment(id, order, provider, provider_ref, amount_minor, currency, status, failure_reason, created_at, updated_at)
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | UUIDField(32) | non | PK | (fonction) |
+| `order` | FK -> marketplace.Order | non |  |  |
+| `provider` | CharField(14) | non |  |  |
+| `provider_ref` | CharField(120) | non |  |  |
+| `amount_minor` | PositiveBigIntegerField | non |  |  |
+| `currency` | CharField(3) | non |  |  |
+| `status` | CharField(10) | non |  | initiated |
+| `failure_reason` | CharField(200) | non |  |  |
+| `created_at` | DateTimeField | non |  | (fonction) |
+| `updated_at` | DateTimeField | non |  | (fonction) |
+
+**Contraintes :** `chk_payment_amount` ; `uniq_payment_provider_ref` ; `uniq_payment_one_success_per_order`
+
+**Index :** `payment_order_idx`
+
+### `payments_ledger_entry` (LedgerEntry)
+
+Grand livre a ecritures signees : montant > 0 = credit du compte, < 0 = debit. Un lot (batch) somme a zero.
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | BigAutoField | non | PK |  |
+| `batch` | UUIDField(32) | non |  | (fonction) |
+| `order` | FK -> marketplace.Order | non |  |  |
+| `store` | FK -> marketplace.Store | oui |  |  |
+| `account` | CharField(8) | non |  |  |
+| `kind` | CharField(8) | non |  |  |
+| `amount_minor` | BigIntegerField | non |  |  |
+| `currency` | CharField(3) | non |  |  |
+| `created_at` | DateTimeField | non |  | (fonction) |
+
+**Contraintes :** `chk_ledger_nonzero` ; `chk_ledger_seller_store`
+
+**Index :** `ledger_batch_idx` ; `ledger_store_idx` ; `ledger_order_idx`
+
+### `payments_refund` (Refund)
+
+Refund(id, payment, order_item, amount_minor, reason, status, requested_by, decided_by, created_at, decided_at)
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | UUIDField(32) | non | PK | (fonction) |
+| `payment` | FK -> payments.Payment | non |  |  |
+| `order_item` | FK -> marketplace.OrderItem | non |  |  |
+| `amount_minor` | PositiveBigIntegerField | non |  |  |
+| `reason` | CharField(500) | non |  |  |
+| `status` | CharField(10) | non |  | requested |
+| `requested_by` | FK -> accounts.User | non |  |  |
+| `decided_by` | FK -> accounts.User | oui |  |  |
+| `created_at` | DateTimeField | non |  | (fonction) |
+| `decided_at` | DateTimeField | oui |  |  |
+
+**Contraintes :** `chk_refund_amount` ; `chk_refund_decided_dated` ; `uniq_refund_open_per_item`
+
+### `payments_webhook_event` (WebhookEvent)
+
+WebhookEvent(id, provider, event_id, payload, processed_at, received_at)
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | BigAutoField | non | PK |  |
+| `provider` | CharField(14) | non |  |  |
+| `event_id` | CharField(120) | non |  |  |
+| `payload` | JSONField | non |  | (fonction) |
+| `processed_at` | DateTimeField | oui |  |  |
+| `received_at` | DateTimeField | non |  | (fonction) |
+
+**Contraintes :** `uniq_webhook_event`
+
+## companies
+
+**Source of truth :** PostgreSQL — entreprises, membres et roles, verification
+
+### `companies_company` (Company)
+
+Company(id, slug, name, tagline, description, website, industry, size_range, country, city, logo_key, cover_key, status, created_at, updated_at)
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | UUIDField(32) | non | PK | (fonction) |
+| `slug` | SlugField(80) | non | oui |  |
+| `name` | CharField(140) | non |  |  |
+| `tagline` | CharField(200) | non |  |  |
+| `description` | TextField(10000) | non |  |  |
+| `website` | CharField(200) | non |  |  |
+| `industry` | CharField(80) | non |  |  |
+| `size_range` | CharField(12) | non |  |  |
+| `country` | FK -> profiles.Country | oui |  |  |
+| `city` | CharField(80) | non |  |  |
+| `logo_key` | CharField(300) | non |  |  |
+| `cover_key` | CharField(300) | non |  |  |
+| `status` | CharField(10) | non |  | pending |
+| `created_at` | DateTimeField | non |  | (fonction) |
+| `updated_at` | DateTimeField | non |  | (fonction) |
+
+**Contraintes :** `chk_company_size`
+
+**Index :** `company_browse_idx`
+
+### `companies_member` (CompanyMember)
+
+CompanyMember(id, company, user, role, title, is_public, joined_at)
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | UUIDField(32) | non | PK | (fonction) |
+| `company` | FK -> companies.Company | non |  |  |
+| `user` | FK -> accounts.User | non |  |  |
+| `role` | CharField(10) | non |  | employee |
+| `title` | CharField(100) | non |  |  |
+| `is_public` | BooleanField | non |  | True |
+| `joined_at` | DateTimeField | non |  | (fonction) |
+
+**Contraintes :** `uniq_company_member`
+
+**Index :** `companymember_user_idx`
+
+### `companies_verification` (CompanyVerification)
+
+CompanyVerification(id, company, method, evidence, status, submitted_by, reviewed_by, reviewed_at, notes, created_at)
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | UUIDField(32) | non | PK | (fonction) |
+| `company` | FK -> companies.Company | non |  |  |
+| `method` | CharField(14) | non |  |  |
+| `evidence` | JSONField | non |  | (fonction) |
+| `status` | CharField(10) | non |  | pending |
+| `submitted_by` | FK -> accounts.User | non |  |  |
+| `reviewed_by` | FK -> accounts.User | oui |  |  |
+| `reviewed_at` | DateTimeField | oui |  |  |
+| `notes` | CharField(500) | non |  |  |
+| `created_at` | DateTimeField | non |  | (fonction) |
+
+**Contraintes :** `uniq_verification_pending` ; `chk_verification_reviewed`
+
+### `companies_social_link` (CompanySocialLink)
+
+CompanySocialLink(id, company, provider, url)
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | UUIDField(32) | non | PK | (fonction) |
+| `company` | FK -> companies.Company | non |  |  |
+| `provider` | CharField(12) | non |  |  |
+| `url` | CharField(300) | non |  |  |
+
+**Contraintes :** `uniq_company_social` ; `chk_company_social_https`
+
+### `companies_project` (CompanyProject)
+
+CompanyProject(id, company, title, description, url, repo_url, is_public, created_at)
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | UUIDField(32) | non | PK | (fonction) |
+| `company` | FK -> companies.Company | non |  |  |
+| `title` | CharField(160) | non |  |  |
+| `description` | TextField(5000) | non |  |  |
+| `url` | CharField(200) | non |  |  |
+| `repo_url` | CharField(200) | non |  |  |
+| `is_public` | BooleanField | non |  | True |
+| `created_at` | DateTimeField | non |  | (fonction) |
+| `skills` | M2M -> profiles.Skill | - | - | - |
+
+### `companies_service` (CompanyService)
+
+CompanyService(id, company, title, description, starting_price_minor, currency, is_active)
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | UUIDField(32) | non | PK | (fonction) |
+| `company` | FK -> companies.Company | non |  |  |
+| `title` | CharField(160) | non |  |  |
+| `description` | TextField(3000) | non |  |  |
+| `starting_price_minor` | PositiveIntegerField | oui |  |  |
+| `currency` | CharField(3) | non |  |  |
+| `is_active` | BooleanField | non |  | True |
+
+**Contraintes :** `chk_companyservice_currency`
+
+### `companies_product_ref` (CompanyProductRef)
+
+Produit de la marketplace presente sur la page entreprise : REFERENCE par id (pas de FK entre domaines).
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | UUIDField(32) | non | PK | (fonction) |
+| `company` | FK -> companies.Company | non |  |  |
+| `product_ref` | UUIDField(32) | non |  |  |
+| `position` | PositiveSmallIntegerField | non |  | 0 |
+
+**Contraintes :** `uniq_company_productref`
+
+## portfolio
+
+**Source of truth :** PostgreSQL — projets, depots, experiences, formations, certificats affiches
+
+### `portfolio_portfolio` (Portfolio)
+
+Portfolio(user, title, summary, visibility, updated_at)
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `user` | FK -> accounts.User | non | PK |  |
+| `title` | CharField(140) | non |  |  |
+| `summary` | TextField(3000) | non |  |  |
+| `visibility` | CharField(14) | non |  | public |
+| `updated_at` | DateTimeField | non |  | (fonction) |
+
+**Contraintes :** `chk_portfolio_visibility`
+
+### `portfolio_project` (Project)
+
+Project(id, portfolio, slug, title, description, role, started_on, ended_on, is_featured, position, created_at)
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | UUIDField(32) | non | PK | (fonction) |
+| `portfolio` | FK -> portfolio.Portfolio | non |  |  |
+| `slug` | SlugField(80) | non |  |  |
+| `title` | CharField(160) | non |  |  |
+| `description` | TextField(10000) | non |  |  |
+| `role` | CharField(100) | non |  |  |
+| `started_on` | DateField | oui |  |  |
+| `ended_on` | DateField | oui |  |  |
+| `is_featured` | BooleanField | non |  | False |
+| `position` | PositiveSmallIntegerField | non |  | 0 |
+| `created_at` | DateTimeField | non |  | (fonction) |
+| `technologies` | M2M -> profiles.Skill | - | - | - |
+
+**Contraintes :** `uniq_project_slug` ; `chk_project_dates`
+
+**Index :** `project_order_idx`
+
+### `portfolio_project_media` (ProjectMedia)
+
+ProjectMedia(id, project, kind, storage_key, position)
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | UUIDField(32) | non | PK | (fonction) |
+| `project` | FK -> portfolio.Project | non |  |  |
+| `kind` | CharField(10) | non |  | image |
+| `storage_key` | CharField(400) | non |  |  |
+| `position` | PositiveSmallIntegerField | non |  | 0 |
+
+**Contraintes :** `uniq_projectmedia_position`
+
+### `portfolio_project_link` (ProjectLink)
+
+ProjectLink(id, project, kind, provider, url)
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | UUIDField(32) | non | PK | (fonction) |
+| `project` | FK -> portfolio.Project | non |  |  |
+| `kind` | CharField(12) | non |  | other |
+| `provider` | CharField(12) | non |  |  |
+| `url` | CharField(400) | non |  |  |
+
+**Contraintes :** `chk_projectlink_https` ; `uniq_projectlink`
+
+### `portfolio_repository` (Repository)
+
+Depot GitHub/GitLab affiche sur le portfolio (donnees issues des API OFFICIELLES via integrations).
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | UUIDField(32) | non | PK | (fonction) |
+| `user` | FK -> accounts.User | non |  |  |
+| `project` | FK -> portfolio.Project | oui |  |  |
+| `provider` | CharField(8) | non |  |  |
+| `full_name` | CharField(200) | non |  |  |
+| `url` | CharField(400) | non |  |  |
+| `description` | CharField(500) | non |  |  |
+| `language` | CharField(40) | non |  |  |
+| `stars` | PositiveIntegerField | non |  | 0 |
+| `last_synced_at` | DateTimeField | oui |  |  |
+
+**Contraintes :** `uniq_repository` ; `chk_repository_provider`
+
+### `portfolio_experience` (Experience)
+
+Experience(id, user, company_name, company_ref, title, location, started_on, ended_on, description)
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | UUIDField(32) | non | PK | (fonction) |
+| `user` | FK -> accounts.User | non |  |  |
+| `company_name` | CharField(140) | non |  |  |
+| `company_ref` | UUIDField(32) | oui |  |  |
+| `title` | CharField(140) | non |  |  |
+| `location` | CharField(100) | non |  |  |
+| `started_on` | DateField | non |  |  |
+| `ended_on` | DateField | oui |  |  |
+| `description` | TextField(5000) | non |  |  |
+
+**Contraintes :** `chk_experience_dates`
+
+**Index :** `experience_user_idx`
+
+### `portfolio_education` (Education)
+
+Education(id, user, institution, degree, field, started_on, ended_on)
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | UUIDField(32) | non | PK | (fonction) |
+| `user` | FK -> accounts.User | non |  |  |
+| `institution` | CharField(160) | non |  |  |
+| `degree` | CharField(140) | non |  |  |
+| `field` | CharField(140) | non |  |  |
+| `started_on` | DateField | oui |  |  |
+| `ended_on` | DateField | oui |  |  |
+
+**Contraintes :** `chk_education_dates`
+
+### `portfolio_achievement` (Achievement)
+
+Achievement(id, user, title, issuer, achieved_on, url)
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | UUIDField(32) | non | PK | (fonction) |
+| `user` | FK -> accounts.User | non |  |  |
+| `title` | CharField(160) | non |  |  |
+| `issuer` | CharField(140) | non |  |  |
+| `achieved_on` | DateField | oui |  |  |
+| `url` | CharField(200) | non |  |  |
+
+### `portfolio_certificate_entry` (CertificateEntry)
+
+Certificat affiche sur le portfolio. Si `platform_certificate_ref` est renseigne, il est VERIFIABLE (certificat LE BAOBAB).
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | UUIDField(32) | non | PK | (fonction) |
+| `user` | FK -> accounts.User | non |  |  |
+| `name` | CharField(160) | non |  |  |
+| `issuer` | CharField(140) | non |  |  |
+| `issued_on` | DateField | oui |  |  |
+| `credential_url` | CharField(200) | non |  |  |
+| `platform_certificate_ref` | UUIDField(32) | oui |  |  |
+
+## jobs
+
+**Source of truth :** PostgreSQL — offres, candidatures (machine a etats), entretiens, offres d'embauche, freelance, contrats, jalons
+
+### `jobs_category` (JobCategory)
+
+JobCategory(id, slug, name)
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | BigAutoField | non | PK |  |
+| `slug` | SlugField(80) | non | oui |  |
+| `name` | CharField(100) | non |  |  |
+
+### `jobs_job` (Job)
+
+Job(id, company, posted_by, category, title, description, job_type, contract_type, experience_level, remote_policy, country, city, salary_min_minor, salary_max_minor, salary_currency, salary_period, status, published_at, deadline, created_at, updated_at)
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | UUIDField(32) | non | PK | (fonction) |
+| `company` | FK -> companies.Company | oui |  |  |
+| `posted_by` | FK -> accounts.User | non |  |  |
+| `category` | FK -> jobs.JobCategory | oui |  |  |
+| `title` | CharField(160) | non |  |  |
+| `description` | TextField(20000) | non |  |  |
+| `job_type` | CharField(12) | non |  |  |
+| `contract_type` | CharField(12) | non |  |  |
+| `experience_level` | CharField(8) | non |  | mid |
+| `remote_policy` | CharField(8) | non |  | onsite |
+| `country` | FK -> profiles.Country | oui |  |  |
+| `city` | CharField(80) | non |  |  |
+| `salary_min_minor` | PositiveBigIntegerField | oui |  |  |
+| `salary_max_minor` | PositiveBigIntegerField | oui |  |  |
+| `salary_currency` | CharField(3) | non |  |  |
+| `salary_period` | CharField(6) | non |  |  |
+| `status` | CharField(8) | non |  | draft |
+| `published_at` | DateTimeField | oui |  |  |
+| `deadline` | DateTimeField | oui |  |  |
+| `created_at` | DateTimeField | non |  | (fonction) |
+| `updated_at` | DateTimeField | non |  | (fonction) |
+| `skills` | M2M -> profiles.Skill | - | - | - |
+
+**Contraintes :** `chk_job_salary` ; `chk_job_salary_period` ; `chk_job_open_dated` ; `chk_job_deadline`
+
+**Index :** `job_open_idx` ; `job_filter_idx` ; `job_company_idx`
+
+### `jobs_job_skill` (JobSkill)
+
+JobSkill(id, job, skill, is_required)
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | BigAutoField | non | PK |  |
+| `job` | FK -> jobs.Job | non |  |  |
+| `skill` | FK -> profiles.Skill | non |  |  |
+| `is_required` | BooleanField | non |  | True |
+
+**Contraintes :** `uniq_job_skill`
+
+**Index :** `jobskill_skill_idx`
+
+### `jobs_application` (JobApplication)
+
+JobApplication(id, job, applicant, status, cover_letter, cv_storage_key, portfolio_url, github_url, gitlab_url, links, documents, expected_salary_minor, available_from, created_at, updated_at)
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | UUIDField(32) | non | PK | (fonction) |
+| `job` | FK -> jobs.Job | non |  |  |
+| `applicant` | FK -> accounts.User | non |  |  |
+| `status` | CharField(12) | non |  | submitted |
+| `cover_letter` | TextField(10000) | non |  |  |
+| `cv_storage_key` | CharField(400) | non |  |  |
+| `portfolio_url` | CharField(200) | non |  |  |
+| `github_url` | CharField(200) | non |  |  |
+| `gitlab_url` | CharField(200) | non |  |  |
+| `links` | JSONField | non |  | (fonction) |
+| `documents` | JSONField | non |  | (fonction) |
+| `expected_salary_minor` | PositiveBigIntegerField | oui |  |  |
+| `available_from` | DateField | oui |  |  |
+| `created_at` | DateTimeField | non |  | (fonction) |
+| `updated_at` | DateTimeField | non |  | (fonction) |
+| `projects` | M2M -> portfolio.Project | - | - | - |
+
+**Contraintes :** `uniq_application`
+
+**Index :** `application_job_idx` ; `application_user_idx`
+
+### `jobs_application_status_event` (ApplicationStatusEvent)
+
+Historique append-only des changements de statut (trigger).
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | BigAutoField | non | PK |  |
+| `application` | FK -> jobs.JobApplication | non |  |  |
+| `from_status` | CharField(12) | non |  |  |
+| `to_status` | CharField(12) | non |  |  |
+| `changed_by` | FK -> accounts.User | oui |  |  |
+| `note` | CharField(500) | non |  |  |
+| `created_at` | DateTimeField | non |  | (fonction) |
+
+**Index :** `appstatus_app_idx`
+
+### `jobs_interview_slot` (InterviewSlot)
+
+Creneau propose par un recruteur. La base INTERDIT deux creneaux qui se chevauchent pour le meme recruteur (exclusion).
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | UUIDField(32) | non | PK | (fonction) |
+| `interviewer` | FK -> accounts.User | non |  |  |
+| `job` | FK -> jobs.Job | non |  |  |
+| `starts_at` | DateTimeField | non |  |  |
+| `ends_at` | DateTimeField | non |  |  |
+| `booked_by` | FK -> jobs.JobApplication | oui | oui |  |
+
+**Contraintes :** `chk_slot_period`
+
+**Index :** `slot_free_idx`
+
+### `jobs_interview` (Interview)
+
+Interview(id, application, slot, mode, location, status, feedback, created_at)
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | UUIDField(32) | non | PK | (fonction) |
+| `application` | FK -> jobs.JobApplication | non |  |  |
+| `slot` | FK -> jobs.InterviewSlot | oui | oui |  |
+| `mode` | CharField(8) | non |  | video |
+| `location` | CharField(300) | non |  |  |
+| `status` | CharField(10) | non |  | scheduled |
+| `feedback` | TextField(5000) | non |  |  |
+| `created_at` | DateTimeField | non |  | (fonction) |
+
+### `jobs_offer` (Offer)
+
+Offer(id, application, amount_minor, currency, period, start_date, expires_at, status, created_at, decided_at)
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | UUIDField(32) | non | PK | (fonction) |
+| `application` | FK -> jobs.JobApplication | non |  |  |
+| `amount_minor` | PositiveBigIntegerField | non |  |  |
+| `currency` | CharField(3) | non |  |  |
+| `period` | CharField(6) | non |  | month |
+| `start_date` | DateField | oui |  |  |
+| `expires_at` | DateTimeField | oui |  |  |
+| `status` | CharField(10) | non |  | sent |
+| `created_at` | DateTimeField | non |  | (fonction) |
+| `decided_at` | DateTimeField | oui |  |  |
+
+**Contraintes :** `chk_offer_amount` ; `uniq_offer_active`
+
+### `jobs_freelancer_profile` (FreelancerProfile)
+
+FreelancerProfile(user, headline, hourly_rate_minor, currency, is_available, languages, updated_at)
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `user` | FK -> accounts.User | non | PK |  |
+| `headline` | CharField(160) | non |  |  |
+| `hourly_rate_minor` | PositiveIntegerField | oui |  |  |
+| `currency` | CharField(3) | non |  |  |
+| `is_available` | BooleanField | non |  | True |
+| `languages` | CharField(100) | non |  |  |
+| `updated_at` | DateTimeField | non |  | (fonction) |
+
+**Contraintes :** `chk_freelancer_currency`
+
+**Index :** `freelancer_available_idx`
+
+### `jobs_proposal` (Proposal)
+
+Proposal(id, job, freelancer, cover_letter, bid_minor, currency, delivery_days, status, created_at)
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | UUIDField(32) | non | PK | (fonction) |
+| `job` | FK -> jobs.Job | non |  |  |
+| `freelancer` | FK -> accounts.User | non |  |  |
+| `cover_letter` | TextField(10000) | non |  |  |
+| `bid_minor` | PositiveBigIntegerField | non |  |  |
+| `currency` | CharField(3) | non |  |  |
+| `delivery_days` | PositiveSmallIntegerField | non |  |  |
+| `status` | CharField(10) | non |  | submitted |
+| `created_at` | DateTimeField | non |  | (fonction) |
+
+**Contraintes :** `uniq_proposal` ; `uniq_proposal_accepted_per_job` ; `chk_proposal_values`
+
+### `jobs_contract` (Contract)
+
+Contract(id, kind, client, contractor, application, proposal, amount_minor, currency, start_date, end_date, status, created_at)
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | UUIDField(32) | non | PK | (fonction) |
+| `kind` | CharField(10) | non |  |  |
+| `client` | FK -> accounts.User | non |  |  |
+| `contractor` | FK -> accounts.User | non |  |  |
+| `application` | FK -> jobs.JobApplication | oui | oui |  |
+| `proposal` | FK -> jobs.Proposal | oui | oui |  |
+| `amount_minor` | PositiveBigIntegerField | non |  |  |
+| `currency` | CharField(3) | non |  |  |
+| `start_date` | DateField | non |  | (fonction) |
+| `end_date` | DateField | oui |  |  |
+| `status` | CharField(10) | non |  | active |
+| `created_at` | DateTimeField | non |  | (fonction) |
+
+**Contraintes :** `chk_contract_single_source` ; `chk_contract_distinct_parties` ; `chk_contract_dates`
+
+### `jobs_milestone` (Milestone)
+
+Milestone(id, contract, position, title, amount_minor, due_on, status, approved_at)
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | UUIDField(32) | non | PK | (fonction) |
+| `contract` | FK -> jobs.Contract | non |  |  |
+| `position` | PositiveSmallIntegerField | non |  |  |
+| `title` | CharField(160) | non |  |  |
+| `amount_minor` | PositiveBigIntegerField | non |  |  |
+| `due_on` | DateField | oui |  |  |
+| `status` | CharField(12) | non |  | pending |
+| `approved_at` | DateTimeField | oui |  |  |
+
+**Contraintes :** `uniq_milestone_position` ; `chk_milestone_amount` ; `chk_milestone_approved_dated`
+
+## advertising
+
+**Source of truth :** PostgreSQL + Redis + MongoDB — annonceurs, campagnes, ciblage (liste blanche), portefeuille ; evenements bruts en Mongo `ad_events` ; plafonds en Redis
+
+### `advertising_advertiser` (Advertiser)
+
+Advertiser(id, owner, company_ref, name, status, created_at)
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | UUIDField(32) | non | PK | (fonction) |
+| `owner` | FK -> accounts.User | non |  |  |
+| `company_ref` | UUIDField(32) | oui |  |  |
+| `name` | CharField(140) | non |  |  |
+| `status` | CharField(10) | non |  | active |
+| `created_at` | DateTimeField | non |  | (fonction) |
+
+**Contraintes :** `uniq_advertiser_name`
+
+### `advertising_account` (AdAccount)
+
+Portefeuille PREPAYE : le solde ne peut JAMAIS etre negatif (CHECK) => aucune depense sans fonds.
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | UUIDField(32) | non | PK | (fonction) |
+| `advertiser` | FK -> advertising.Advertiser | non | oui |  |
+| `currency` | CharField(3) | non |  |  |
+| `balance_minor` | BigIntegerField | non |  | 0 |
+| `spend_remainder_micro` | PositiveIntegerField | non |  | 0 |
+| `created_at` | DateTimeField | non |  | (fonction) |
+| `updated_at` | DateTimeField | non |  | (fonction) |
+
+**Contraintes :** `chk_adaccount_no_overdraft` ; `chk_adaccount_currency` ; `chk_adaccount_remainder`
+
+### `advertising_account_transaction` (AdAccountTransaction)
+
+Journal du portefeuille (ecriture seule, trigger). `reference` UNIQUE par compte => recharge/reglement idempotents.
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | BigAutoField | non | PK |  |
+| `account` | FK -> advertising.AdAccount | non |  |  |
+| `kind` | CharField(8) | non |  |  |
+| `amount_minor` | BigIntegerField | non |  |  |
+| `balance_after_minor` | BigIntegerField | non |  |  |
+| `reference` | CharField(120) | non |  |  |
+| `created_at` | DateTimeField | non |  | (fonction) |
+
+**Contraintes :** `uniq_adtx_reference` ; `chk_adtx_nonzero` ; `chk_adtx_sign`
+
+**Index :** `adtx_account_idx`
+
+### `advertising_audience` (Audience)
+
+Audience(id, advertiser, name, kind, created_at)
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | UUIDField(32) | non | PK | (fonction) |
+| `advertiser` | FK -> advertising.Advertiser | non |  |  |
+| `name` | CharField(140) | non |  |  |
+| `kind` | CharField(12) | non |  | custom_list |
+| `created_at` | DateTimeField | non |  | (fonction) |
+
+**Contraintes :** `uniq_audience_name`
+
+### `advertising_audience_membership` (AudienceMembership)
+
+AudienceMembership(id, audience, user, source, added_at)
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | BigAutoField | non | PK |  |
+| `audience` | FK -> advertising.Audience | non |  |  |
+| `user` | FK -> accounts.User | non |  |  |
+| `source` | CharField(30) | non |  | advertiser_list |
+| `added_at` | DateTimeField | non |  | (fonction) |
+
+**Contraintes :** `uniq_audience_member`
+
+**Index :** `audmember_user_idx`
+
+### `advertising_campaign` (Campaign)
+
+Campaign(id, account, name, objective, status, pause_reason, starts_at, ends_at, daily_budget_minor, total_budget_minor, created_at, updated_at)
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | UUIDField(32) | non | PK | (fonction) |
+| `account` | FK -> advertising.AdAccount | non |  |  |
+| `name` | CharField(140) | non |  |  |
+| `objective` | CharField(12) | non |  | traffic |
+| `status` | CharField(10) | non |  | draft |
+| `pause_reason` | CharField(40) | non |  |  |
+| `starts_at` | DateTimeField | non |  |  |
+| `ends_at` | DateTimeField | oui |  |  |
+| `daily_budget_minor` | PositiveBigIntegerField | non |  |  |
+| `total_budget_minor` | PositiveBigIntegerField | non |  |  |
+| `created_at` | DateTimeField | non |  | (fonction) |
+| `updated_at` | DateTimeField | non |  | (fonction) |
+
+**Contraintes :** `chk_campaign_budgets` ; `chk_campaign_period`
+
+**Index :** `campaign_active_idx`
+
+### `advertising_adset` (AdSet)
+
+AdSet(id, campaign, name, status, billing_model, bid_minor, placements, frequency_cap_per_day, audience)
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | UUIDField(32) | non | PK | (fonction) |
+| `campaign` | FK -> advertising.Campaign | non |  |  |
+| `name` | CharField(140) | non |  |  |
+| `status` | CharField(8) | non |  | active |
+| `billing_model` | CharField(3) | non |  | cpc |
+| `bid_minor` | PositiveIntegerField | non |  |  |
+| `placements` | ArrayField | non |  | (fonction) |
+| `frequency_cap_per_day` | PositiveSmallIntegerField | non |  | 3 |
+| `audience` | FK -> advertising.Audience | oui |  |  |
+
+**Contraintes :** `chk_adset_bid` ; `chk_adset_freqcap`
+
+### `advertising_targeting_rule` (TargetingRule)
+
+Une regle = (critere, operateur, valeurs). ET entre regles ; dans une regle : `in` = OU, `all` = ET, `not_in` = NON.
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | UUIDField(32) | non | PK | (fonction) |
+| `ad_set` | FK -> advertising.AdSet | non |  |  |
+| `field` | CharField(24) | non |  |  |
+| `operator` | CharField(6) | non |  | in |
+| `values` | JSONField | non |  | (fonction) |
+| `required` | BooleanField | non |  | True |
+| `weight` | PositiveSmallIntegerField | non |  | 1 |
+
+**Contraintes :** `chk_targeting_field_allowed` ; `chk_targeting_weight`
+
+### `advertising_creative` (Creative)
+
+Creative(id, advertiser, kind, headline, body, media_key, cta_label, destination_url)
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | UUIDField(32) | non | PK | (fonction) |
+| `advertiser` | FK -> advertising.Advertiser | non |  |  |
+| `kind` | CharField(6) | non |  | text |
+| `headline` | CharField(90) | non |  |  |
+| `body` | CharField(300) | non |  |  |
+| `media_key` | CharField(400) | non |  |  |
+| `cta_label` | CharField(30) | non |  |  |
+| `destination_url` | CharField(500) | non |  |  |
+
+**Contraintes :** `chk_creative_https` ; `chk_creative_media`
+
+### `advertising_ad` (Advertisement)
+
+Advertisement(id, ad_set, creative, status, review_notes, reviewed_by, reviewed_at)
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | UUIDField(32) | non | PK | (fonction) |
+| `ad_set` | FK -> advertising.AdSet | non |  |  |
+| `creative` | FK -> advertising.Creative | non |  |  |
+| `status` | CharField(14) | non |  | draft |
+| `review_notes` | CharField(500) | non |  |  |
+| `reviewed_by` | FK -> accounts.User | oui |  |  |
+| `reviewed_at` | DateTimeField | oui |  |  |
+
+**Contraintes :** `chk_ad_reviewed`
+
+**Index :** `ad_live_idx`
+
+### `advertising_settlement` (AdSettlement)
+
+REGLEMENT : lot de depenses/statistiques d'UNE annonce pour UN jour, applique UNE seule fois (unique(batch, ad)). Verite financiere.
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | BigAutoField | non | PK |  |
+| `batch` | UUIDField(32) | non |  |  |
+| `ad` | FK -> advertising.Advertisement | non |  |  |
+| `day` | DateField | non |  |  |
+| `impressions` | PositiveIntegerField | non |  | 0 |
+| `clicks` | PositiveIntegerField | non |  | 0 |
+| `conversions` | PositiveIntegerField | non |  | 0 |
+| `spend_micro` | PositiveBigIntegerField | non |  | 0 |
+| `created_at` | DateTimeField | non |  | (fonction) |
+
+**Contraintes :** `uniq_settlement`
+
+**Index :** `settlement_ad_day_idx`
+
+### `advertising_user_preference` (AdUserPreference)
+
+Droit de refuser la publicite PERSONNALISEE : l'utilisateur ne recoit alors que des annonces sans ciblage personnel.
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `user` | FK -> accounts.User | non | PK |  |
+| `personalized_ads` | BooleanField | non |  | True |
+| `updated_at` | DateTimeField | non |  | (fonction) |
+
 ## analytics
 
 **Source of truth :** PostgreSQL + MongoDB — catalogue d'evenements + agregats (PG) ; evenements bruts (Mongo `events`)

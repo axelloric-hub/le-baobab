@@ -290,3 +290,20 @@ def revoke_entitlement(entitlement_id, *, by) -> Entitlement:
     ent.save(update_fields=["revoked_at"])
     publish_event("EntitlementRevoked", "entitlement", ent.pk, {"user": str(ent.user_id)})
     return ent
+
+
+def revoke_entitlements_by_prefix(prefix: str) -> int:
+    """Revocation SYSTEME (remboursement) des droits dont la cle d'idempotence commence par `prefix` ; l'historique reste."""
+    return Entitlement.objects.filter(grant_key__startswith=prefix, revoked_at__isnull=True).update(revoked_at=timezone.now())
+
+
+def sellable_target(scope: str, target_id, actor) -> bool:
+    """La cible existe-t-elle et `actor` peut-il la vendre ? (utilise par le domaine marketplace via le registre)."""
+    model = {"classroom": Classroom, "course": Course, "module": Module, "chapter": Chapter}.get(scope)
+    obj = model.objects.filter(pk=target_id).first() if model else None
+    if obj is None:
+        return False
+    course = obj if scope == "course" else getattr(obj, "course", None) or getattr(getattr(obj, "module", None), "course", None)
+    if scope == "classroom":
+        return actor.is_staff or ClassroomMember.objects.filter(classroom=obj, user=actor, status="active", role__in=STAFF_ROLES).exists()
+    return is_course_staff(actor, course)

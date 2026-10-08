@@ -1,12 +1,13 @@
 # MONGODB_ARCHITECTURE
 
-MongoDB n'est utilise que la ou le modele document apporte quelque chose. **3 collections**, specifiees dans `database/mongodb/collections/*.json` (schema, index, patron de lecture/ecriture, embedding, sharding futur, TTL) et appliquees par `manage.py mongo_setup`.
+MongoDB n'est utilise que la ou le modele document apporte quelque chose. **4 collections**, specifiees dans `database/mongodb/collections/*.json` (schema, index, patron de lecture/ecriture, embedding, sharding futur, TTL) et appliquees par `manage.py mongo_setup`.
 
 | Collection | Role | Source de verite | Volume | TTL |
 |---|---|---|---|---|
 | `post_cards` | read-model denormalise d'un post (auteur, medias <= 10, hashtags, compteurs) pour hydrater le feed **sans jointure** | PostgreSQL `social_post` | 1 doc/post | aucun (supprime par `PostDeleted`) |
 | `events` | evenements analytiques bruts (acteur, cible, meta libre) | MongoDB (c'est la seule copie : analytique) | tres eleve | `expires_at` (par type, `analytics_event_type.retention_days`) |
 | `api_request_logs` | journal de requetes (observabilite, abus) | MongoDB | tres eleve | 30 jours |
+| `ad_events` | impressions, clics, conversions publicitaires (la depense facturee est reglee dans PostgreSQL) | MongoDB (bruts) ; PostgreSQL (reglements) | tres eleve | 60 jours |
 
 ## Choix d'embedding
 Auteur et medias **embarques** (toujours lus ensemble, bornes, changent rarement). Commentaires **non embarques** : croissance non bornee (risque de depasser 16 Mo) -> PostgreSQL.

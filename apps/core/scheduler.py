@@ -43,6 +43,9 @@ def default_jobs() -> list[Job]:
         Job("refresh-platform", 3600, _command("refresh_materialized_views", "mv_platform_daily")),
         Job("refresh-metrics", 3600, _command("refresh_metrics", days=2)),
         Job("housekeeping", 3600, _command("housekeeping")),
+        Job("ads-settle", 300, lambda: __import__("apps.advertising.delivery", fromlist=["x"]).settle()),
+        Job("ads-recover", 900, lambda: __import__("apps.advertising.delivery", fromlist=["x"]).recover_settlements()),
+        Job("expire-orders", 600, lambda: __import__("apps.marketplace.services", fromlist=["x"]).expire_pending_orders()),
     ]
 
 

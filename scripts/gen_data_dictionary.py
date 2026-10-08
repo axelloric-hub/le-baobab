@@ -22,6 +22,12 @@ TRUTH = {
     "education": ("PostgreSQL", "classrooms, cours, modules/chapitres (prix par niveau), blocs de contenu, inscriptions, droits d'acces"),
     "assessments": ("PostgreSQL", "quiz (correction auto), devoirs, groupes, grille de notation, notes"),
     "progress": ("PostgreSQL", "progression par chapitre (module/cours calcules en SQL), certificats verifiables"),
+    "marketplace": ("PostgreSQL", "catalogue, panier, commandes (prix figes), licences, avis"),
+    "payments": ("PostgreSQL", "paiements, grand livre equilibre et inalterable, remboursements, webhooks dedoublonnes"),
+    "companies": ("PostgreSQL", "entreprises, membres et roles, verification"),
+    "portfolio": ("PostgreSQL", "projets, depots, experiences, formations, certificats affiches"),
+    "jobs": ("PostgreSQL", "offres, candidatures (machine a etats), entretiens, offres d'embauche, freelance, contrats, jalons"),
+    "advertising": ("PostgreSQL + Redis + MongoDB", "annonceurs, campagnes, ciblage (liste blanche), portefeuille ; evenements bruts en Mongo `ad_events` ; plafonds en Redis"),
     "analytics": ("PostgreSQL + MongoDB", "catalogue d'evenements + agregats (PG) ; evenements bruts (Mongo `events`)"), "core": ("PostgreSQL", "outbox, idempotence"),
 }
 

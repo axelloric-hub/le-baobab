@@ -29,6 +29,15 @@ NOTIFICATION_TYPES = [
     ("course_enrollment", "learning", ["in_app", "websocket"], False),
     ("assignment_graded", "learning", ["in_app", "websocket", "push"], False),
     ("certificate_issued", "learning", ["in_app", "websocket", "email"], False),
+    ("order_paid", "commerce", ["in_app", "email"], True),
+    ("new_sale", "commerce", ["in_app", "websocket", "email"], False),
+    ("refund_processed", "commerce", ["in_app", "email"], True),
+    ("application_received", "jobs", ["in_app", "websocket", "email"], False),
+    ("application_status", "jobs", ["in_app", "websocket", "push"], False),
+    ("interview_scheduled", "jobs", ["in_app", "websocket", "email"], False),
+    ("offer_received", "jobs", ["in_app", "websocket", "email"], False),
+    ("proposal_received", "jobs", ["in_app", "websocket", "email"], False),
+    ("proposal_accepted", "jobs", ["in_app", "websocket", "email"], False),
 ]
 
 EVENT_TYPES = [

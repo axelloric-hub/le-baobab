@@ -12,12 +12,9 @@ class AdminSmokeTests(TestCase):
         self.client.force_login(su)
         failures = []
         for model, model_admin in admin.site._registry.items():
-            if not model._meta.app_label.startswith(("education", "assessments", "progress", "accounts", "profiles", "friends", "community", "messaging",
-                                                      "social", "notifications", "audit", "moderation", "integrations", "analytics", "core")):
-                continue
             url = f"/admin/{model._meta.app_label}/{model._meta.model_name}/"
             r = self.client.get(url, {"q": "x"})
             if r.status_code != 200:
                 failures.append((url, r.status_code))
         self.assertEqual(failures, [])
-        self.assertGreater(len(admin.site._registry), 80)
+        self.assertGreater(len(admin.site._registry), 130)

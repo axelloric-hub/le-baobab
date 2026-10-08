@@ -16,7 +16,11 @@ Redis = **acceleration et temps reel, jamais verite**. Construction des cles uni
 | `baobab:idem:{scope}:{key}` | string | 24 h | verrou court d'idempotence | **la base fait foi** |
 | `baobab:cnt:post_view:{id}` | string | — | compteur de vues, vide par `GETDEL` chaque minute | perte max = 1 minute de vues |
 | `baobab:dedup:post_view:{post}:{viewer}` | string | 1 h | une vue/heure/viewer | ephemere |
-| `baobab:ad:freq:{ad}:{user}:{window}` | string | fenetre | frequency capping (domaine advertising, a venir) | ephemere |
+| `baobab:ad:freq:{ad}:{user}:{jour}` | string | 24 h | plafond de frequence publicitaire | ephemere |
+| `baobab:ad:gate:{campagne}:{jour}` / `gate_total:{campagne}` | string (micro-unites) | 2 j / 400 j | garde-fou de budget temps reel (INCRBY atomique puis controle) ; le total est reinitialise depuis PostgreSQL | PG (`AdSettlement`) |
+| `baobab:ad:acc:{annonce}:{jour}` | hash | 3 j | accumulateur impressions/clics/conversions/depense avant reglement | ephemere : RENAME vers un lot puis application en base |
+| `baobab:ad:settling:{lot}:{annonce}:{jour}` | hash | — | lot en cours de reglement (rejouable apres plantage) | supprime APRES commit |
+| `baobab:ad:dedupe:{imp|click|conv}:{id}` | string | 24 h / 7 j | un evenement ne compte qu'une fois | ephemere |
 | `baobab:asgi:*` | channel layer | 10 s | WebSocket (Django Channels) | ephemere |
 
 ## Scripts Lua (atomiques)

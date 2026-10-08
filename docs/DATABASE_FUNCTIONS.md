@@ -29,8 +29,30 @@ Principe : triggers **courts, previsibles, sans logique metier** ; la logique es
 | `baobab_module_progress(user, module)` / `baobab_course_progress(user, course)` | chapitres publies termines / total, pourcentage, temps passe (module/cours = **calcul**, aucune donnee derivee a maintenir) | table |
 | `baobab_quiz_best_percent(user, quiz)` | meilleur score en % parmi les tentatives corrigees | numeric |
 | `baobab_course_leaderboard(course, limit)` | classement (chapitres termines puis temps), egalites = meme rang | table |
-Vue `v_course_statistics` (inscriptions, taux d'achevement, certificats, droits actifs). Audit par trigger sur `education_entitlement`, `progress_certificate`, `assessments_grade`, `education_enrollment`.
+Vues ajoutees : `v_store_statistics`, `v_job_statistics`, `v_company_statistics`, `v_campaign_statistics`. Vue `v_course_statistics` (inscriptions, taux d'achevement, certificats, droits actifs). Audit par trigger sur `education_entitlement`, `progress_certificate`, `assessments_grade`, `education_enrollment`.
 La regle d'acces payant a UNE seule definition (la fonction SQL) ; `apps.education.access` l'appelle, il n'y a pas de duplication Python.
+
+## Fonctions du commerce (`007_commerce.sql`)
+| Nom | Objet |
+|---|---|
+| `baobab_trg_review_rating()` | note moyenne d'un produit maintenue a l'insertion, a la modification de la note et a la suppression d'un avis |
+| `baobab_ledger_check_batch()` | **trigger differe** : tout lot d'ecritures du grand livre somme a ZERO et ne melange pas les devises, sinon la transaction est refusee |
+| `baobab_order_ledger_balance(order)` | solde de toutes les ecritures d'une commande (doit valoir 0) |
+| `baobab_store_revenue(store, from, to)` | revenus d'une boutique calcules depuis le grand livre (brut, rembourse, net) |
+
+## Fonctions du recrutement (`008_opportunities.sql`)
+| Nom | Objet |
+|---|---|
+| `baobab_company_requires_owner()` | **trigger differe** : une entreprise a toujours au moins un proprietaire (transfert possible dans une seule transaction) |
+| `baobab_job_funnel(job)` | entonnoir : nombre de candidatures par statut |
+Contrainte d'exclusion `excl_slot_no_overlap` : deux creneaux d'entretien d'un meme recruteur ne peuvent pas se chevaucher. Historique des candidatures en ecriture seule.
+
+## Fonctions de la publicite (`009_advertising.sql`)
+| Nom | Objet |
+|---|---|
+| `baobab_adwallet_check()` | **trigger differe** : solde du portefeuille == somme de son journal, que l'on modifie l'un ou l'autre |
+| `baobab_campaign_settled_micro(campaign)` | depense reglee d'une campagne (micro-unites) |
+Le portefeuille ne peut pas etre negatif (`CHECK`), le journal et les reglements sont en ecriture seule, le ciblage est limite a une liste blanche (`CHECK`).
 
 ## Triggers (28 + 4 education)
 `trg_set_updated_at` (toutes tables), 8 compteurs, 3 messagerie, 3 append-only (`audit_log`, `audit_admin_action`, `moderation_action`), 6 audit de lignes (`accounts_user`, `profiles_profile`, `profiles_privacy`, `community_group_ban`, `community_group_role`, `moderation_restriction`).

@@ -12,11 +12,13 @@ EXPECTED_FUNCTIONS = [
     "baobab_audit_row", "baobab_are_friends", "baobab_group_has_permission", "baobab_feed_score", "baobab_unread_count",
     "baobab_user_stats", "baobab_recount_post_counters", "baobab_refresh_daily_metrics", "baobab_housekeeping",
     "baobab_chapter_unlocked", "baobab_course_progress", "baobab_module_progress", "baobab_quiz_best_percent", "baobab_course_leaderboard",
+    "baobab_ledger_check_batch", "baobab_order_ledger_balance", "baobab_store_revenue", "baobab_trg_review_rating",
+    "baobab_company_requires_owner", "baobab_job_funnel", "baobab_adwallet_check", "baobab_campaign_settled_micro",
 ]
 EXPECTED_TRIGGERS = ["trg_post_reaction_count", "trg_comment_count", "trg_group_member_count", "trg_message_assign_seq",
                      "trg_audit_log_immutable", "trg_moderation_action_immutable", "trg_audit_user", "trg_set_updated_at",
-                     "trg_audit_entitlement", "trg_audit_certificate", "trg_audit_grade"]
-EXPECTED_VIEWS = ["v_user_statistics", "v_group_statistics", "v_moderation_queue", "mv_platform_daily", "mv_trending_hashtags", "v_course_statistics"]
+                     "trg_audit_entitlement", "trg_audit_certificate", "trg_audit_grade", "trg_ledger_immutable", "trg_ledger_balanced", "trg_audit_payment", "trg_company_requires_owner_member", "trg_application_history_immutable", "trg_adtx_immutable", "trg_adwallet_check_tx"]
+EXPECTED_VIEWS = ["v_user_statistics", "v_group_statistics", "v_moderation_queue", "mv_platform_daily", "mv_trending_hashtags", "v_course_statistics", "v_store_statistics", "v_job_statistics", "v_company_statistics", "v_campaign_statistics"]
 EXPECTED_INDEXES = ["post_fts_idx", "audit_log_created_brin", "outbox_pending_idx", "post_author_pub_idx", "friend_low_acc_idx"]
 Result = tuple[str, bool, str]
 
@@ -43,9 +45,9 @@ def _pg() -> list[Result]:
             missing = [e for e in expected if e not in present]
             out.append((f"postgres.{label}", not missing, f"{len(present)} presents" + (f", MANQUANTS: {missing}" if missing else "")))
         cur.execute("SELECT count(*) FROM pg_constraint WHERE contype = 'x'")
-        out.append(("postgres.exclusion", cur.fetchone()[0] >= 1, "contrainte d'exclusion des sanctions"))
+        out.append(("postgres.exclusion", cur.fetchone()[0] >= 2, "contraintes d'exclusion (sanctions, creneaux d'entretien)"))
         cur.execute("SELECT count(*) FROM django_migrations WHERE app = 'dbobjects'")
-        out.append(("postgres.migrations", cur.fetchone()[0] >= 5, "dbobjects appliquees"))
+        out.append(("postgres.migrations", cur.fetchone()[0] >= 10, "dbobjects appliquees"))
     return out
 
 

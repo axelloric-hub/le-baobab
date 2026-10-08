@@ -148,5 +148,12 @@ Vous avez deja PostgreSQL, MongoDB, Redis et Docker Desktop : `python manage.py 
 | `cloudflare/wrangler-action@v3` et l'entree `secrets:` | logs du premier run |
 | Carte bancaire exigee a l'inscription ? | a l'inscription |
 
+## 7 bis. Ce qui change au prochain deploiement (domaines commerce, recrutement, publicite)
+- **`Migrer` creera** ~60 tables, 12 fonctions SQL, des triggers (dont des controles differes sur le grand livre et le portefeuille) et la collection MongoDB **`ad_events`**. C'est leur premiere execution sur Supabase/Atlas : regardez le journal ; en cas d'echec, envoyez les 20 dernieres lignes.
+- **Variables d'environnement optionnelles** (Render > Environment) : `PLATFORM_FEE_BPS` (defaut 1000 = 10 %), `PENDING_ORDER_TTL_HOURS` (24), et un secret de signature par fournisseur de paiement : `PAYMENT_WEBHOOK_SECRET_MOBILE_MONEY`, `..._CARD`, `..._MANUAL`. **Non renseigne = tous les webhooks de ce fournisseur sont refuses** (comportement voulu).
+- **Aucun fournisseur de paiement n'est branche** : il faudra ecrire la creation de sessions de paiement chez le fournisseur choisi (Orange Money, MTN MoMo, carte...) puis pointer son webhook vers l'API.
+- Le planificateur interne execute aussi `expire-orders` (10 min), `ads-settle` (5 min) et `ads-recover` (15 min), **uniquement pendant l'activite du service**.
+- Budget de commandes Upstash : le reglement publicitaire utilise `SCAN` toutes les 5 min (quelques dizaines de commandes par jour, a surveiller dans le tableau de bord Upstash).
+
 ## 8. Quand vous aurez un peu de budget
 Par ordre d'effet : Render **Starter (7 $/mois)** supprime la veille (et le reveil d'une minute) ; Supabase **Pro (25 $/mois)** supprime la pause. Rien dans le code ne change.

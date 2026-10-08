@@ -65,3 +65,59 @@ def course_enrolled(ev):
 def classroom_invitation(ev):
     notify(recipient=User.objects.get(pk=ev.payload["to"]), type_code="classroom_invitation", actor=User.objects.get(pk=ev.payload["by"]),
            target_type="classroom", target_id=ev.payload["classroom"], dedupe_key=f"cinv:{ev.aggregate_id}")
+
+
+# ------------------------------------------------------------------ commerce
+@subscribe("OrderPaid")
+def order_paid(ev):
+    notify(recipient=User.objects.get(pk=ev.payload["buyer"]), type_code="order_paid", target_type="order", target_id=ev.aggregate_id,
+           data={"number": ev.payload["number"], "total": ev.payload["total"], "currency": ev.payload["currency"]}, dedupe_key=f"op:{ev.aggregate_id}")
+    for sid in ev.payload["sellers"]:
+        notify(recipient=User.objects.get(pk=sid), type_code="new_sale", target_type="order", target_id=ev.aggregate_id, data={"number": ev.payload["number"]}, dedupe_key=f"ns:{ev.aggregate_id}:{sid}")
+
+
+@subscribe("OrderRefunded")
+def order_refunded(ev):
+    notify(recipient=User.objects.get(pk=ev.payload["buyer"]), type_code="refund_processed", target_type="order", target_id=ev.aggregate_id,
+           data={"amount": ev.payload["amount"], "currency": ev.payload["currency"]}, dedupe_key=f"rf:{ev.event_id}")
+
+
+# ------------------------------------------------------------------ recrutement / freelance
+def _each(ids, **kw):
+    for uid in ids:
+        notify(recipient=User.objects.get(pk=uid), **kw)
+
+
+@subscribe("JobApplied")
+def job_applied(ev):
+    p = ev.payload
+    applicant = User.objects.get(pk=p["user"])
+    _each(p["recruiters"], type_code="application_received", actor=applicant, target_type="application", target_id=ev.aggregate_id, data={"job": p["job"]}, dedupe_key=f"ar:{ev.event_id}")
+
+
+@subscribe("ApplicationStatusChanged")
+def application_status(ev):
+    p = ev.payload
+    notify(recipient=User.objects.get(pk=p["user"]), type_code="application_status", target_type="application", target_id=ev.aggregate_id,
+           data={"from": p["from"], "to": p["to"], "job": p["job"]}, dedupe_key=f"as:{ev.event_id}")
+
+
+@subscribe("InterviewScheduled")
+def interview_scheduled(ev):
+    p = ev.payload
+    _each([p["user"], p["interviewer"]], type_code="interview_scheduled", target_type="interview", target_id=ev.aggregate_id, data={"starts_at": p["starts_at"]}, dedupe_key=f"is:{ev.event_id}")
+
+
+@subscribe("OfferSent")
+def offer_sent(ev):
+    notify(recipient=User.objects.get(pk=ev.payload["user"]), type_code="offer_received", target_type="offer", target_id=ev.aggregate_id, data={"job": ev.payload["job"]}, dedupe_key=f"os:{ev.event_id}")
+
+
+@subscribe("ProposalReceived")
+def proposal_received(ev):
+    _each(ev.payload["recruiters"], type_code="proposal_received", target_type="proposal", target_id=ev.aggregate_id, data={"job": ev.payload["job"]}, dedupe_key=f"pr2:{ev.event_id}")
+
+
+@subscribe("ProposalAccepted")
+def proposal_accepted(ev):
+    notify(recipient=User.objects.get(pk=ev.payload["freelancer"]), type_code="proposal_accepted", target_type="proposal", target_id=ev.aggregate_id, data={"job": ev.payload["job"]}, dedupe_key=f"pa:{ev.event_id}")

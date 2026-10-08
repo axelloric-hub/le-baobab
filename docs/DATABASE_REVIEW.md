@@ -1,26 +1,32 @@
-# DATABASE_REVIEW — audit
+# DATABASE_REVIEW — audit final de la couche data
 
-Scores = jugement honnete sur **ce qui existe et a ete verifie**, pas sur le perimetre vise. Le cahier des charges exigeait >= 90 partout : **ce n'est PAS atteint** ; l'ecart est detaille axe par axe. Gonfler une note sans la preuve correspondante serait faux.
+Scores = jugement honnete sur **ce qui existe et a ete verifie**. Le cahier des charges exigeait >= 90 partout : **ce n'est pas atteint**, et ce document dit pourquoi, axe par axe. Gonfler une note sans la preuve correspondante serait faux ; les axes sous 90 ne montent qu'avec des **mesures reelles** (charge, metriques, audit externe), pas avec du code supplementaire.
 
-## Ce qui a ete verifie sur de VRAIS services (et non simule)
-Migrations PostgreSQL (fonctions, triggers, vues, contrainte d'exclusion) sur **Supabase** ; creation des collections, validateurs JSON Schema et index sur **MongoDB Atlas** (`mongo_setup`) ; connexion des trois bases par `/ready/` (Supabase, Atlas, Upstash) apres deploiement sur **Render** derriere un routeur **Cloudflare**. 204 tests sur PostgreSQL 16 et Redis reels (MongoDB simule en test).
+## Ce qui a ete verifie, et sur quoi
+- **Tests automatises : 312**, sur PostgreSQL 16 et Redis **reels** (concurrence reelle par threads : achats, paiements, remboursements, candidatures, creneaux, clics). MongoDB est **simule** (`mongomock`) en test.
+- **Sur de vrais services** (Supabase, Atlas, Upstash, Render, Cloudflare) : migrations jusqu'au domaine *education* (voir historique), `mongo_setup`, et `/ready/` = les trois bases connectees.
+- **Pas encore verifie sur de vrais services** : les migrations des domaines marketplace, payments, companies, portfolio, jobs, advertising (ecrites apres le dernier deploiement), et la collection MongoDB `ad_events`. Le prochain `Migrer` sera leur premiere execution reelle.
+
+## Inventaire mesure (base locale migree)
+36 fonctions SQL · 45 triggers · 8 vues + 2 vues materialisees · 2 contraintes d'exclusion · 183 tables metier · 118 contraintes `CHECK` · 834 index · 175 entites documentees (`DATA_DICTIONARY.md`, genere depuis les modeles).
 
 | Axe | /100 | Pourquoi | Ce qui manque pour 90+ |
 |---|---|---|---|
-| Modelisation | 78 | 100+ entites, contraintes en base (prix, cibles uniques, exclusion), education complete (prix par module/chapitre, droits idempotents, quiz, devoirs, certificats) | **marketplace/paiements, jobs/freelance/portfolio/companies, advertising** non faits |
-| PostgreSQL | 89 | 28 fonctions, 32 triggers, vues, index partiels/BRIN/FTS, migrations reversibles, valide sur Supabase reel | `EXPLAIN` sur > 1 M lignes ; partitionnement non active |
-| MongoDB | 78 | creation du schema/validateurs/index **valide sur Atlas reel** ; pipelines testes sur simulateur | pipelines et patrons de lecture jamais executes sur un vrai serveur |
-| Redis | 84 | primitives atomiques (Lua) testees sur vrai Redis ; Upstash connecte | politique d'eviction non verifiable sur Upstash ; quota 500 000 commandes/mois ; WebSocket en memoire |
-| Securite | 80 | audit inalterable, autorisation en SQL, origine verrouillee (secret edge), HMAC interne, certificats a verification limitee, corrections de quiz jamais exposees (teste) | pas de pentest, pas de `pip-audit`, 2FA / verification e-mail / reset non faits, pas de RLS |
+| Modelisation | 86 | tous les domaines demandes sont modelises (identite, social, messagerie, education, marketplace, paiements, emplois/freelance, portfolio, entreprises, publicite, moderation, audit, analytics) ; invariants en base (somme du grand livre nulle, solde = journal, proprietaire d'entreprise, exclusion de creneaux, liste blanche de ciblage) | **AI Gateway** non fait ; signaux de recommandation seulement prepares ; pas de partitionnement actif |
+| PostgreSQL | 89 | 36 fonctions, 45 triggers dont 6 **differes** (invariants verifies au commit), index partiels/BRIN/FTS/exclusion, migrations reversibles et rejouables | `EXPLAIN` sur des volumes realistes (> 1 M lignes) ; migrations recentes non rejouees sur Supabase |
+| MongoDB | 78 | 4 collections specifiees (schema, index justifies, TTL) ; creation validee sur Atlas pour les 3 premieres | pipelines et requetes jamais executes sur un vrai serveur ; `ad_events` non encore cree sur Atlas |
+| Redis | 84 | primitives atomiques (Lua) testees sur vrai Redis ; plafonds de frequence/budget temps reel ; tout reconstructible | politique d'eviction non verifiable sur Upstash ; quota 500 000 commandes/mois ; WebSocket en memoire (1 instance) |
+| Securite | 82 | webhooks HMAC dedoublonnes, grand livre/portefeuille/journaux en ecriture seule, anti-fraude des clics, ciblage par liste blanche, aucun secret commercial dans les serializers (teste), origine verrouillee | pas de pentest, pas de `pip-audit`, 2FA / verification e-mail / reset non faits, pas de RLS, **aucun fournisseur de paiement integre** |
 | Performance | 72 | index partiels, pagination curseur, EXPLAIN cibles | **aucun test de charge** ; lignes chaudes connues (voir SCALABILITY.md) |
-| Scalabilite | 76 | fan-out hybride, outbox `SKIP LOCKED`, plan de partitionnement | **une seule instance gratuite** par conception ; non mesuree |
-| Maintenabilite | 87 | 204 tests (concurrence incluse), dictionnaire genere, responsabilites claires | couche API (vues/URLs) absente |
-| Observabilite | 62 | correlation ID, logs JSON, `/ready/`, journal `SystemEvent` | pas de metriques ni de tableau de bord, pas de timing par requete DB/Redis/Mongo |
-| Preparation microservices | 82 | references par UUID entre domaines, evenements outbox, registre de hooks | quelques FK restantes entre domaines proches ; contrats d'evenements non versionnes |
+| Scalabilite | 76 | fan-out hybride, outbox `SKIP LOCKED`, reglement publicitaire par lots, plan de partitionnement | **une seule instance gratuite** par conception ; non mesuree |
+| Maintenabilite | 88 | 312 tests, dictionnaire genere, decouplage par evenements/registres, services/selectors, admin sans liste illisible (test de fumee sur ~145 modeles) | couche API (vues/URLs) absente |
+| Observabilite | 62 | correlation ID, logs JSON, `/ready/`, `SecurityEvent`/`SystemEvent` (paiement orphelin, montant falsifie, webhook non signe) | pas de metriques ni de tableau de bord, pas de timing par requete DB/Redis/Mongo |
+| Preparation microservices | 85 | references par UUID entre domaines, evenements outbox, registres (moderation, cibles vendables), commerce <-> education sans import | quelques FK restantes entre domaines proches ; contrats d'evenements non versionnes |
 
 ## Defauts trouves pendant la construction (tous couverts par un test)
-Cache de permissions non invalide a l'adhesion ; demande d'ami rejetee a tort ; preference de notification `NULL` jamais appliquee (`IN (x, NULL)`) ; evenement analytique rejete en boucle ; contexte d'audit qui fuyait ; index redondant ; `argon2-cffi`/`whitenoise` absents de `requirements.txt` ; YAML invalide ; nom de conteneur de CI invalide ; **`SELECT ... FOR UPDATE` refuse par PostgreSQL sur une jointure externe (aurait casse tous les quiz)**.
+Cache de permissions non invalide a l'adhesion · demande d'ami rejetee a tort · preference de notification `NULL` jamais appliquee (`IN (x, NULL)`) · evenement analytique rejete en boucle · contexte d'audit qui fuyait · index redondant · dependances absentes de `requirements.txt` · YAML invalide · nom de conteneur de CI invalide · `SELECT ... FOR UPDATE` refuse sur jointure externe (aurait casse les quiz) · panier cree avec une quantite 0 · remboursement d'un produit sans licence (formation) · lecture de `NEW` dans un trigger de suppression (PL/pgSQL) · contrainte « clics <= impressions » qui aurait fait echouer un reglement le lendemain d'une impression · plusieurs tests creux (`if False`) detectes et remplaces.
 
 ## Limites connues
-- Tests : PostgreSQL et Redis reels ; MongoDB simule ; WebSocket teste en memoire puis en local derriere le routeur (pas sur Cloudflare Pages reel).
+- MongoDB simule en test ; WebSocket teste en memoire puis en local derriere le routeur, pas sur Cloudflare Pages reel.
 - Offre gratuite : veille de ~1 min, une instance, Redis a quota, base Supabase mise en pause apres 1 semaine sans activite.
+- Les jobs periodiques (relais outbox, reglement publicitaire, expiration des commandes) tournent **dans le processus web** : ils ne s'executent que pendant l'activite.

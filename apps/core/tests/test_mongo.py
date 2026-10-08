@@ -14,7 +14,7 @@ class MongoSchemaTests(SimpleTestCase):
 
     def test_specs_are_well_formed(self):
         specs = load_collection_specs()
-        self.assertEqual({s["name"] for s in specs}, {"post_cards", "events", "api_request_logs"})
+        self.assertEqual({s["name"] for s in specs}, {"post_cards", "events", "api_request_logs", "ad_events"})
         for s in specs:
             for key in ("purpose", "read_pattern", "write_pattern", "sharding_future", "ttl", "indexes", "jsonSchema"):
                 self.assertIn(key, s, f"{s['name']} sans {key}")
@@ -24,7 +24,7 @@ class MongoSchemaTests(SimpleTestCase):
     def test_ensure_schema_is_idempotent_and_creates_indexes(self):
         first = ensure_schema()
         second = ensure_schema()
-        self.assertEqual(first["collections_created"], 3)
+        self.assertEqual(first["collections_created"], 4)
         self.assertEqual(second["collections_created"], 0)
         names = {i["name"] for i in collection("events").list_indexes()}
         self.assertTrue({"ttl_expires", "type_ts", "actor_ts", "target_ts"} <= names)

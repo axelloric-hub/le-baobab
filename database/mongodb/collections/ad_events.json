@@ -1,0 +1,29 @@
+{
+  "name": "ad_events",
+  "purpose": "Evenements publicitaires bruts (impression, clic, conversion) : tres fort volume, faible valeur individuelle. La depense facturee n'est PAS ici : elle est reglee dans PostgreSQL (advertising_settlement).",
+  "read_pattern": "recherche par _id (validation d'un clic : l'impression existe-t-elle ?), agregations par annonce/campagne/jour.",
+  "write_pattern": "insert idempotent (_id = imp:<id> | click:<id> | conv:<id>) ; aucune mise a jour.",
+  "embedding": "documents plats ; l'adresse IP n'est JAMAIS stockee en clair (empreinte tronquee).",
+  "sharding_future": "hashed _id, ou {campaign_id, ts} selon le patron de lecture dominant.",
+  "ttl": "60 jours (expires_at).",
+  "jsonSchema": {
+    "bsonType": "object",
+    "required": ["type", "ad_id", "campaign_id", "ts", "expires_at"],
+    "properties": {
+      "_id": {"bsonType": "string"},
+      "type": {"enum": ["impression", "click", "conversion"]},
+      "ad_id": {"bsonType": "string"},
+      "campaign_id": {"bsonType": "string"},
+      "user_id": {"bsonType": "string"},
+      "placement": {"bsonType": "string"},
+      "ip_hash": {"bsonType": ["string", "null"]},
+      "ts": {"bsonType": "date"},
+      "expires_at": {"bsonType": "date"}
+    }
+  },
+  "indexes": [
+    {"name": "ttl_60d", "keys": [["expires_at", 1]], "expireAfterSeconds": 0, "why": "retention automatique"},
+    {"name": "ad_ts", "keys": [["ad_id", 1], ["ts", -1]], "why": "historique et agregats par annonce"},
+    {"name": "campaign_type_ts", "keys": [["campaign_id", 1], ["type", 1], ["ts", -1]], "why": "tableau de bord d'une campagne par type d'evenement"}
+  ]
+}

@@ -69,6 +69,12 @@ LOCAL_APPS = [
     "apps.education",
     "apps.assessments",
     "apps.progress",
+    "apps.marketplace",
+    "apps.payments",
+    "apps.companies",
+    "apps.portfolio",
+    "apps.jobs",
+    "apps.advertising",
     "apps.dbobjects",  # DOIT rester en dernier : triggers/vues/fonctions SQL
 ]
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -228,3 +234,9 @@ LOGGING = {
     "root": {"handlers": ["console"], "level": LOG_LEVEL},
     "loggers": {"baobab.slow": {"level": "WARNING"}},
 }
+
+# --------------------------------------------------------------------- Marketplace / paiements
+PLATFORM_FEE_BPS = int(env("PLATFORM_FEE_BPS", "1000"))  # commission plateforme en points de base (1000 = 10 %)
+PENDING_ORDER_TTL_HOURS = int(env("PENDING_ORDER_TTL_HOURS", "24"))
+# Secrets de signature des webhooks par fournisseur. Secret vide => TOUS les webhooks de ce fournisseur sont refuses (jamais de non-signe accepte).
+PAYMENT_WEBHOOK_SECRETS = {p: env(f"PAYMENT_WEBHOOK_SECRET_{p.upper()}") for p in ("mobile_money", "card", "manual")}
