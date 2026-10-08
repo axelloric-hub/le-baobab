@@ -5,6 +5,7 @@ from datetime import timedelta
 
 from django.conf import settings
 from django.db import IntegrityError, transaction
+from django.db import models
 from django.db.models import F, Q
 from django.db.models.functions import Upper
 from django.utils import timezone
@@ -339,3 +340,12 @@ def toggle_wishlist(user, product_id) -> bool:
         return False
     Wishlist.objects.get_or_create(user=user, product_id=product_id)
     return True
+
+
+@transaction.atomic
+def add_media(product: Product, actor, *, storage_key: str, kind: str = "image"):
+    from apps.marketplace.models import ProductMedia
+
+    _owner_or_staff(actor, product.store)
+    pos = (ProductMedia.objects.filter(product=product).aggregate(m=models.Max("position"))["m"] or -1) + 1
+    return ProductMedia.objects.create(product=product, kind=kind, storage_key=storage_key, position=pos)

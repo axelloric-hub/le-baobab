@@ -246,3 +246,15 @@ def archive_expired_statuses(batch: int = 1000) -> int:
     """Job periodique : marque comme archives les statuts expires (pas de DELETE : l'historique/moderation reste)."""
     ids = list(Status.objects.filter(expires_at__lte=timezone.now(), archived_at__isnull=True).values_list("pk", flat=True)[:batch])
     return Status.objects.filter(pk__in=ids).update(archived_at=timezone.now())
+
+
+@transaction.atomic
+def delete_comment(comment_id, actor, reason: str = "") -> Comment:
+    """L'auteur du commentaire, l'auteur du post ou un moderateur du groupe peut le supprimer."""
+    c = Comment.objects.select_for_update().select_related("post").get(pk=comment_id, deleted_at__isnull=True)
+    allowed = actor.pk in (c.author_id, c.post.author_id) or (c.post.group_id and can(actor.pk, c.post.group_id, "post.delete_any"))
+    if not allowed:
+        raise PermissionDeniedError("Suppression non autorisee.")
+    c.deleted_at, c.deleted_by, c.deletion_reason = timezone.now(), actor, reason
+    c.save(update_fields=["deleted_at", "deleted_by", "deletion_reason"])
+    return c

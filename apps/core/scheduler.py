@@ -45,6 +45,7 @@ def default_jobs() -> list[Job]:
         Job("housekeeping", 3600, _command("housekeeping")),
         Job("ads-settle", 300, lambda: __import__("apps.advertising.delivery", fromlist=["x"]).settle()),
         Job("ads-recover", 900, lambda: __import__("apps.advertising.delivery", fromlist=["x"]).recover_settlements()),
+        Job("storage-cleanup", 3600, lambda: __import__("apps.storage.services", fromlist=["x"]).expire_pending()),
         Job("expire-orders", 600, lambda: __import__("apps.marketplace.services", fromlist=["x"]).expire_pending_orders()),
     ]
 

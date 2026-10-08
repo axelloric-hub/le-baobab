@@ -74,3 +74,23 @@ def mark_read(user, notification_ids=None) -> int:
     if updated:
         transaction.on_commit(lambda: R.get_redis().delete(K.user_notifications_unread(user.pk)))  # reconstruit a la prochaine lecture
     return updated
+
+
+def set_preference(user, type_code: str | None, channel: str, enabled: bool):
+    """Active/desactive un canal pour un type (ou pour tous si type_code est None). Les types critiques (securite, paiement) ne se desactivent pas."""
+    from apps.core.exceptions import DomainError
+    from apps.notifications.models import NotificationPreference, NotificationType
+
+    ntype = None
+    if type_code is not None:
+        ntype = NotificationType.objects.filter(code=type_code, is_active=True).first()
+        if ntype is None:
+            raise DomainError("Type de notification inconnu.", code="unknown_type")
+        if ntype.is_critical and not enabled:
+            raise DomainError("Cette notification est critique et ne peut pas etre desactivee.", code="critical_notification")
+    pref = NotificationPreference.objects.filter(user=user, type=ntype, channel=channel).first()
+    if pref:
+        pref.enabled = enabled
+        pref.save(update_fields=["enabled"])
+        return pref
+    return NotificationPreference.objects.create(user=user, type=ntype, channel=channel, enabled=enabled)

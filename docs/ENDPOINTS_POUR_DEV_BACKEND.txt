@@ -1,0 +1,1730 @@
+LE BAOBAB - API REST v1 : REFERENCE POUR LE DEVELOPPEUR BACKEND
+==============================================================================
+271 endpoints. Genere automatiquement a partir du code (scripts/gen_api_docs.py) : cette liste ne peut pas diverger de la realite.
+
+1. CONVENTIONS
+------------------------------------------------------------------------------
+URL de base      : l'adresse du ROUTEUR Cloudflare (ex. https://baobab-router.pages.dev), JAMAIS l'adresse onrender.com (elle refuse tout acces direct).
+                   Toutes les routes de l'API commencent par /api/v1/ . WebSocket : wss://<routeur>/ws/...
+Format           : JSON (Content-Type: application/json). Dates en ISO 8601 UTC. Montants d'argent : ENTIERS dans la plus petite unite (XAF : 1, EUR : centimes).
+Authentification : en-tete  Authorization: Bearer <access>  (JWT). Niveaux par endpoint :
+                     public   = aucun jeton ; n'envoyez PAS d'en-tete Authorization (un jeton invalide donne 401 meme ici)
+                     optional = jeton facultatif (le resultat depend de qui regarde : confidentialite, acces payant)
+                     user     = jeton obligatoire
+                     staff    = jeton d'un administrateur (sinon 403)
+Jetons           : access (duree configurable, 15 min en production) + refresh (14 jours, usage unique : rotation).
+                   Sur 401, appeler POST /auth/token/refresh/ puis rejouer la requete ; si le refresh echoue, renvoyer vers la connexion.
+Format d'erreur  : TOUJOURS  {"error": {"code": "<code_machine>", "message": "<texte>", "fields": {...}}}   ("fields" seulement pour validation_error)
+Codes HTTP       : 200/201 succes ; 202 accepte (comptage) ; 204 sans contenu ; 400 validation_error (champs invalides) ; 401 not_authenticated / invalid_credentials ;
+                   402 contenu PAYANT non debloque (le code precise payment_required ou classroom_payment_required) ; 403 forbidden (droit insuffisant, code explicite) ;
+                   404 not_found : la ressource n'existe pas OU vous n'avez pas le droit de la voir (volontairement indiscernable) ;
+                   409 conflit (doublon, etat incompatible) ; 422 regle metier violee (code explicite) ; 429 rate_limited ; 503 indisponible.
+                   Le frontend doit se baser sur error.code (stable), jamais sur error.message (affichage).
+Pagination       : listes paginees par curseur : ?limit=<1..100>&cursor=<valeur de "next"> ; reponse {"next": url|null, "previous": url|null, "results": [...]}.
+                   Pour suivre : appeler l'URL "next" telle quelle jusqu'a ce qu'elle soit null.
+Idempotence      : POST /checkout/ (idempotency_key OBLIGATOIRE) et POST /conversations/{id}/messages/ (client_msg_id) : un nouvel essai apres coupure reseau
+                   avec la MEME cle ne cree jamais de doublon. Generez la cle cote client (UUID) AVANT d'envoyer.
+Limites de debit : connexion (10 essais / 15 min par e-mail, 40 par IP), OTP (60 s entre deux envois, 10/h par IP, 25 e-mails/jour au total), demandes d'envoi de fichier (60/h),
+                   telechargements (20/min), verification de certificat (30/min par IP). Au-dela : 429.
+Isolation        : toute ressource est filtree par proprietaire/droit. Un identifiant d'une autre personne renvoie 404, jamais son contenu.
+
+
+2. FICHIERS : le contenu ne passe JAMAIS par l'API (3 etapes)
+------------------------------------------------------------------------------
+a) POST /api/v1/files/uploads/  {purpose, filename, content_type, size_bytes}
+     -> 201 {file_id, method:"PUT", url, headers:{Content-Type}, expires_in}
+     Types et tailles autorises par usage : GET /api/v1/files/purposes/ (SVG, HTML, JS refuses).
+b) Le FRONTEND envoie directement au bucket :  PUT <url>  avec le corps = le fichier brut et l'en-tete Content-Type donne.
+     Le type ET la taille sont signes : un fichier different est refuse par le bucket. (Le navigateur fixe Content-Length tout seul.)
+c) POST /api/v1/files/{file_id}/complete/  -> le serveur verifie dans le bucket (existence, taille, type). Le fichier devient utilisable.
+Puis on REFERENCE le fichier par son file_id dans les autres endpoints (avatar_file, cv_file, file, files, media[].file...). Jamais par un chemin.
+Un fichier ne peut etre reference que par son proprietaire, une fois verifie, et pour le bon usage (sinon 422 invalid_file).
+Lecture : les reponses contiennent des URL signees a duree courte (5 min) apres controle d'acces ; ne les stockez pas.
+Prerequis bucket : configurer le CORS du bucket (voir A_NE_PAS_OUBLIER.md).
+
+
+3. TEMPS REEL (WebSocket, Django Channels)
+------------------------------------------------------------------------------
+wss://<routeur>/ws/notifications/?token=<access>
+    serveur -> client : {"type":"notification","id":"...","code":"friend_request","data":{...}}
+    fermeture 4401 : non authentifie.
+wss://<routeur>/ws/conversations/<conversation_id>/?token=<access>
+    client -> serveur : {"type":"heartbeat"}  (presence)   |   {"type":"typing"}
+    serveur -> client : {"type":"message","message_id":"...","seq":12,"sender":"..."}   |   {"type":"typing","user":"..."}
+    fermeture 4403 : pas membre de la conversation.
+    Les messages sont ENVOYES par REST (POST .../messages/) ; le socket signale seulement leur arrivee : recuperer ensuite le contenu par GET .../messages/.
+Une seule instance serveur : en cas de redemarrage les sockets tombent, le client doit se reconnecter (avec delai croissant).
+
+
+4. WEBHOOK DE PAIEMENT (appele par le fournisseur, pas par le frontend)
+------------------------------------------------------------------------------
+POST /api/v1/payments/webhooks/<provider>/   provider : mobile_money | card | manual
+En-tete X-Signature = HMAC-SHA256 hexadecimal du CORPS BRUT avec le secret PAYMENT_WEBHOOK_SECRET_<PROVIDER>. Secret vide = tout est refuse.
+Corps : {"event_id": "...", "provider_ref": "...", "status": "succeeded|failed|cancelled", "amount_minor": 5000, "currency": "XAF"}
+Idempotent (event_id) ; montant et devise sont recontroles. Reponse {"duplicate": false|true}.
+AUCUN fournisseur n'est branche : voir RESTE_A_FAIRE.md. En phase de test : POST /payments/{id}/simulate/ (si active).
+
+
+5. ENDPOINTS PAR DOMAINE
+------------------------------------------------------------------------------
+
+### AUTHENTIFICATION  (11)
+
+POST   /api/v1/auth/register/   [public]  succes: 201
+       Creer un compte (statut 'pending') et envoyer un code OTP par e-mail.
+       Corps JSON :
+         email  e-mail  (requis)
+         username  texte (format impose)  (requis)
+         password  texte (max 128 car.)  (requis)
+         display_name  texte (max 80 car.)  (facultatif)
+
+POST   /api/v1/auth/verify-email/   [public]  succes: 200
+       Confirmer l'adresse e-mail avec le code OTP ; renvoie directement les jetons de connexion.
+       Corps JSON :
+         email  e-mail  (requis)
+         code  texte (max 6 car.)  (requis)
+
+POST   /api/v1/auth/resend-otp/   [public]  succes: 200
+       Renvoyer un code OTP (delai de 60 s entre deux envois). Reponse identique que le compte
+       existe ou non.
+       Corps JSON :
+         email  e-mail  (requis)
+         purpose  choix : verify_email | reset_password  (facultatif)
+
+POST   /api/v1/auth/login/   [public]  succes: 200
+       Se connecter avec e-mail et mot de passe. Refuse les comptes non confirmes ou suspendus.
+       Corps JSON :
+         email  e-mail  (requis)
+         password  texte (max 128 car.)  (requis)
+
+POST   /api/v1/auth/token/refresh/   [public]  succes: 200
+       Obtenir un nouveau jeton d'acces ; le jeton de rafraichissement est renouvele et l'ancien
+       invalide (rotation).
+       Corps JSON :
+         refresh  texte  (requis)
+
+POST   /api/v1/auth/logout/   [public]  succes: 204
+       Se deconnecter : invalide le jeton de rafraichissement.
+       Corps JSON :
+         refresh  texte  (requis)
+
+POST   /api/v1/auth/password/forgot/   [public]  succes: 200
+       Mot de passe oublie : envoie un code OTP. Reponse toujours identique (pas d'enumeration de
+       comptes).
+       Corps JSON :
+         email  e-mail  (requis)
+
+POST   /api/v1/auth/password/reset/   [public]  succes: 200
+       Reinitialiser le mot de passe avec le code OTP ; invalide toutes les sessions existantes.
+       Corps JSON :
+         email  e-mail  (requis)
+         code  texte (max 6 car.)  (requis)
+         new_password  texte (max 128 car.)  (requis)
+
+POST   /api/v1/me/password/   [user]  succes: 200
+       Changer son mot de passe (connaissant l'ancien) ; revoque les autres sessions.
+       Corps JSON :
+         current_password  texte (max 128 car.)  (requis)
+         new_password  texte (max 128 car.)  (requis)
+
+GET    /api/v1/me/login-history/   [user]  succes: 200
+       Historique de mes connexions (reussies et echouees).
+
+GET    /api/v1/me/devices/   [user]  succes: 200
+       Mes appareils connus.
+
+### FICHIERS (URL SIGNEES)  (6)
+
+GET    /api/v1/files/purposes/   [public]  succes: 200
+       Usages de fichiers autorises (types et tailles maximales).
+
+POST   /api/v1/files/uploads/   [user]  succes: 201
+       Demander une URL signee pour ENVOYER un fichier directement au bucket (PUT). Le type et la
+       taille declares sont signes : le bucket refuse tout ecart.
+       Corps JSON :
+         purpose  choix : ad_creative | assignment_submission | avatar | company_cover | company_logo | course_content | cover | cv | message_attachment | portfolio_media | post_media | product_asset  (requis)
+         filename  texte (max 200 car.)  (requis)
+         content_type  texte (max 100 car.)  (requis)
+         size_bytes  entier (min 1)  (requis)
+
+GET    /api/v1/files/   [user]  succes: 200
+       Mes fichiers.
+       Parametres de requete :
+         purpose  texte  (facultatif)
+
+POST   /api/v1/files/<uuid:file_id>/complete/   [user]  succes: 200
+       Confirmer l'envoi : le serveur verifie dans le bucket l'existence, la taille et le type du
+       fichier.
+       Dans l'URL : file_id
+
+GET    /api/v1/files/<uuid:file_id>/url/   [optional]  succes: 200
+       URL signee de LECTURE (duree courte). Proprietaire, ou tout le monde pour un usage public
+       (avatar, logo...). Sinon 404.
+       Dans l'URL : file_id
+
+DELETE /api/v1/files/<uuid:file_id>/   [user]  succes: 204
+       Supprimer un de mes fichiers (supprime aussi l'objet du bucket).
+       Dans l'URL : file_id
+
+### PROFIL ET RECHERCHE  (15)
+
+GET    /api/v1/me/   [user]  succes: 200
+       Mon compte complet : identite, profil, confidentialite, preferences.
+
+PATCH  /api/v1/me/profile/   [user]  succes: 200
+       Modifier mon profil (champs facultatifs). avatar_file / cover_file : identifiant d'un
+       fichier envoye (usage 'avatar' / 'cover'), ou null pour effacer.
+       Corps JSON :
+         display_name  texte (max 80 car.)  (facultatif)
+         headline  texte (max 160 car.)  (facultatif)
+         bio  texte (max 2000 car.)  (facultatif)
+         country  texte (max 2 car., null autorise)  (facultatif)
+         region  texte (max 80 car.)  (facultatif)
+         city  texte (max 80 car.)  (facultatif)
+         languages  liste de texte (max 8 car.) (max 10)  (facultatif)
+         profession  texte (max 80 car., null autorise)  (facultatif)
+         availability  choix : none | open_to_work | freelance | hiring  (facultatif)
+         avatar_file  uuid (null autorise)  (facultatif)
+         cover_file  uuid (null autorise)  (facultatif)
+
+PATCH  /api/v1/me/privacy/   [user]  succes: 200
+       Ma confidentialite.
+       Corps JSON :
+         profile_visibility  choix : public | followers | friends | close_friends | private  (facultatif)
+         portfolio_visibility  choix : public | followers | friends | close_friends | private  (facultatif)
+         default_post_visibility  choix : public | followers | friends | close_friends | private | group_members  (facultatif)
+         default_status_visibility  choix : public | followers | friends | close_friends | private  (facultatif)
+         activity_visibility  choix : public | followers | friends | close_friends | private  (facultatif)
+         who_can_message  choix : everyone | friends | nobody  (facultatif)
+         who_can_send_friend_request  choix : everyone | friends | nobody  (facultatif)
+         show_presence  booleen  (facultatif)
+         show_read_receipts  booleen  (facultatif)
+         searchable  booleen  (facultatif)
+
+PATCH  /api/v1/me/preferences/   [user]  succes: 200
+       Mes preferences (langue, fuseau, theme).
+       Corps JSON :
+         language  texte (max 8 car.)  (facultatif)
+         time_zone  texte (max 64 car.)  (facultatif)
+         theme  choix : system | light | dark  (facultatif)
+
+PUT    /api/v1/me/skills/   [user]  succes: 200
+       Remplacer la liste de mes competences.
+       Corps JSON :
+         skills  liste de objet JSON (max 60)  (requis)
+
+PUT    /api/v1/me/interests/   [user]  succes: 200
+       Remplacer la liste de mes centres d'interet.
+       Corps JSON :
+         interests  liste de texte (max 80 car.) (max 40)  (requis)
+
+POST   /api/v1/me/links/   [user]  succes: 201
+       Ajouter un lien (GitHub, LinkedIn, site...). https obligatoire.
+       Corps JSON :
+         provider  choix : github | gitlab | linkedin | tiktok | youtube | x | website | portfolio  (requis)
+         url  url (https) (max 300 car.)  (requis)
+         handle  texte (max 100 car.)  (facultatif)
+
+DELETE /api/v1/me/links/<uuid:link_id>/   [user]  succes: 204
+       Supprimer un de mes liens.
+       Dans l'URL : link_id
+
+POST   /api/v1/me/delete/   [user]  succes: 204
+       Supprimer mon compte (anonymisation irreversible). Exige le mot de passe.
+       Corps JSON :
+         password  texte (max 128 car.)  (requis)
+
+GET    /api/v1/users/   [optional]  succes: 200
+       Rechercher des utilisateurs par nom ou pseudo (profils 'recherchables' uniquement, minimum
+       2 caracteres).
+       Parametres de requete :
+         q  texte (max 60 car.)  (requis)
+
+GET    /api/v1/users/<str:username>/   [optional]  succes: 200
+       Profil public d'un utilisateur (404 si prive, bloque ou inexistant).
+       Dans l'URL : username
+
+GET    /api/v1/skills/   [public]  succes: 200
+       Referentiel : Skill.
+       Parametres de requete :
+         q  texte (max 60 car.)  (facultatif)
+
+GET    /api/v1/interests/   [public]  succes: 200
+       Referentiel : Interest.
+       Parametres de requete :
+         q  texte (max 60 car.)  (facultatif)
+
+GET    /api/v1/professions/   [public]  succes: 200
+       Referentiel : Profession.
+       Parametres de requete :
+         q  texte (max 60 car.)  (facultatif)
+
+GET    /api/v1/countries/   [public]  succes: 200
+       Referentiel : Country.
+       Parametres de requete :
+         q  texte (max 60 car.)  (facultatif)
+
+### AMIS, ABONNEMENTS, BLOCAGES  (16)
+
+GET    /api/v1/friends/   [user]  succes: 200
+       Mes amis (ordre alphabetique des pseudos).
+
+GET    /api/v1/friends/requests/   [user]  succes: 200
+       Demandes d'amis recues, en attente.
+
+POST   /api/v1/friends/requests/   [user]  succes: 201
+       Envoyer une demande d'ami (si l'autre vous en avait deja envoye une, l'amitie est creee).
+       Corps JSON :
+         username  texte (max 30 car.)  (requis)
+
+GET    /api/v1/friends/requests/sent/   [user]  succes: 200
+       Demandes d'amis envoyees, en attente.
+
+POST   /api/v1/friends/requests/<uuid:request_id>/respond/   [user]  succes: 200
+       Accepter ou refuser une demande d'ami recue.
+       Dans l'URL : request_id
+       Corps JSON :
+         accept  booleen  (requis)
+
+DELETE /api/v1/friends/<str:username>/   [user]  succes: 204
+       Retirer un ami.
+       Dans l'URL : username
+
+POST   /api/v1/users/<str:username>/follow/   [user]  succes: 201
+       Suivre un utilisateur.
+       Dans l'URL : username
+
+DELETE /api/v1/users/<str:username>/follow/   [user]  succes: 204
+       Ne plus suivre un utilisateur.
+       Dans l'URL : username
+
+POST   /api/v1/users/<str:username>/block/   [user]  succes: 201
+       Bloquer un utilisateur (supprime amitie et abonnements dans les deux sens ; il ne vous
+       voit plus).
+       Dans l'URL : username
+
+DELETE /api/v1/users/<str:username>/block/   [user]  succes: 204
+       Debloquer un utilisateur.
+       Dans l'URL : username
+
+POST   /api/v1/users/<str:username>/close-friend/   [user]  succes: 201
+       Ajouter un ami a mes amis proches.
+       Dans l'URL : username
+
+DELETE /api/v1/users/<str:username>/close-friend/   [user]  succes: 204
+       Retirer un ami de mes amis proches.
+       Dans l'URL : username
+
+POST   /api/v1/users/<str:username>/mute/   [user]  succes: 201
+       Mettre un utilisateur en sourdine (ses contenus disparaissent de mon feed).
+       Dans l'URL : username
+       Corps JSON :
+         scope  choix : all | posts | statuses | messages  (facultatif)
+
+GET    /api/v1/me/followers/   [user]  succes: 200
+       Mes abonnes.
+
+GET    /api/v1/me/following/   [user]  succes: 200
+       Les comptes que je suis.
+
+GET    /api/v1/me/blocks/   [user]  succes: 200
+       Mes blocages.
+
+### GROUPES ET COMMUNAUTES  (18)
+
+GET    /api/v1/groups/   [optional]  succes: 200
+       Decouvrir les groupes (publics et prives ; jamais les caches).
+       Parametres de requete :
+         q  texte (max 60 car.)  (facultatif)
+         community  slug  (facultatif)
+
+POST   /api/v1/groups/   [user]  succes: 201
+       Creer un groupe (vous en devenez proprietaire).
+       Corps JSON :
+         name  texte (max 120 car.)  (requis)
+         slug  slug (max 80 car.)  (requis)
+         description  texte (max 3000 car.)  (facultatif)
+         privacy  choix : public | private | hidden  (facultatif)
+         join_policy  choix : open | approval | invite_only  (facultatif)
+         community  slug  (facultatif)
+
+GET    /api/v1/me/groups/   [user]  succes: 200
+       Mes groupes.
+
+GET    /api/v1/me/group-invitations/   [user]  succes: 200
+       Mes invitations de groupe en attente.
+
+POST   /api/v1/group-invitations/<uuid:invitation_id>/respond/   [user]  succes: 200
+       Accepter ou refuser une invitation de groupe.
+       Dans l'URL : invitation_id
+       Corps JSON :
+         accept  booleen  (requis)
+
+POST   /api/v1/group-join-requests/<uuid:request_id>/review/   [user]  succes: 200
+       Approuver ou refuser une demande d'adhesion.
+       Dans l'URL : request_id
+       Corps JSON :
+         approve  booleen  (requis)
+
+GET    /api/v1/groups/<slug:slug>/   [optional]  succes: 200
+       Detail d'un groupe.
+       Dans l'URL : slug
+
+POST   /api/v1/groups/<slug:slug>/join/   [user]  succes: 201
+       Rejoindre un groupe : adhesion immediate, ou demande en attente selon la politique du
+       groupe.
+       Dans l'URL : slug
+
+POST   /api/v1/groups/<slug:slug>/leave/   [user]  succes: 204
+       Quitter un groupe.
+       Dans l'URL : slug
+
+GET    /api/v1/groups/<slug:slug>/members/   [optional]  succes: 200
+       Membres d'un groupe (public : tout le monde ; sinon membres uniquement).
+       Dans l'URL : slug
+
+POST   /api/v1/groups/<slug:slug>/invite/   [user]  succes: 201
+       Inviter un utilisateur dans le groupe (permission 'member.invite').
+       Dans l'URL : slug
+       Corps JSON :
+         username  texte (max 30 car.)  (requis)
+
+GET    /api/v1/groups/<slug:slug>/join-requests/   [user]  succes: 200
+       Demandes d'adhesion en attente (reservees a ceux qui peuvent les approuver).
+       Dans l'URL : slug
+
+POST   /api/v1/groups/<slug:slug>/ban/   [user]  succes: 201
+       Bannir un membre (permission 'member.ban').
+       Dans l'URL : slug
+       Corps JSON :
+         username  texte (max 30 car.)  (requis)
+         reason  texte (max 300 car.)  (facultatif)
+         expires_at  date-heure ISO 8601  (facultatif)
+
+POST   /api/v1/groups/<slug:slug>/mute/   [user]  succes: 201
+       Rendre muet un membre (permission 'member.mute').
+       Dans l'URL : slug
+       Corps JSON :
+         username  texte (max 30 car.)  (requis)
+         minutes  entier (min 1, max 43200)  (requis)
+         reason  texte (max 300 car.)  (facultatif)
+
+GET    /api/v1/groups/<slug:slug>/channels/   [user]  succes: 200
+       Channels d'un groupe (membres uniquement).
+       Dans l'URL : slug
+
+POST   /api/v1/groups/<slug:slug>/channels/   [user]  succes: 201
+       Creer un channel dans un groupe (permission 'channel.manage').
+       Dans l'URL : slug
+       Corps JSON :
+         name  texte (max 100 car.)  (requis)
+         slug  slug (max 80 car.)  (requis)
+         type  choix : public | private | restricted | announcement | discussion | support | classroom  (facultatif)
+         topic  texte (max 300 car.)  (facultatif)
+
+GET    /api/v1/communities/   [public]  succes: 200
+       Communautes publiques.
+
+POST   /api/v1/communities/   [user]  succes: 201
+       Creer une communaute.
+       Corps JSON :
+         name  texte (max 120 car.)  (requis)
+         slug  slug (max 80 car.)  (requis)
+         description  texte (max 3000 car.)  (facultatif)
+
+### MESSAGERIE  (10)
+
+GET    /api/v1/conversations/   [user]  succes: 200
+       Ma boite de reception (conversations triees par activite, avec le nombre de non-lus).
+
+POST   /api/v1/conversations/direct/   [user]  succes: 201
+       Ouvrir (ou retrouver) la conversation directe avec un utilisateur.
+       Corps JSON :
+         username  texte (max 30 car.)  (requis)
+
+POST   /api/v1/conversations/group/   [user]  succes: 201
+       Creer une conversation de groupe.
+       Corps JSON :
+         usernames  liste de texte (max 30 car.) (min 1, max 50)  (requis)
+         title  texte (max 150 car.)  (facultatif)
+
+GET    /api/v1/conversations/<uuid:conversation_id>/messages/   [user]  succes: 200
+       Historique d'une conversation, du plus recent au plus ancien (curseur).
+       Dans l'URL : conversation_id
+
+POST   /api/v1/conversations/<uuid:conversation_id>/messages/   [user]  succes: 201
+       Envoyer un message. client_msg_id (UUID) rend l'envoi idempotent : un nouvel essai apres
+       coupure reseau ne cree pas de doublon. attachments : identifiants de fichiers (usage
+       'message_attachment').
+       Dans l'URL : conversation_id
+       Corps JSON :
+         body  texte (max 10000 car.)  (facultatif)
+         kind  choix : text | image | video | audio | file | code | system  (facultatif)
+         reply_to  uuid  (facultatif)
+         thread_root  uuid  (facultatif)
+         client_msg_id  uuid  (facultatif)
+         attachments  liste de uuid (max 10)  (facultatif)
+         metadata  objet JSON  (facultatif)
+
+GET    /api/v1/conversations/<uuid:conversation_id>/messages/<uuid:message_id>/thread/   [user]  succes: 200
+       Fil de discussion d'un message.
+       Dans l'URL : conversation_id, message_id
+
+POST   /api/v1/conversations/<uuid:conversation_id>/read/   [user]  succes: 200
+       Marquer comme lu jusqu'a un numero de message (seq).
+       Dans l'URL : conversation_id
+       Corps JSON :
+         up_to_seq  entier (min 0)  (requis)
+
+PATCH  /api/v1/messages/<uuid:message_id>/   [user]  succes: 200
+       Modifier mon message.
+       Dans l'URL : message_id
+       Corps JSON :
+         body  texte (max 10000 car.)  (requis)
+
+DELETE /api/v1/messages/<uuid:message_id>/   [user]  succes: 204
+       Supprimer un message : pour moi seulement, ou pour tous (auteur/moderation).
+       Dans l'URL : message_id
+       Parametres de requete :
+         for_everyone  booleen  (facultatif)
+
+POST   /api/v1/messages/<uuid:message_id>/reactions/   [user]  succes: 200
+       Ajouter/retirer une reaction (emoji) a un message.
+       Dans l'URL : message_id
+       Corps JSON :
+         emoji  texte (max 16 car.)  (requis)
+
+### PUBLICATIONS, FEED, STATUTS  (24)
+
+POST   /api/v1/posts/   [user]  succes: 201
+       Publier. media : [{file, alt}] avec des fichiers envoyes (usage 'post_media'). poll :
+       {question, options:[2 a 10], allows_multiple?, is_anonymous?, closes_at?}. audience :
+       pseudos (visibilite 'custom').
+       Corps JSON :
+         kind  choix : text | image | video | link | code | repository | project | portfolio | event | job | course | poll  (facultatif)
+         title  texte (max 200 car.)  (facultatif)
+         body  texte (max 20000 car.)  (facultatif)
+         visibility  choix : public | followers | friends | close_friends | group_members | custom | private  (facultatif)
+         group  slug  (facultatif)
+         payload  objet JSON  (facultatif)
+         media  liste de objet JSON (max 10)  (facultatif)
+         audience  liste de texte (max 30 car.) (max 200)  (facultatif)
+         poll  objet {question: texte (max 300 car.), options: liste de texte (max 120 car.) (min 2, max 10), allows_multiple?: booleen, is_anonymous?: booleen, closes_at?: date-heure ISO 8601}  (facultatif)
+
+GET    /api/v1/posts/<uuid:post_id>/   [optional]  succes: 200
+       Lire une publication (404 si je n'ai pas le droit de la voir).
+       Dans l'URL : post_id
+
+PATCH  /api/v1/posts/<uuid:post_id>/   [user]  succes: 200
+       Modifier ma publication.
+       Dans l'URL : post_id
+       Corps JSON :
+         title  texte (max 200 car.)  (facultatif)
+         body  texte (max 20000 car.)  (facultatif)
+         payload  objet JSON  (facultatif)
+
+DELETE /api/v1/posts/<uuid:post_id>/   [user]  succes: 204
+       Supprimer ma publication (ou en moderateur de groupe).
+       Dans l'URL : post_id
+
+GET    /api/v1/users/<str:username>/posts/   [optional]  succes: 200
+       Publications d'un utilisateur (seulement celles que je peux voir).
+       Dans l'URL : username
+
+GET    /api/v1/feed/   [user]  succes: 200
+       Mon fil d'actualite. 'before' : curseur renvoye par la page precedente (next_cursor).
+       Parametres de requete :
+         limit  entier (min 1, max 50)  (facultatif)
+         before  nombre  (facultatif)
+
+POST   /api/v1/posts/<uuid:post_id>/reactions/   [user]  succes: 200
+       Reagir a une publication (type = null pour retirer).
+       Dans l'URL : post_id
+       Corps JSON :
+         type  texte (max 12 car., null autorise)  (requis)
+
+GET    /api/v1/posts/<uuid:post_id>/comments/   [optional]  succes: 200
+       Commentaires d'une publication (racines).
+       Dans l'URL : post_id
+
+POST   /api/v1/posts/<uuid:post_id>/comments/   [user]  succes: 201
+       Commenter (parent = identifiant d'un commentaire pour repondre).
+       Dans l'URL : post_id
+       Corps JSON :
+         body  texte (max 5000 car.)  (requis)
+         parent  uuid  (facultatif)
+
+GET    /api/v1/comments/<uuid:comment_id>/replies/   [optional]  succes: 200
+       Reponses a un commentaire.
+       Dans l'URL : comment_id
+
+DELETE /api/v1/comments/<uuid:comment_id>/   [user]  succes: 204
+       Supprimer un commentaire (auteur, auteur du post ou moderateur de groupe).
+       Dans l'URL : comment_id
+
+POST   /api/v1/comments/<uuid:comment_id>/reactions/   [user]  succes: 200
+       Reagir a un commentaire.
+       Dans l'URL : comment_id
+       Corps JSON :
+         type  texte (max 12 car., null autorise)  (requis)
+
+POST   /api/v1/posts/<uuid:post_id>/share/   [user]  succes: 201
+       Partager une publication.
+       Dans l'URL : post_id
+       Corps JSON :
+         comment  texte (max 500 car.)  (facultatif)
+         visibility  choix : public | followers | friends | close_friends | group_members | custom | private  (facultatif)
+
+POST   /api/v1/posts/<uuid:post_id>/save/   [user]  succes: 201
+       Enregistrer une publication dans mes favoris.
+       Dans l'URL : post_id
+       Corps JSON :
+         collection  texte (max 60 car.)  (facultatif)
+
+DELETE /api/v1/posts/<uuid:post_id>/save/   [user]  succes: 204
+       Retirer une publication de mes favoris.
+       Dans l'URL : post_id
+
+GET    /api/v1/me/saved/   [user]  succes: 200
+       Mes publications enregistrees.
+
+POST   /api/v1/posts/<uuid:post_id>/view/   [optional]  succes: 202
+       Compter une vue (dedoublonne, au plus une par heure et par utilisateur).
+       Dans l'URL : post_id
+
+POST   /api/v1/posts/<uuid:post_id>/poll/vote/   [user]  succes: 200
+       Voter dans un sondage (options : identifiants d'options).
+       Dans l'URL : post_id
+       Corps JSON :
+         options  liste de uuid (min 1, max 10)  (requis)
+
+GET    /api/v1/statuses/   [user]  succes: 200
+       Statuts actifs que je peux voir.
+
+POST   /api/v1/statuses/   [user]  succes: 201
+       Publier un statut ephemere (24 h). file : fichier envoye (usage 'status_media').
+       Corps JSON :
+         kind  choix : text | image | video | audio | link | document  (facultatif)
+         body  texte (max 500 car.)  (facultatif)
+         visibility  choix : public | followers | friends | close_friends | group_members | custom | private  (facultatif)
+         file  uuid  (facultatif)
+         link_url  url (https)  (facultatif)
+         style  objet JSON  (facultatif)
+         audience  liste de texte (max 30 car.) (max 200)  (facultatif)
+
+POST   /api/v1/statuses/<uuid:status_id>/view/   [user]  succes: 202
+       Marquer un statut comme vu.
+       Dans l'URL : status_id
+
+POST   /api/v1/statuses/<uuid:status_id>/react/   [user]  succes: 201
+       Reagir a un statut.
+       Dans l'URL : status_id
+       Corps JSON :
+         emoji  texte (max 16 car.)  (requis)
+
+GET    /api/v1/hashtags/trending/   [public]  succes: 200
+       Hashtags tendance (vue materialisee).
+
+GET    /api/v1/hashtags/<str:tag>/posts/   [optional]  succes: 200
+       Publications d'un hashtag (seulement celles que je peux voir).
+       Dans l'URL : tag
+
+### NOTIFICATIONS  (5)
+
+GET    /api/v1/notifications/   [user]  succes: 200
+       Mes notifications (les plus recentes d'abord).
+       Parametres de requete :
+         unread  booleen  (facultatif)
+
+GET    /api/v1/notifications/unread-count/   [user]  succes: 200
+       Nombre de notifications non lues (cache Redis, O(1)).
+
+POST   /api/v1/notifications/read/   [user]  succes: 200
+       Marquer comme lues (ids facultatif : sans liste, toutes).
+       Corps JSON :
+         ids  liste de uuid (max 200)  (facultatif)
+
+GET    /api/v1/notifications/preferences/   [user]  succes: 200
+       Mes preferences de notification.
+
+PUT    /api/v1/notifications/preferences/   [user]  succes: 200
+       Activer/desactiver un canal (in_app, websocket, email, push) pour un type (ou tous).
+       Corps JSON :
+         type  texte (max 50 car., null autorise)  (facultatif)
+         channel  choix : in_app | websocket | email | push  (requis)
+         enabled  booleen  (requis)
+
+### SIGNALEMENTS ET MODERATION  (4)
+
+GET    /api/v1/reports/reasons/   [public]  succes: 200
+       Motifs de signalement.
+
+POST   /api/v1/reports/   [user]  succes: 201
+       Signaler un contenu ou un utilisateur (un meme signalement n'est pas compte deux fois).
+       Corps JSON :
+         target_type  texte (max 40 car.)  (requis)
+         target_id  uuid  (requis)
+         reason  texte (max 40 car.)  (requis)
+         details  texte (max 1000 car.)  (facultatif)
+
+GET    /api/v1/admin/moderation/cases/   [staff]  succes: 200
+       [Moderation] File des dossiers.
+       Parametres de requete :
+         status  choix : open | in_review | resolved  (facultatif)
+
+POST   /api/v1/admin/moderation/cases/<uuid:case_id>/actions/   [staff]  succes: 200
+       [Moderation] Appliquer une decision (masquer, retirer, avertir, suspendre, bannir...).
+       Dans l'URL : case_id
+       Corps JSON :
+         action  texte (max 30 car.)  (requis)
+         reason  texte (max 500 car.)  (requis)
+         expires_at  date-heure ISO 8601  (facultatif)
+         policy_code  texte (max 40 car.)  (facultatif)
+         points  entier (min 0, max 10)  (facultatif)
+
+### EDUCATION (CLASSROOMS, COURS)  (27)
+
+GET    /api/v1/classrooms/   [optional]  succes: 200
+       Decouvrir les classrooms publiques.
+       Parametres de requete :
+         q  texte (max 60 car.)  (facultatif)
+
+POST   /api/v1/classrooms/   [user]  succes: 201
+       Creer une classroom (vous en etes le proprietaire). Une classroom payante exige prix et
+       devise.
+       Corps JSON :
+         title  texte (max 160 car.)  (requis)
+         slug  slug (max 80 car.)  (requis)
+         description  texte (max 5000 car.)  (facultatif)
+         privacy  choix : public | private | invite_only  (facultatif)
+         is_paid  booleen  (facultatif)
+         price_minor  entier (min 1, null autorise)  (facultatif)
+         currency  texte (max 3 car.)  (facultatif)
+
+GET    /api/v1/me/classrooms/   [user]  succes: 200
+       Mes classrooms (membre ou en attente).
+
+GET    /api/v1/me/classroom-invitations/   [user]  succes: 200
+       Mes invitations a des classrooms.
+
+POST   /api/v1/classroom-invitations/<uuid:invitation_id>/respond/   [user]  succes: 200
+       Accepter ou refuser une invitation.
+       Dans l'URL : invitation_id
+       Corps JSON :
+         accept  booleen  (requis)
+
+GET    /api/v1/classrooms/<slug:slug>/   [optional]  succes: 200
+       Detail d'une classroom.
+       Dans l'URL : slug
+
+POST   /api/v1/classrooms/<slug:slug>/join/   [user]  succes: 201
+       Rejoindre une classroom (public : immediat ; prive : demande ; sur invitation : invitation
+       requise).
+       Dans l'URL : slug
+
+POST   /api/v1/classrooms/<slug:slug>/leave/   [user]  succes: 204
+       Quitter une classroom.
+       Dans l'URL : slug
+
+GET    /api/v1/classrooms/<slug:slug>/members/   [user]  succes: 200
+       [Enseignant] Membres d'une classroom.
+       Dans l'URL : slug
+       Parametres de requete :
+         status  choix : active | pending | banned  (facultatif)
+
+POST   /api/v1/classrooms/<slug:slug>/members/<uuid:member_id>/review/   [user]  succes: 200
+       [Enseignant] Approuver ou refuser une demande d'adhesion.
+       Dans l'URL : slug, member_id
+       Corps JSON :
+         approve  booleen  (requis)
+
+POST   /api/v1/classrooms/<slug:slug>/invite/   [user]  succes: 201
+       [Enseignant] Inviter un utilisateur.
+       Dans l'URL : slug
+       Corps JSON :
+         username  texte (max 30 car.)  (requis)
+         role  choix : student | assistant | instructor  (facultatif)
+
+POST   /api/v1/classrooms/<slug:slug>/ban/   [user]  succes: 201
+       [Enseignant] Bannir un membre.
+       Dans l'URL : slug
+       Corps JSON :
+         username  texte (max 30 car.)  (requis)
+
+POST   /api/v1/classrooms/<slug:slug>/courses/   [user]  succes: 201
+       Creer un cours dans une classroom (enseignants).
+       Dans l'URL : slug
+       Corps JSON :
+         title  texte (max 160 car.)  (requis)
+         slug  slug (max 80 car.)  (requis)
+         description  texte (max 10000 car.)  (facultatif)
+         level  choix : beginner | intermediate | advanced  (facultatif)
+         language  texte (max 8 car.)  (facultatif)
+         is_free  booleen  (facultatif)
+         price_minor  entier (min 1, null autorise)  (facultatif)
+         currency  texte (max 3 car.)  (facultatif)
+         certificate_enabled  booleen  (facultatif)
+
+GET    /api/v1/courses/   [optional]  succes: 200
+       Catalogue des cours publies (classrooms publiques).
+       Parametres de requete :
+         q  texte (max 60 car.)  (facultatif)
+         free  booleen (null autorise)  (facultatif)
+         level  texte  (facultatif)
+
+GET    /api/v1/courses/<uuid:course_id>/   [optional]  succes: 200
+       Plan d'un cours : modules, chapitres, prix, et pour chaque chapitre MON acces (autorise ou
+       raison du refus).
+       Dans l'URL : course_id
+
+POST   /api/v1/courses/<uuid:course_id>/publish/   [user]  succes: 200
+       [Enseignant] Publier le cours (verifie qu'il est exploitable).
+       Dans l'URL : course_id
+
+POST   /api/v1/courses/<uuid:course_id>/instructors/   [user]  succes: 201
+       [Enseignant principal] Ajouter un co-enseignant (doit etre membre de la classroom).
+       Dans l'URL : course_id
+       Corps JSON :
+         username  texte (max 30 car.)  (requis)
+
+POST   /api/v1/courses/<uuid:course_id>/modules/   [user]  succes: 201
+       [Enseignant] Ajouter un module. Un module payant exige prix et devise.
+       Dans l'URL : course_id
+       Corps JSON :
+         title  texte (max 160 car.)  (requis)
+         description  texte (max 3000 car.)  (facultatif)
+         is_free  booleen  (facultatif)
+         price_minor  entier (min 1, null autorise)  (facultatif)
+         currency  texte (max 3 car.)  (facultatif)
+
+POST   /api/v1/modules/<uuid:module_id>/chapters/   [user]  succes: 201
+       [Enseignant] Ajouter un chapitre a un module.
+       Dans l'URL : module_id
+       Corps JSON :
+         title  texte (max 160 car.)  (requis)
+         estimated_minutes  entier (min 1, max 600)  (facultatif)
+         is_free  booleen  (facultatif)
+         price_minor  entier (min 1, null autorise)  (facultatif)
+         currency  texte (max 3 car.)  (facultatif)
+
+POST   /api/v1/chapters/<uuid:chapter_id>/blocks/   [user]  succes: 201
+       [Enseignant] Ajouter un bloc de contenu. file : fichier envoye (usage 'course_content')
+       pour pdf/image/audio/video/notebook/presentation/document ; url https pour link/embed ;
+       ref_id pour quiz/exercise.
+       Dans l'URL : chapter_id
+       Corps JSON :
+         kind  choix : text | pdf | image | audio | video | code | notebook | presentation | document | link | embed | quiz  (requis)
+         title  texte (max 160 car.)  (facultatif)
+         body  texte (max 100000 car.)  (facultatif)
+         file  uuid  (facultatif)
+         url  url (https)  (facultatif)
+         ref_id  uuid  (facultatif)
+         payload  objet JSON  (facultatif)
+         duration_seconds  entier (min 1)  (facultatif)
+
+GET    /api/v1/chapters/<uuid:chapter_id>/content/   [optional]  succes: 200
+       Contenu d'un chapitre. 200 avec les blocs (fichiers = URL signees courtes) si j'y ai acces
+       ; sinon 402 (payant) ou 403 avec la raison.
+       Dans l'URL : chapter_id
+
+POST   /api/v1/courses/<uuid:course_id>/enroll/   [user]  succes: 201
+       M'inscrire a un cours (idempotent).
+       Dans l'URL : course_id
+
+DELETE /api/v1/courses/<uuid:course_id>/enroll/   [user]  succes: 204
+       Abandonner un cours.
+       Dans l'URL : course_id
+
+GET    /api/v1/me/enrollments/   [user]  succes: 200
+       Mes inscriptions avec ma progression.
+
+GET    /api/v1/courses/<uuid:course_id>/progress/   [user]  succes: 200
+       Ma progression dans un cours (global et par module).
+       Dans l'URL : course_id
+
+GET    /api/v1/courses/<uuid:course_id>/students/   [user]  succes: 200
+       [Enseignant] Etudiants inscrits.
+       Dans l'URL : course_id
+
+POST   /api/v1/courses/<uuid:course_id>/grants/   [user]  succes: 201
+       [Enseignant] Offrir un acces (cours, module ou chapitre) a un utilisateur.
+       Dans l'URL : course_id
+       Corps JSON :
+         username  texte (max 30 car.)  (requis)
+         scope  choix : course | module | chapter  (facultatif)
+         target_id  uuid  (facultatif)
+
+### QUIZ ET DEVOIRS  (17)
+
+POST   /api/v1/courses/<uuid:course_id>/quizzes/   [user]  succes: 201
+       [Enseignant] Creer un quiz.
+       Dans l'URL : course_id
+       Corps JSON :
+         title  texte (max 160 car.)  (requis)
+         pass_percent  entier (min 0, max 100)  (facultatif)
+         max_attempts  entier (min 0, max 50)  (facultatif)
+         time_limit_seconds  entier (min 10)  (facultatif)
+         chapter  uuid  (facultatif)
+
+GET    /api/v1/quizzes/<uuid:quiz_id>/   [user]  succes: 200
+       Lire un quiz (questions et choix SANS les bonnes reponses).
+       Dans l'URL : quiz_id
+
+POST   /api/v1/quizzes/<uuid:quiz_id>/questions/   [user]  succes: 201
+       [Enseignant] Ajouter une question. kind : single, multiple, true_false, text, code,
+       ordering. choices : [{label, is_correct, correct_order}] ; accepted : reponses acceptees
+       (text).
+       Dans l'URL : quiz_id
+       Corps JSON :
+         kind  choix : single | multiple | true_false | text | code | ordering  (requis)
+         prompt  texte (max 5000 car.)  (requis)
+         points  entier (min 1, max 100)  (facultatif)
+         choices  liste de objet JSON (max 20)  (facultatif)
+         accepted  liste de texte (max 200 car.) (max 20)  (facultatif)
+         explanation  texte (max 2000 car.)  (facultatif)
+
+POST   /api/v1/quizzes/<uuid:quiz_id>/publish/   [user]  succes: 200
+       [Enseignant] Publier / depublier un quiz.
+       Dans l'URL : quiz_id
+       Corps JSON :
+         published  booleen  (requis)
+
+GET    /api/v1/quizzes/<uuid:quiz_id>/attempts/   [user]  succes: 200
+       Mes tentatives sur un quiz.
+       Dans l'URL : quiz_id
+
+POST   /api/v1/quizzes/<uuid:quiz_id>/attempts/   [user]  succes: 201
+       Demarrer (ou reprendre) une tentative.
+       Dans l'URL : quiz_id
+
+POST   /api/v1/attempts/<uuid:attempt_id>/submit/   [user]  succes: 200
+       Soumettre les reponses : {answers: {<id question>: {selected: [<id choix>], text:
+       "..."}}}. Hors delai : note 0.
+       Dans l'URL : attempt_id
+       Corps JSON :
+         answers  objet JSON  (requis)
+
+POST   /api/v1/attempts/<uuid:attempt_id>/grade-code/   [user]  succes: 200
+       [Enseignant] Corriger une reponse de type 'code'.
+       Dans l'URL : attempt_id
+       Corps JSON :
+         question  uuid  (requis)
+         correct  booleen  (requis)
+
+GET    /api/v1/courses/<uuid:course_id>/assignments/   [user]  succes: 200
+       Devoirs d'un cours (inscrits et enseignants).
+       Dans l'URL : course_id
+
+POST   /api/v1/courses/<uuid:course_id>/assignments/   [user]  succes: 201
+       [Enseignant] Creer un devoir. criteria : grille [{label, max_points}] dont la somme egale
+       max_points.
+       Dans l'URL : course_id
+       Corps JSON :
+         title  texte (max 160 car.)  (requis)
+         instructions  texte (max 20000 car.)  (facultatif)
+         max_points  entier (min 1, max 1000)  (facultatif)
+         due_at  date-heure ISO 8601  (facultatif)
+         allow_late  booleen  (facultatif)
+         max_attempts  entier (min 1, max 20)  (facultatif)
+         is_group  booleen  (facultatif)
+         criteria  liste de objet {label: texte (max 200 car.), max_points: entier (min 1, max 1000)} (max 20)  (facultatif)
+         chapter  uuid  (facultatif)
+
+GET    /api/v1/assignments/<uuid:assignment_id>/   [user]  succes: 200
+       Detail d'un devoir.
+       Dans l'URL : assignment_id
+
+POST   /api/v1/assignments/<uuid:assignment_id>/groups/   [user]  succes: 201
+       Former mon groupe pour un devoir collectif (tous les membres doivent etre inscrits ; un
+       eleve = un seul groupe).
+       Dans l'URL : assignment_id
+       Corps JSON :
+         name  texte (max 100 car.)  (requis)
+         usernames  liste de texte (max 30 car.) (max 20)  (facultatif)
+
+GET    /api/v1/assignments/<uuid:assignment_id>/submissions/   [user]  succes: 200
+       Rendus d'un devoir : tous pour les enseignants ; seulement les miens (et ceux de mon
+       groupe) pour un etudiant.
+       Dans l'URL : assignment_id
+
+POST   /api/v1/assignments/<uuid:assignment_id>/submissions/   [user]  succes: 201
+       Rendre un devoir (texte et/ou fichiers envoyes, usage 'assignment_submission'). Pour un
+       devoir collectif, le rendu est celui du groupe.
+       Dans l'URL : assignment_id
+       Corps JSON :
+         text  texte (max 50000 car.)  (facultatif)
+         files  liste de uuid (max 10)  (facultatif)
+
+GET    /api/v1/submissions/<uuid:submission_id>/   [user]  succes: 200
+       Lire un rendu (auteur, groupe ou enseignants).
+       Dans l'URL : submission_id
+
+POST   /api/v1/submissions/<uuid:submission_id>/grade/   [user]  succes: 200
+       [Enseignant] Noter un rendu : points (note globale) OU criteria [{criterion_id, points,
+       comment}] (grille complete). Une nouvelle note remplace l'ancienne.
+       Dans l'URL : submission_id
+       Corps JSON :
+         points  decimal  (facultatif)
+         criteria  liste de objet {criterion_id: uuid, points: decimal (min 0), comment?: texte (max 500 car.)} (max 20)  (facultatif)
+         feedback  texte (max 5000 car.)  (facultatif)
+
+POST   /api/v1/submissions/<uuid:submission_id>/feedback/   [user]  succes: 201
+       Commenter un rendu (enseignants et auteur/groupe).
+       Dans l'URL : submission_id
+       Corps JSON :
+         body  texte (max 5000 car.)  (requis)
+
+### PROGRESSION ET CERTIFICATS  (3)
+
+POST   /api/v1/chapters/<uuid:chapter_id>/progress/   [user]  succes: 200
+       Enregistrer ma progression dans un chapitre (le pourcentage ne recule jamais ; 100 =
+       chapitre termine ; le temps est plafonne a 1 h par appel).
+       Dans l'URL : chapter_id
+       Corps JSON :
+         percent  entier (min 0, max 100)  (requis)
+         seconds  entier (min 0, max 3600)  (facultatif)
+
+GET    /api/v1/me/certificates/   [user]  succes: 200
+       Mes certificats.
+
+GET    /api/v1/public/certificates/<str:code>/   [public]  succes: 200
+       Verifier PUBLIQUEMENT un certificat par son code (limite par adresse IP). Ne renvoie
+       aucune donnee privee.
+       Dans l'URL : code
+
+### MARKETPLACE  (27)
+
+POST   /api/v1/stores/   [user]  succes: 201
+       Creer ma boutique.
+       Corps JSON :
+         name  texte (max 120 car.)  (requis)
+         slug  slug (max 80 car.)  (requis)
+         description  texte (max 5000 car.)  (facultatif)
+
+GET    /api/v1/me/stores/   [user]  succes: 200
+       Mes boutiques.
+
+GET    /api/v1/stores/<slug:slug>/   [public]  succes: 200
+       Page publique d'une boutique.
+       Dans l'URL : slug
+
+POST   /api/v1/stores/<slug:slug>/products/   [user]  succes: 201
+       [Vendeur] Creer un produit (brouillon).
+       Dans l'URL : slug
+       Corps JSON :
+         kind  choix : application | software | service | template | resource | course | digital_content  (requis)
+         slug  slug (max 80 car.)  (requis)
+         title  texte (max 160 car.)  (requis)
+         license_type  choix : personal | team | commercial | none  (facultatif)
+         description  texte (max 20000 car.)  (facultatif)
+
+POST   /api/v1/stores/<slug:slug>/coupons/   [user]  succes: 201
+       [Vendeur] Creer un coupon pour ma boutique.
+       Dans l'URL : slug
+       Corps JSON :
+         code  texte (max 40 car.)  (requis)
+         kind  choix : percent | fixed  (requis)
+         value  entier (min 1)  (requis)
+         currency  texte (max 3 car.)  (facultatif)
+         max_redemptions  entier (min 1)  (facultatif)
+         per_user_limit  entier (min 1, max 100)  (facultatif)
+         min_subtotal_minor  entier (min 0)  (facultatif)
+         ends_at  date-heure ISO 8601  (facultatif)
+
+GET    /api/v1/stores/<slug:slug>/revenue/   [user]  succes: 200
+       [Vendeur] Mes revenus calcules depuis le grand livre (brut, rembourse, net apres
+       commission).
+       Dans l'URL : slug
+
+GET    /api/v1/products/   [public]  succes: 200
+       Catalogue des produits publies.
+       Parametres de requete :
+         q  texte (max 60 car.)  (facultatif)
+         kind  texte  (facultatif)
+         store  slug  (facultatif)
+
+GET    /api/v1/products/<uuid:product_id>/   [optional]  succes: 200
+       Fiche produit (version, changelog, prerequis, instructions, fichiers sans lien de
+       telechargement).
+       Dans l'URL : product_id
+
+POST   /api/v1/products/<uuid:product_id>/variants/   [user]  succes: 201
+       [Vendeur] Ajouter une variante (prix en plus petite unite ; stock vide = illimite).
+       Dans l'URL : product_id
+       Corps JSON :
+         sku  texte (max 60 car.)  (requis)
+         name  texte (max 100 car.)  (requis)
+         price_minor  entier (min 0)  (requis)
+         currency  texte (max 3 car.)  (requis)
+         stock  entier (min 0, null autorise)  (facultatif)
+
+POST   /api/v1/products/<uuid:product_id>/media/   [user]  succes: 201
+       [Vendeur] Ajouter une image/video au produit (fichier envoye, usage 'product_media').
+       Dans l'URL : product_id
+       Corps JSON :
+         file  uuid  (requis)
+
+POST   /api/v1/products/<uuid:product_id>/releases/   [user]  succes: 201
+       [Vendeur] Publier une version avec ses fichiers (envoyes, usage 'product_asset').
+       L'empreinte SHA-256 est fournie par le vendeur.
+       Dans l'URL : product_id
+       Corps JSON :
+         version  texte (max 40 car.)  (requis)
+         platform  choix : any | windows | macos | linux | android | ios | web  (facultatif)
+         changelog  texte (max 20000 car.)  (facultatif)
+         requirements  texte (max 5000 car.)  (facultatif)
+         installation_instructions  texte (max 10000 car.)  (facultatif)
+         assets  liste de objet {file: uuid, checksum_sha256: texte (format impose)} (min 1, max 20)  (requis)
+
+POST   /api/v1/products/<uuid:product_id>/entitlement-targets/   [user]  succes: 201
+       [Vendeur] Ce que l'achat debloque (cours, module, chapitre, classroom) : verifie que vous
+       en etes enseignant.
+       Dans l'URL : product_id
+       Corps JSON :
+         scope  choix : classroom | course | module | chapter  (requis)
+         target_id  uuid  (requis)
+
+POST   /api/v1/products/<uuid:product_id>/publish/   [user]  succes: 200
+       [Vendeur] Publier le produit (verifie qu'il est vendable).
+       Dans l'URL : product_id
+
+GET    /api/v1/products/<uuid:product_id>/reviews/   [public]  succes: 200
+       Avis d'un produit.
+       Dans l'URL : product_id
+
+POST   /api/v1/products/<uuid:product_id>/reviews/   [user]  succes: 201
+       Noter un produit (reserve aux acheteurs, un avis par produit).
+       Dans l'URL : product_id
+       Corps JSON :
+         rating  entier (min 1, max 5)  (requis)
+         title  texte (max 120 car.)  (facultatif)
+         body  texte (max 5000 car.)  (facultatif)
+
+POST   /api/v1/products/<uuid:product_id>/wishlist/   [user]  succes: 200
+       Ajouter/retirer un produit de ma liste de souhaits.
+       Dans l'URL : product_id
+
+GET    /api/v1/me/wishlist/   [user]  succes: 200
+       Ma liste de souhaits.
+
+GET    /api/v1/cart/   [user]  succes: 200
+       Mon panier.
+
+POST   /api/v1/cart/items/   [user]  succes: 201
+       Ajouter au panier (une seule devise par panier ; stock verifie).
+       Corps JSON :
+         variant  uuid  (requis)
+         quantity  entier (min 1, max 100)  (facultatif)
+
+PATCH  /api/v1/cart/items/<uuid:variant_id>/   [user]  succes: 200
+       Changer la quantite (0 retire la ligne).
+       Dans l'URL : variant_id
+       Corps JSON :
+         quantity  entier (min 0, max 100)  (requis)
+
+DELETE /api/v1/cart/items/<uuid:variant_id>/   [user]  succes: 200
+       Retirer une ligne du panier.
+       Dans l'URL : variant_id
+
+POST   /api/v1/checkout/   [user]  succes: 201
+       Passer commande depuis le panier. idempotency_key est OBLIGATOIRE (une cle = une commande,
+       meme si le client clique deux fois). Prix figes ; stock reserve.
+       Corps JSON :
+         idempotency_key  texte (max 100 car.)  (requis)
+         coupon_code  texte (max 40 car.)  (facultatif)
+
+GET    /api/v1/orders/   [user]  succes: 200
+       Mes commandes.
+
+GET    /api/v1/orders/<uuid:order_id>/   [user]  succes: 200
+       Detail d'une de mes commandes.
+       Dans l'URL : order_id
+
+POST   /api/v1/orders/<uuid:order_id>/cancel/   [user]  succes: 200
+       Annuler une commande non payee (le stock et le coupon sont rendus).
+       Dans l'URL : order_id
+
+GET    /api/v1/me/licenses/   [user]  succes: 200
+       Mes licences.
+
+POST   /api/v1/assets/<uuid:asset_id>/download/   [user]  succes: 200
+       Obtenir une URL signee de telechargement (licence active requise ; 20 par minute).
+       Dans l'URL : asset_id
+
+### PAIEMENTS ET REMBOURSEMENTS  (9)
+
+POST   /api/v1/payments/start/   [user]  succes: 201
+       Initier le paiement d'une de mes commandes (idempotent). Le fournisseur reel n'est pas
+       branche : voir /payments/{id}/simulate/ en phase de test.
+       Corps JSON :
+         order  uuid  (requis)
+         provider  choix : mobile_money | card | manual  (requis)
+
+POST   /api/v1/payments/<uuid:payment_id>/simulate/   [user]  succes: 200
+       [PHASE DE TEST] Simuler le resultat d'un paiement 'manual' (reussite ou echec). Retourne
+       404 si PAYMENTS_SIMULATION_ENABLED est desactive.
+       Dans l'URL : payment_id
+       Corps JSON :
+         outcome  choix : succeeded | failed  (facultatif)
+
+POST   /api/v1/payments/webhooks/<slug:provider>/   [public]  succes: 200
+       Webhook d'un fournisseur de paiement. Corps JSON brut {event_id, provider_ref, status,
+       amount_minor, currency} + en-tete X-Signature = HMAC-SHA256 hexadecimal du corps avec le
+       secret du fournisseur. Idempotent.
+       Dans l'URL : provider
+
+POST   /api/v1/orders/<uuid:order_id>/pay-free/   [user]  succes: 200
+       Valider une commande GRATUITE (total 0).
+       Dans l'URL : order_id
+
+POST   /api/v1/refunds/   [user]  succes: 201
+       Demander un remboursement (delai de 14 jours ; une demande ouverte par article).
+       Corps JSON :
+         order_item  uuid  (requis)
+         reason  texte (max 500 car.)  (requis)
+         amount_minor  entier (min 1)  (facultatif)
+
+GET    /api/v1/me/refunds/   [user]  succes: 200
+       Mes demandes de remboursement.
+
+GET    /api/v1/admin/refunds/   [staff]  succes: 200
+       [Administration] File des remboursements.
+       Parametres de requete :
+         status  choix : requested | processed | rejected  (facultatif)
+
+POST   /api/v1/admin/refunds/<uuid:refund_id>/decision/   [staff]  succes: 200
+       [Administration] Approuver ou refuser un remboursement (reversement comptable
+       proportionnel, licence et acces retires).
+       Dans l'URL : refund_id
+       Corps JSON :
+         approve  booleen  (requis)
+
+GET    /api/v1/admin/ledger/orders/<uuid:order_id>/   [staff]  succes: 200
+       [Administration] Ecritures du grand livre d'une commande (le solde doit valoir 0).
+       Dans l'URL : order_id
+
+### ENTREPRISES  (14)
+
+POST   /api/v1/companies/   [user]  succes: 201
+       Creer une entreprise (vous en etes le proprietaire).
+       Corps JSON :
+         name  texte (max 140 car.)  (requis)
+         slug  slug (max 80 car.)  (requis)
+         tagline  texte (max 200 car.)  (facultatif)
+         description  texte (max 10000 car.)  (facultatif)
+         website  url (https)  (facultatif)
+         industry  texte (max 80 car.)  (facultatif)
+         size_range  choix :  | 1-10 | 11-50 | 51-200 | 201-1000 | 1000+  (facultatif)
+         city  texte (max 80 car.)  (facultatif)
+
+GET    /api/v1/me/companies/   [user]  succes: 200
+       Mes entreprises.
+
+GET    /api/v1/companies/<slug:slug>/   [public]  succes: 200
+       Page publique d'une entreprise.
+       Dans l'URL : slug
+
+PATCH  /api/v1/companies/<slug:slug>/   [user]  succes: 200
+       [Gestionnaire/editeur] Modifier l'entreprise. logo_file / cover_file : fichiers envoyes
+       (usages 'company_logo' / 'company_cover').
+       Dans l'URL : slug
+       Corps JSON :
+         name  texte (max 140 car.)  (facultatif)
+         tagline  texte (max 200 car.)  (facultatif)
+         description  texte (max 10000 car.)  (facultatif)
+         website  url (https)  (facultatif)
+         industry  texte (max 80 car.)  (facultatif)
+         size_range  choix :  | 1-10 | 11-50 | 51-200 | 201-1000 | 1000+  (facultatif)
+         city  texte (max 80 car.)  (facultatif)
+         country  texte (max 2 car., null autorise)  (facultatif)
+         logo_file  uuid (null autorise)  (facultatif)
+         cover_file  uuid (null autorise)  (facultatif)
+
+GET    /api/v1/companies/<slug:slug>/members/   [public]  succes: 200
+       Equipe visible sur la page publique.
+       Dans l'URL : slug
+
+POST   /api/v1/companies/<slug:slug>/members/   [user]  succes: 201
+       [Gestionnaire] Ajouter un membre (role : admin, recruiter, editor, employee).
+       Dans l'URL : slug
+       Corps JSON :
+         username  texte (max 30 car.)  (requis)
+         role  choix : owner | admin | recruiter | editor | employee  (facultatif)
+         title  texte (max 100 car.)  (facultatif)
+
+PATCH  /api/v1/companies/<slug:slug>/members/<str:username>/   [user]  succes: 200
+       [Gestionnaire] Changer le role d'un membre.
+       Dans l'URL : slug, username
+       Corps JSON :
+         role  choix : owner | admin | recruiter | editor | employee  (requis)
+
+DELETE /api/v1/companies/<slug:slug>/members/<str:username>/   [user]  succes: 204
+       Retirer un membre (ou quitter l'entreprise). Le dernier proprietaire ne peut pas partir.
+       Dans l'URL : slug, username
+
+POST   /api/v1/companies/<slug:slug>/verification/   [user]  succes: 201
+       [Gestionnaire] Demander la verification de l'entreprise.
+       Dans l'URL : slug
+       Corps JSON :
+         method  choix : domain_email | document | manual  (requis)
+         evidence  objet JSON  (facultatif)
+
+POST   /api/v1/companies/<slug:slug>/links/   [user]  succes: 201
+       [Editeur] Ajouter un lien (https).
+       Dans l'URL : slug
+       Corps JSON :
+         provider  texte (max 12 car.)  (requis)
+         url  url (https) (max 300 car.)  (requis)
+
+POST   /api/v1/companies/<slug:slug>/projects/   [user]  succes: 201
+       [Editeur] Ajouter un projet a la page.
+       Dans l'URL : slug
+       Corps JSON :
+         title  texte (max 160 car.)  (requis)
+         description  texte (max 5000 car.)  (facultatif)
+         url  url (https)  (facultatif)
+         repo_url  url (https)  (facultatif)
+
+POST   /api/v1/companies/<slug:slug>/services/   [user]  succes: 201
+       [Editeur] Ajouter un service propose.
+       Dans l'URL : slug
+       Corps JSON :
+         title  texte (max 160 car.)  (requis)
+         description  texte (max 3000 car.)  (facultatif)
+         starting_price_minor  entier (min 1)  (facultatif)
+         currency  texte (max 3 car.)  (facultatif)
+
+GET    /api/v1/admin/company-verifications/   [staff]  succes: 200
+       [Administration] Demandes de verification en attente.
+
+POST   /api/v1/admin/company-verifications/<uuid:verification_id>/review/   [staff]  succes: 200
+       [Administration] Approuver ou rejeter une verification.
+       Dans l'URL : verification_id
+       Corps JSON :
+         approve  booleen  (requis)
+         notes  texte (max 500 car.)  (facultatif)
+
+### PORTFOLIO  (12)
+
+GET    /api/v1/me/portfolio/   [user]  succes: 200
+       Mon portfolio complet.
+
+PATCH  /api/v1/me/portfolio/   [user]  succes: 200
+       Modifier mon portfolio (titre, resume, visibilite).
+       Corps JSON :
+         title  texte (max 140 car.)  (facultatif)
+         summary  texte (max 3000 car.)  (facultatif)
+         visibility  choix : public | followers | friends | close_friends | private  (facultatif)
+
+GET    /api/v1/users/<str:username>/portfolio/   [optional]  succes: 200
+       Portfolio d'un utilisateur (404 si prive pour moi).
+       Dans l'URL : username
+
+POST   /api/v1/me/portfolio/projects/   [user]  succes: 201
+       Ajouter un projet. technologies : slugs de competences.
+       Corps JSON :
+         slug  slug (max 80 car.)  (requis)
+         title  texte (max 160 car.)  (requis)
+         description  texte (max 10000 car.)  (facultatif)
+         role  texte (max 100 car.)  (facultatif)
+         started_on  date AAAA-MM-JJ  (facultatif)
+         ended_on  date AAAA-MM-JJ  (facultatif)
+         technologies  liste de texte (max 80 car.) (max 30)  (facultatif)
+         links  liste de objet {kind?: choix : demo | repository | article | other, provider?: texte (max 12 car.), url: url (https) (max 400 car.)} (max 10)  (facultatif)
+
+POST   /api/v1/me/portfolio/projects/<uuid:project_id>/links/   [user]  succes: 201
+       Ajouter un lien a un de mes projets.
+       Dans l'URL : project_id
+       Corps JSON :
+         kind  choix : demo | repository | article | other  (facultatif)
+         provider  texte (max 12 car.)  (facultatif)
+         url  url (https) (max 400 car.)  (requis)
+
+POST   /api/v1/me/portfolio/projects/<uuid:project_id>/media/   [user]  succes: 201
+       Ajouter une image/video a un de mes projets (fichier envoye, usage 'portfolio_media').
+       Dans l'URL : project_id
+       Corps JSON :
+         file  uuid  (requis)
+
+POST   /api/v1/me/portfolio/repositories/   [user]  succes: 201
+       Declarer un depot (saisie manuelle).
+       Corps JSON :
+         provider  choix : github | gitlab  (requis)
+         full_name  texte (max 200 car.)  (requis)
+         url  url (https) (max 400 car.)  (requis)
+         description  texte (max 500 car.)  (facultatif)
+         language  texte (max 40 car.)  (facultatif)
+
+POST   /api/v1/me/portfolio/experiences/   [user]  succes: 201
+       Ajouter une experience.
+       Corps JSON :
+         company_name  texte (max 140 car.)  (requis)
+         title  texte (max 140 car.)  (requis)
+         location  texte (max 100 car.)  (facultatif)
+         started_on  date AAAA-MM-JJ  (requis)
+         ended_on  date AAAA-MM-JJ  (facultatif)
+         description  texte (max 5000 car.)  (facultatif)
+
+POST   /api/v1/me/portfolio/educations/   [user]  succes: 201
+       Ajouter une formation.
+       Corps JSON :
+         institution  texte (max 160 car.)  (requis)
+         degree  texte (max 140 car.)  (facultatif)
+         field  texte (max 140 car.)  (facultatif)
+         started_on  date AAAA-MM-JJ  (facultatif)
+         ended_on  date AAAA-MM-JJ  (facultatif)
+
+POST   /api/v1/me/portfolio/achievements/   [user]  succes: 201
+       Ajouter une realisation.
+       Corps JSON :
+         title  texte (max 160 car.)  (requis)
+         issuer  texte (max 140 car.)  (facultatif)
+         achieved_on  date AAAA-MM-JJ  (facultatif)
+         url  url (https)  (facultatif)
+
+POST   /api/v1/me/portfolio/certificates/   [user]  succes: 201
+       Afficher un de MES certificats LE BAOBAB (verifiable publiquement).
+       Corps JSON :
+         certificate_id  uuid  (requis)
+
+DELETE /api/v1/me/portfolio/<slug:kind>/<uuid:entry_id>/   [user]  succes: 204
+       Supprimer une entree de mon portfolio. kind : projects, experiences, educations,
+       achievements, certificates, repositories.
+       Dans l'URL : kind, entry_id
+
+### EMPLOIS ET FREELANCE  (26)
+
+GET    /api/v1/jobs/   [public]  succes: 200
+       Offres ouvertes (emplois et missions freelance).
+       Parametres de requete :
+         q  texte (max 60 car.)  (facultatif)
+         type  texte  (facultatif)
+         remote  texte  (facultatif)
+         country  texte (max 2 car.)  (facultatif)
+         skill  texte  (facultatif)
+         company  slug  (facultatif)
+         level  texte  (facultatif)
+
+POST   /api/v1/jobs/   [user]  succes: 201
+       Creer une offre (brouillon). Un emploi exige une entreprise dont vous etes recruteur ; une
+       mission freelance peut etre publiee a titre individuel.
+       Corps JSON :
+         company  slug  (facultatif)
+         title  texte (max 160 car.)  (requis)
+         description  texte (max 20000 car.)  (requis)
+         job_type  choix : full_time | part_time | internship | contract | freelance  (requis)
+         contract_type  choix : permanent | fixed_term | freelance | internship  (requis)
+         experience_level  choix : junior | mid | senior | lead  (facultatif)
+         remote_policy  choix : onsite | hybrid | remote  (facultatif)
+         country  texte (max 2 car.)  (facultatif)
+         city  texte (max 80 car.)  (facultatif)
+         salary  objet {min: entier (min 0), max: entier (min 0), currency: texte (max 3 car.), period: choix : hour | day | month | year}  (facultatif)
+         skills  liste de objet {slug: texte (max 80 car.), required?: booleen} (max 30)  (facultatif)
+         deadline  date-heure ISO 8601  (facultatif)
+
+GET    /api/v1/jobs/<uuid:job_id>/   [optional]  succes: 200
+       Detail d'une offre.
+       Dans l'URL : job_id
+
+POST   /api/v1/jobs/<uuid:job_id>/publish/   [user]  succes: 200
+       [Recruteur] Publier l'offre.
+       Dans l'URL : job_id
+
+POST   /api/v1/jobs/<uuid:job_id>/close/   [user]  succes: 200
+       [Recruteur] Fermer l'offre (filled=true : poste pourvu).
+       Dans l'URL : job_id
+       Corps JSON :
+         filled  booleen  (facultatif)
+
+POST   /api/v1/jobs/<uuid:job_id>/apply/   [user]  succes: 201
+       Postuler a une offre (une seule candidature par offre). cv_file : fichier envoye (usage
+       'cv').
+       Dans l'URL : job_id
+       Corps JSON :
+         cover_letter  texte (max 10000 car.)  (facultatif)
+         cv_file  uuid  (facultatif)
+         portfolio_url  url (https)  (facultatif)
+         github_url  url (https)  (facultatif)
+         gitlab_url  url (https)  (facultatif)
+         projects  liste de uuid (max 10)  (facultatif)
+         expected_salary_minor  entier (min 0)  (facultatif)
+         available_from  date AAAA-MM-JJ  (facultatif)
+
+GET    /api/v1/jobs/<uuid:job_id>/applications/   [user]  succes: 200
+       [Recruteur] Candidatures recues pour une offre.
+       Dans l'URL : job_id
+       Parametres de requete :
+         status  choix : submitted | reviewing | shortlisted | interview | offer | hired | rejected | withdrawn  (facultatif)
+
+GET    /api/v1/jobs/<uuid:job_id>/slots/   [user]  succes: 200
+       Creneaux libres (recruteurs ; candidats pre-selectionnes de cette offre).
+       Dans l'URL : job_id
+
+POST   /api/v1/jobs/<uuid:job_id>/slots/   [user]  succes: 201
+       [Recruteur] Proposer un creneau d'entretien (deux creneaux d'un meme recruteur ne peuvent
+       pas se chevaucher).
+       Dans l'URL : job_id
+       Corps JSON :
+         starts_at  date-heure ISO 8601  (requis)
+         ends_at  date-heure ISO 8601  (requis)
+
+GET    /api/v1/jobs/<uuid:job_id>/proposals/   [user]  succes: 200
+       [Client] Propositions recues pour une mission.
+       Dans l'URL : job_id
+
+POST   /api/v1/jobs/<uuid:job_id>/proposals/   [user]  succes: 201
+       Repondre a une mission freelance par une proposition (une par mission).
+       Dans l'URL : job_id
+       Corps JSON :
+         cover_letter  texte (max 10000 car.)  (requis)
+         bid_minor  entier (min 1)  (requis)
+         currency  texte (max 3 car.)  (requis)
+         delivery_days  entier (min 1, max 3650)  (requis)
+
+GET    /api/v1/me/applications/   [user]  succes: 200
+       Mes candidatures.
+
+GET    /api/v1/applications/<uuid:application_id>/   [user]  succes: 200
+       Detail d'une candidature (le candidat ou les recruteurs de l'offre ; sinon 404).
+       Dans l'URL : application_id
+
+POST   /api/v1/applications/<uuid:application_id>/transition/   [user]  succes: 200
+       Changer le statut d'une candidature. Recruteur : reviewing, shortlisted, interview, offer,
+       hired, rejected. Candidat : withdrawn. Seules les transitions valides sont acceptees.
+       Dans l'URL : application_id
+       Corps JSON :
+         to_status  choix : submitted | reviewing | shortlisted | interview | offer | hired | rejected | withdrawn  (requis)
+         note  texte (max 500 car.)  (facultatif)
+
+POST   /api/v1/applications/<uuid:application_id>/book/   [user]  succes: 201
+       Reserver un creneau pour une candidature (candidat ou recruteur) : passe la candidature en
+       'interview'.
+       Dans l'URL : application_id
+       Corps JSON :
+         slot  uuid  (requis)
+         mode  choix : video | phone | onsite  (facultatif)
+         location  texte (max 300 car.)  (facultatif)
+
+POST   /api/v1/applications/<uuid:application_id>/offer/   [user]  succes: 201
+       [Recruteur] Envoyer une offre d'embauche (apres un entretien).
+       Dans l'URL : application_id
+       Corps JSON :
+         amount_minor  entier (min 1)  (requis)
+         currency  texte (max 3 car.)  (requis)
+         period  choix : hour | day | month | year  (facultatif)
+         start_date  date AAAA-MM-JJ  (facultatif)
+         valid_days  entier (min 1, max 60)  (facultatif)
+
+GET    /api/v1/me/offers/   [user]  succes: 200
+       Mes offres d'embauche recues.
+
+POST   /api/v1/offers/<uuid:offer_id>/respond/   [user]  succes: 200
+       Accepter ou refuser une offre d'embauche (l'acceptation cree le contrat).
+       Dans l'URL : offer_id
+       Corps JSON :
+         accept  booleen  (requis)
+
+GET    /api/v1/me/freelancer-profile/   [user]  succes: 200
+       Mon profil freelance.
+
+PUT    /api/v1/me/freelancer-profile/   [user]  succes: 200
+       Creer/mettre a jour mon profil freelance (un tarif exige une devise).
+       Corps JSON :
+         headline  texte (max 160 car.)  (facultatif)
+         hourly_rate_minor  entier (min 1, null autorise)  (facultatif)
+         currency  texte (max 3 car.)  (facultatif)
+         is_available  booleen  (facultatif)
+         languages  texte (max 100 car.)  (facultatif)
+
+GET    /api/v1/me/proposals/   [user]  succes: 200
+       Mes propositions.
+
+POST   /api/v1/proposals/<uuid:proposal_id>/accept/   [user]  succes: 201
+       [Client] Accepter une proposition : cree le contrat et ses jalons (leur somme doit egaler
+       l'offre), refuse les autres propositions, marque la mission pourvue.
+       Dans l'URL : proposal_id
+       Corps JSON :
+         milestones  liste de objet {title: texte (max 160 car.), amount_minor: entier (min 1), due_on?: date AAAA-MM-JJ} (max 20)  (facultatif)
+
+GET    /api/v1/me/contracts/   [user]  succes: 200
+       Mes contrats (comme client ou prestataire).
+
+GET    /api/v1/contracts/<uuid:contract_id>/   [user]  succes: 200
+       Detail d'un contrat (parties uniquement).
+       Dans l'URL : contract_id
+
+POST   /api/v1/contracts/<uuid:contract_id>/terminate/   [user]  succes: 200
+       Resilier un contrat (l'une des parties).
+       Dans l'URL : contract_id
+
+POST   /api/v1/milestones/<uuid:milestone_id>/advance/   [user]  succes: 200
+       Faire avancer un jalon : start et submit par le prestataire, approve par le client. Le
+       contrat se termine quand tous les jalons sont valides.
+       Dans l'URL : milestone_id
+       Corps JSON :
+         action  choix : start | submit | approve  (requis)
+
+### PUBLICITE  (22)
+
+POST   /api/v1/ads/accounts/   [user]  succes: 201
+       Creer mon compte annonceur et son portefeuille prepaye.
+       Corps JSON :
+         name  texte (max 140 car.)  (requis)
+         currency  texte (max 3 car.)  (requis)
+
+GET    /api/v1/me/ads/accounts/   [user]  succes: 200
+       Mes comptes annonceur.
+
+POST   /api/v1/admin/ads/accounts/<uuid:account_id>/topup/   [staff]  succes: 201
+       [Administration] Crediter un portefeuille (virement verifie). reference unique : un rejeu
+       ne credite pas deux fois.
+       Dans l'URL : account_id
+       Corps JSON :
+         amount_minor  entier (min 1)  (requis)
+         reference  texte (max 120 car.)  (requis)
+
+GET    /api/v1/ads/campaigns/   [user]  succes: 200
+       Mes campagnes.
+
+POST   /api/v1/ads/campaigns/   [user]  succes: 201
+       Creer une campagne (brouillon).
+       Corps JSON :
+         account  uuid  (requis)
+         name  texte (max 140 car.)  (requis)
+         starts_at  date-heure ISO 8601  (requis)
+         ends_at  date-heure ISO 8601  (facultatif)
+         daily_budget_minor  entier (min 1)  (requis)
+         total_budget_minor  entier (min 1)  (requis)
+         objective  choix : awareness | traffic | conversions  (facultatif)
+
+POST   /api/v1/ads/campaigns/<uuid:campaign_id>/ad-sets/   [user]  succes: 201
+       Creer un groupe d'annonces. Ciblage = regles ET entre elles (in = OU, all = ET, not_in =
+       NON) ; criteres limites a une liste blanche, AUCUNE donnee sensible. frequency_cap_per_day
+       : impressions max par utilisateur et par jour.
+       Dans l'URL : campaign_id
+       Corps JSON :
+         name  texte (max 140 car.)  (requis)
+         bid_minor  entier (min 1)  (requis)
+         billing_model  choix : cpc | cpm  (facultatif)
+         placements  liste de choix : feed | sidebar | search | course_page | job_page (min 1)  (requis)
+         frequency_cap_per_day  entier (min 1, max 50)  (facultatif)
+         audience  uuid  (facultatif)
+         rules  liste de objet {field: choix : interest | skill | technology | profession | country | region | language | level | domain | availability | followed_category | viewed_content_type, operator?: choix : in | all | not_in, values: liste de texte (max 80 car.) (min 1, max 50), required?: booleen, weight?: entier (min 1, max 10)} (max 20)  (facultatif)
+
+POST   /api/v1/ads/campaigns/<uuid:campaign_id>/activate/   [user]  succes: 200
+       Activer la campagne (portefeuille non vide et au moins une annonce validee).
+       Dans l'URL : campaign_id
+
+POST   /api/v1/ads/campaigns/<uuid:campaign_id>/pause/   [user]  succes: 200
+       Mettre la campagne en pause.
+       Dans l'URL : campaign_id
+
+GET    /api/v1/ads/campaigns/<uuid:campaign_id>/stats/   [user]  succes: 200
+       Statistiques d'une campagne (depense reglee, impressions, clics, CTR, budget restant) et
+       solde du portefeuille.
+       Dans l'URL : campaign_id
+
+POST   /api/v1/ads/creatives/   [user]  succes: 201
+       Creer une creation publicitaire (https obligatoire ; image/video : fichier envoye, usage
+       'ad_creative').
+       Corps JSON :
+         account  uuid  (requis)
+         headline  texte (max 90 car.)  (requis)
+         destination_url  url (https) (max 500 car.)  (requis)
+         kind  choix : text | image | video  (facultatif)
+         body  texte (max 300 car.)  (facultatif)
+         cta_label  texte (max 30 car.)  (facultatif)
+         file  uuid  (facultatif)
+
+POST   /api/v1/ads/ad-sets/<uuid:ad_set_id>/ads/   [user]  succes: 201
+       Creer une annonce (creation + groupe d'annonces).
+       Dans l'URL : ad_set_id
+       Corps JSON :
+         creative  uuid  (requis)
+
+POST   /api/v1/ads/ads/<uuid:ad_id>/submit/   [user]  succes: 200
+       Soumettre l'annonce a la moderation (aucune annonce ne diffuse sans validation humaine).
+       Dans l'URL : ad_id
+
+GET    /api/v1/admin/ads/review-queue/   [staff]  succes: 200
+       [Moderation] File des annonces a valider.
+
+POST   /api/v1/admin/ads/<uuid:ad_id>/review/   [staff]  succes: 200
+       [Moderation] Valider ou refuser une annonce.
+       Dans l'URL : ad_id
+       Corps JSON :
+         approve  booleen  (requis)
+         notes  texte (max 500 car.)  (facultatif)
+
+POST   /api/v1/ads/audiences/   [user]  succes: 201
+       Creer une audience personnalisee.
+       Corps JSON :
+         account  uuid  (requis)
+         name  texte (max 140 car.)  (requis)
+
+POST   /api/v1/ads/audiences/<uuid:audience_id>/members/   [user]  succes: 201
+       Ajouter des utilisateurs (pseudos) a une de mes audiences.
+       Dans l'URL : audience_id
+       Corps JSON :
+         usernames  liste de texte (max 30 car.) (min 1, max 500)  (requis)
+
+GET    /api/v1/ads/serve/   [user]  succes: 200
+       Annonces a afficher a cet emplacement (classees par valeur, respect du ciblage, du plafond
+       de frequence et des budgets). Chaque annonce porte un impression_id a rapporter via
+       /ads/impressions/.
+       Parametres de requete :
+         placement  choix : feed | sidebar | search | course_page | job_page  (requis)
+         limit  entier (min 1, max 5)  (facultatif)
+
+POST   /api/v1/ads/impressions/   [user]  succes: 202
+       Rapporter qu'une annonce a ete AFFICHEE (compte une seule fois par impression_id ; plafond
+       de frequence et budget appliques).
+       Corps JSON :
+         ad  uuid  (requis)
+         placement  choix : feed | sidebar | search | course_page | job_page  (requis)
+         impression_id  texte (max 64 car.)  (requis)
+
+POST   /api/v1/ads/clicks/   [user]  succes: 200
+       Rapporter un CLIC (une impression connue, du meme utilisateur, de moins de 24 h ; un clic
+       par impression). Renvoie l'URL de destination.
+       Corps JSON :
+         impression_id  texte (max 64 car.)  (requis)
+
+POST   /api/v1/ads/conversions/   [user]  succes: 202
+       Rapporter une CONVERSION attribuee a un clic (fenetre de 7 jours, une par clic).
+       Corps JSON :
+         impression_id  texte (max 64 car.)  (requis)
+
+GET    /api/v1/me/ad-preferences/   [user]  succes: 200
+       Mes preferences publicitaires.
+
+PUT    /api/v1/me/ad-preferences/   [user]  succes: 200
+       Accepter ou refuser la publicite personnalisee (refus : seules des annonces SANS ciblage
+       personnel vous sont montrees).
+       Corps JSON :
+         personalized_ads  booleen  (requis)
+
+### ADMINISTRATION : INDICATEURS  (1)
+
+GET    /api/v1/admin/metrics/platform-daily/   [staff]  succes: 200
+       [Administration] Indicateurs quotidiens de la plateforme (vue materialisee).
+       Parametres de requete :
+         days  entier (min 1, max 366)  (facultatif)
+
+### INTEGRATIONS EXTERNES  (3)
+
+GET    /api/v1/integrations/providers/   [public]  succes: 200
+       Fournisseurs externes pris en charge (la connexion n'est pas encore disponible).
+
+GET    /api/v1/me/integrations/   [user]  succes: 200
+       Mes comptes externes connectes (jamais les jetons).
+
+DELETE /api/v1/me/integrations/<uuid:account_id>/   [user]  succes: 204
+       Deconnecter un de mes comptes externes.
+       Dans l'URL : account_id
+
+### ADMINISTRATION : SYSTEME  (1)
+
+GET    /api/v1/admin/system/status/   [staff]  succes: 200
+       [Administration] Etat du systeme : interrupteurs de TEST encore actifs (a couper avant la
+       production), quota d'e-mails OTP, SMTP et stockage.

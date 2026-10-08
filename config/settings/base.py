@@ -75,6 +75,7 @@ LOCAL_APPS = [
     "apps.portfolio",
     "apps.jobs",
     "apps.advertising",
+    "apps.storage",
     "apps.dbobjects",  # DOIT rester en dernier : triggers/vues/fonctions SQL
 ]
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -240,3 +241,39 @@ PLATFORM_FEE_BPS = int(env("PLATFORM_FEE_BPS", "1000"))  # commission plateforme
 PENDING_ORDER_TTL_HOURS = int(env("PENDING_ORDER_TTL_HOURS", "24"))
 # Secrets de signature des webhooks par fournisseur. Secret vide => TOUS les webhooks de ce fournisseur sont refuses (jamais de non-signe accepte).
 PAYMENT_WEBHOOK_SECRETS = {p: env(f"PAYMENT_WEBHOOK_SECRET_{p.upper()}") for p in ("mobile_money", "card", "manual")}
+
+# --------------------------------------------------------------------- E-mail (SMTP)
+EMAIL_BACKEND = env("EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend")
+EMAIL_HOST = env("EMAIL_HOST")
+EMAIL_PORT = int(env("EMAIL_PORT", "587"))
+EMAIL_HOST_USER = env("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD")
+EMAIL_USE_TLS = env_bool("EMAIL_USE_TLS", True)
+EMAIL_USE_SSL = env_bool("EMAIL_USE_SSL", False)
+EMAIL_TIMEOUT = 10
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", "LE BAOBAB <no-reply@baobab.example>")
+
+# --------------------------------------------------------------------- OTP (confirmation de compte, mot de passe oublie)
+OTP_TTL_SECONDS = int(env("OTP_TTL_SECONDS", "600"))
+OTP_MAX_ATTEMPTS = int(env("OTP_MAX_ATTEMPTS", "5"))
+OTP_RESEND_COOLDOWN_SECONDS = int(env("OTP_RESEND_COOLDOWN_SECONDS", "60"))
+OTP_EMAIL_DAILY_LIMIT = int(env("OTP_EMAIL_DAILY_LIMIT", "25"))  # plafond d'e-mails OTP ENVOYES par jour (quota du compte SMTP gratuit)
+# PHASE DE TEST UNIQUEMENT : renvoie le code dans la reponse de l'API (pour tester meme si le SMTP est en panne ou le quota atteint).
+# DOIT etre false en production : sinon n'importe qui peut valider un compte sans posseder l'adresse e-mail.
+OTP_DEBUG_ECHO = env_bool("OTP_DEBUG_ECHO", False)
+# PHASE DE TEST UNIQUEMENT : expose POST /payments/{id}/simulate qui marque un paiement comme reussi sans fournisseur reel.
+PAYMENTS_SIMULATION_ENABLED = env_bool("PAYMENTS_SIMULATION_ENABLED", False)
+
+# --------------------------------------------------------------------- Stockage de fichiers (bucket S3-compatible : Cloudflare R2, Supabase Storage...)
+# Les fichiers ne transitent JAMAIS par l'API : elle delivre des URL signees, le client envoie/lit directement le bucket.
+STORAGE_BACKEND = env("STORAGE_BACKEND", "s3")  # "s3" | "fake" (tests / essais sans bucket)
+STORAGE_ENDPOINT_URL = env("STORAGE_ENDPOINT_URL")
+STORAGE_BUCKET = env("STORAGE_BUCKET")
+STORAGE_ACCESS_KEY_ID = env("STORAGE_ACCESS_KEY_ID")
+STORAGE_SECRET_ACCESS_KEY = env("STORAGE_SECRET_ACCESS_KEY")
+STORAGE_REGION = env("STORAGE_REGION", "auto")
+STORAGE_UPLOAD_URL_TTL = int(env("STORAGE_UPLOAD_URL_TTL", "900"))
+STORAGE_DOWNLOAD_URL_TTL = int(env("STORAGE_DOWNLOAD_URL_TTL", "300"))
+USER_STORAGE_QUOTA_BYTES = int(env("USER_STORAGE_QUOTA_BYTES", str(500 * 1024 * 1024)))
+# ESSAIS SANS BUCKET : avec STORAGE_BACKEND=fake, accepte la fin d'envoi sans verifier l'objet. Jamais en production.
+STORAGE_FAKE_AUTO_COMPLETE = env_bool("STORAGE_FAKE_AUTO_COMPLETE", False)

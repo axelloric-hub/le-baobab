@@ -1,0 +1,30 @@
+from apps.core.api import route
+from apps.education import api
+
+urlpatterns = [
+    route("classrooms/", GET=api.list_classrooms, POST=api.create_classroom),
+    route("me/classrooms/", GET=api.my_classrooms),
+    route("me/classroom-invitations/", GET=api.my_invitations),
+    route("classroom-invitations/<uuid:invitation_id>/respond/", POST=api.respond_invitation),
+    route("classrooms/<slug:slug>/", GET=api.classroom_detail),
+    route("classrooms/<slug:slug>/join/", POST=api.join),
+    route("classrooms/<slug:slug>/leave/", POST=api.leave),
+    route("classrooms/<slug:slug>/members/", GET=api.members),
+    route("classrooms/<slug:slug>/members/<uuid:member_id>/review/", POST=api.review_member),
+    route("classrooms/<slug:slug>/invite/", POST=api.invite),
+    route("classrooms/<slug:slug>/ban/", POST=api.ban),
+    route("classrooms/<slug:slug>/courses/", POST=api.create_course),
+    route("courses/", GET=api.list_courses),
+    route("courses/<uuid:course_id>/", GET=api.course_outline),
+    route("courses/<uuid:course_id>/publish/", POST=api.publish_course),
+    route("courses/<uuid:course_id>/instructors/", POST=api.add_instructor),
+    route("courses/<uuid:course_id>/modules/", POST=api.add_module),
+    route("modules/<uuid:module_id>/chapters/", POST=api.add_chapter),
+    route("chapters/<uuid:chapter_id>/blocks/", POST=api.add_block),
+    route("chapters/<uuid:chapter_id>/content/", GET=api.chapter_content),
+    route("courses/<uuid:course_id>/enroll/", POST=api.enroll, DELETE=api.drop),
+    route("me/enrollments/", GET=api.my_enrollments),
+    route("courses/<uuid:course_id>/progress/", GET=api.my_progress),
+    route("courses/<uuid:course_id>/students/", GET=api.students),
+    route("courses/<uuid:course_id>/grants/", POST=api.grant),
+]

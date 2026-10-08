@@ -1,5 +1,6 @@
-const ORIGIN_PREFIXES = ["/api/", "/admin/", "/static/", "/health/", "/ready/"];
-const STRIP = ["x-forwarded-for", "x-forwarded-host", "x-forwarded-proto", "x-internal-timestamp", "x-internal-signature", "x-edge-secret"];
+// workers/router/src/index.ts
+var ORIGIN_PREFIXES = ["/api/", "/admin/", "/static/", "/health/", "/ready/"];
+var STRIP = ["x-forwarded-for", "x-forwarded-host", "x-forwarded-proto", "x-internal-timestamp", "x-internal-signature", "x-edge-secret", "x-client-ip"];
 function hardened(request) {
   const headers = new Headers(request.headers);
   for (const h of STRIP) headers.delete(h);
@@ -11,6 +12,7 @@ function toOrigin(request, env) {
   const url = new URL(request.url);
   const headers = new Headers(request.headers);
   headers.set("x-edge-secret", env.EDGE_SHARED_SECRET);
+  headers.set("x-client-ip", request.headers.get("cf-connecting-ip") ?? "");
   headers.set("x-forwarded-proto", "https");
   headers.set("x-forwarded-host", env.PUBLIC_HOST);
   return new Request(new URL(url.pathname + url.search, env.ORIGIN_URL), new Request(request, { headers }));

@@ -46,3 +46,22 @@ def users_hidden_from(user_id) -> QuerySet:
     blocked = Block.objects.filter(blocker_id=user_id).values_list("blocked_id", flat=True)
     blockers = Block.objects.filter(blocked_id=user_id).values_list("blocker_id", flat=True)
     return User.objects.filter(Q(pk__in=blocked) | Q(pk__in=blockers)).values_list("pk", flat=True)
+
+
+def visibility_allows(viewer_id, owner_id, visibility: str) -> bool:
+    """Regle de confidentialite UNIQUE (profil, portfolio...) : public / abonnes / amis / prive, blocages prioritaires."""
+    from apps.core.choices import Visibility as V
+
+    if viewer_id is not None and viewer_id == owner_id:
+        return True
+    if viewer_id is not None and is_blocked_either_way(viewer_id, owner_id):
+        return False
+    if visibility == V.PUBLIC:
+        return True
+    if viewer_id is None or visibility == V.PRIVATE:
+        return False
+    if visibility == V.FOLLOWERS:
+        return Follow.objects.filter(follower_id=viewer_id, followee_id=owner_id).exists()
+    if visibility in (V.FRIENDS, V.CLOSE_FRIENDS):
+        return are_friends(viewer_id, owner_id)
+    return False

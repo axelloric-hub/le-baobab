@@ -32,6 +32,14 @@ services:
       # Redis EXTERNE gratuit (Upstash) : cache, verrous, compteurs, idempotence. Le WebSocket utilise la memoire du processus
       # (CHANNEL_REDIS_URL volontairement absente) : une seule instance, un seul worker.
       # Secrets : a saisir dans le dashboard Render (jamais dans ce fichier)
+      # ---- PHASE DE TEST : a PASSER A "false" AVANT LA PRODUCTION (voir A_NE_PAS_OUBLIER.md) ----
+      - { key: OTP_DEBUG_ECHO, value: "true" }                 # renvoie le code OTP dans la reponse de l'API
+      - { key: PAYMENTS_SIMULATION_ENABLED, value: "true" }    # active POST /payments/{id}/simulate/
+      - { key: STORAGE_BACKEND, value: "fake" }                # "s3" des qu'un bucket est configure
+      - { key: STORAGE_FAKE_AUTO_COMPLETE, value: "true" }     # accepte la fin d'envoi sans verifier le bucket
+      # ---- Reglages permanents ----
+      - { key: OTP_EMAIL_DAILY_LIMIT, value: "25" }
+      - { key: JWT_ACCESS_LIFETIME_MINUTES, value: "120" }     # confortable pour les tests ; 15 en production
       - { key: DJANGO_SECRET_KEY, sync: false }
       - { key: DATABASE_URL, sync: false }
       - { key: MONGODB_URL, sync: false }

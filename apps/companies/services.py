@@ -129,3 +129,29 @@ def add_service(company: Company, actor, **fields) -> CompanyService:
             return CompanyService.objects.create(company=company, **fields)
     except IntegrityError as exc:
         raise DomainError("Un prix exige une devise.", code="invalid_service") from exc
+
+
+COMPANY_FIELDS = ("name", "tagline", "description", "website", "industry", "size_range", "city")
+
+
+@transaction.atomic
+def update_company(company: Company, actor, *, fields: dict, logo_key=..., cover_key=...) -> Company:
+    require_role(actor, company, MANAGERS + ("editor",))
+    c = Company.objects.select_for_update().get(pk=company.pk)
+    for k in COMPANY_FIELDS:
+        if k in fields:
+            setattr(c, k, fields[k])
+    if "country" in fields:
+        from apps.profiles.models import Country
+
+        c.country = Country.objects.filter(code=(fields["country"] or "").upper()).first() if fields["country"] else None
+    if logo_key is not ...:
+        c.logo_key = logo_key
+    if cover_key is not ...:
+        c.cover_key = cover_key
+    try:
+        with transaction.atomic():
+            c.save()
+    except IntegrityError as exc:
+        raise DomainError("Taille d'entreprise invalide.", code="invalid_company") from exc
+    return c

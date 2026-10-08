@@ -149,3 +149,27 @@ def mute_member(group: Group, actor, target, duration: timedelta, reason: str = 
     )
     invalidate_permissions(target.pk, group.pk)
     return mute
+
+
+@transaction.atomic
+def create_community(owner, *, name: str, slug: str, description: str = "", privacy: str = "public"):
+    from apps.community.models import Community
+
+    try:
+        with transaction.atomic():
+            return Community.objects.create(owner=owner, name=name, slug=slug, description=description, privacy=privacy)
+    except IntegrityError as exc:
+        raise ConflictError("Ce nom de communaute est deja pris.", code="slug_taken") from exc
+
+
+@transaction.atomic
+def create_channel(group: Group, actor, *, name: str, slug: str, type: str = "discussion", topic: str = ""):
+    from apps.community.models import Channel
+
+    if not can(actor.pk, group.pk, "channel.manage"):
+        raise PermissionDeniedError("Permission 'channel.manage' requise.")
+    try:
+        with transaction.atomic():
+            return Channel.objects.create(group=group, name=name, slug=slug, type=type, topic=topic, created_by=actor)
+    except IntegrityError as exc:
+        raise ConflictError("Ce channel existe deja dans le groupe.", code="slug_taken") from exc

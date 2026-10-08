@@ -284,3 +284,19 @@ def add_feedback(submission_id, author, body: str) -> Feedback:
     if not body.strip():
         raise DomainError("Commentaire vide.", code="empty")
     return Feedback.objects.create(submission=sub, author=author, body=body)
+
+
+@transaction.atomic
+def set_quiz_published(quiz_id, actor, published: bool) -> Quiz:
+    quiz = Quiz.objects.select_for_update(of=("self",)).select_related("course").get(pk=quiz_id)
+    if not is_course_staff(actor, quiz.course):
+        raise PermissionDeniedError("Reserve aux enseignants du cours.")
+    if published and not quiz.questions.exists():
+        raise DomainError("Un quiz publie doit contenir au moins une question.", code="empty_quiz")
+    quiz.is_published = published
+    quiz.save(update_fields=["is_published"])
+    return quiz
+
+
+def ensure_quiz_access(user, quiz: Quiz) -> None:
+    _quiz_access(user, quiz)

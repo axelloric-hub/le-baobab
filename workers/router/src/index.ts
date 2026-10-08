@@ -12,7 +12,7 @@ interface Env {
 }
 
 const ORIGIN_PREFIXES = ["/api/", "/admin/", "/static/", "/health/", "/ready/"];
-const STRIP = ["x-forwarded-for", "x-forwarded-host", "x-forwarded-proto", "x-internal-timestamp", "x-internal-signature", "x-edge-secret"];
+const STRIP = ["x-forwarded-for", "x-forwarded-host", "x-forwarded-proto", "x-internal-timestamp", "x-internal-signature", "x-edge-secret", "x-client-ip"];
 
 function hardened(request: Request): Request {
   const headers = new Headers(request.headers);
@@ -26,6 +26,8 @@ function toOrigin(request: Request, env: Env): Request {
   const url = new URL(request.url);
   const headers = new Headers(request.headers);
   headers.set("x-edge-secret", env.EDGE_SHARED_SECRET);
+  // IP REELLE du client (fournie par Cloudflare, jamais par le client) : sert aux limites de debit par IP cote API.
+  headers.set("x-client-ip", request.headers.get("cf-connecting-ip") ?? "");
   headers.set("x-forwarded-proto", "https");
   headers.set("x-forwarded-host", env.PUBLIC_HOST);
   return new Request(new URL(url.pathname + url.search, env.ORIGIN_URL), new Request(request, { headers }));

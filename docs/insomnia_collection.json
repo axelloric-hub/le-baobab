@@ -1,0 +1,6306 @@
+{
+ "_type": "export",
+ "__export_format": 4,
+ "__export_date": "2026-10-08T00:00:00.000Z",
+ "__export_source": "baobab.gen_api_docs",
+ "resources": [
+  {
+   "_id": "wrk_baobab",
+   "_type": "workspace",
+   "parentId": null,
+   "name": "LE BAOBAB - API v1",
+   "description": "Collection generee depuis le code. Lire INSOMNIA_TESTS.md.",
+   "scope": "collection"
+  },
+  {
+   "_id": "fld_accounts",
+   "_type": "request_group",
+   "parentId": "wrk_baobab",
+   "name": "01 - Authentification",
+   "metaSortKey": 1790000000000
+  },
+  {
+   "_id": "fld_storage",
+   "_type": "request_group",
+   "parentId": "wrk_baobab",
+   "name": "02 - Fichiers (URL signees)",
+   "metaSortKey": 1790000000001
+  },
+  {
+   "_id": "fld_profiles",
+   "_type": "request_group",
+   "parentId": "wrk_baobab",
+   "name": "03 - Profil et recherche",
+   "metaSortKey": 1790000000002
+  },
+  {
+   "_id": "fld_friends",
+   "_type": "request_group",
+   "parentId": "wrk_baobab",
+   "name": "04 - Amis, abonnements, blocages",
+   "metaSortKey": 1790000000003
+  },
+  {
+   "_id": "fld_community",
+   "_type": "request_group",
+   "parentId": "wrk_baobab",
+   "name": "05 - Groupes et communautes",
+   "metaSortKey": 1790000000004
+  },
+  {
+   "_id": "fld_messaging",
+   "_type": "request_group",
+   "parentId": "wrk_baobab",
+   "name": "06 - Messagerie",
+   "metaSortKey": 1790000000005
+  },
+  {
+   "_id": "fld_social",
+   "_type": "request_group",
+   "parentId": "wrk_baobab",
+   "name": "07 - Publications, feed, statuts",
+   "metaSortKey": 1790000000006
+  },
+  {
+   "_id": "fld_notifications",
+   "_type": "request_group",
+   "parentId": "wrk_baobab",
+   "name": "08 - Notifications",
+   "metaSortKey": 1790000000007
+  },
+  {
+   "_id": "fld_moderation",
+   "_type": "request_group",
+   "parentId": "wrk_baobab",
+   "name": "09 - Signalements et moderation",
+   "metaSortKey": 1790000000008
+  },
+  {
+   "_id": "fld_education",
+   "_type": "request_group",
+   "parentId": "wrk_baobab",
+   "name": "10 - Education (classrooms, cours)",
+   "metaSortKey": 1790000000009
+  },
+  {
+   "_id": "fld_assessments",
+   "_type": "request_group",
+   "parentId": "wrk_baobab",
+   "name": "11 - Quiz et devoirs",
+   "metaSortKey": 1790000000010
+  },
+  {
+   "_id": "fld_progress",
+   "_type": "request_group",
+   "parentId": "wrk_baobab",
+   "name": "12 - Progression et certificats",
+   "metaSortKey": 1790000000011
+  },
+  {
+   "_id": "fld_marketplace",
+   "_type": "request_group",
+   "parentId": "wrk_baobab",
+   "name": "13 - Marketplace",
+   "metaSortKey": 1790000000012
+  },
+  {
+   "_id": "fld_payments",
+   "_type": "request_group",
+   "parentId": "wrk_baobab",
+   "name": "14 - Paiements et remboursements",
+   "metaSortKey": 1790000000013
+  },
+  {
+   "_id": "fld_companies",
+   "_type": "request_group",
+   "parentId": "wrk_baobab",
+   "name": "15 - Entreprises",
+   "metaSortKey": 1790000000014
+  },
+  {
+   "_id": "fld_portfolio",
+   "_type": "request_group",
+   "parentId": "wrk_baobab",
+   "name": "16 - Portfolio",
+   "metaSortKey": 1790000000015
+  },
+  {
+   "_id": "fld_jobs",
+   "_type": "request_group",
+   "parentId": "wrk_baobab",
+   "name": "17 - Emplois et freelance",
+   "metaSortKey": 1790000000016
+  },
+  {
+   "_id": "fld_advertising",
+   "_type": "request_group",
+   "parentId": "wrk_baobab",
+   "name": "18 - Publicite",
+   "metaSortKey": 1790000000017
+  },
+  {
+   "_id": "fld_analytics",
+   "_type": "request_group",
+   "parentId": "wrk_baobab",
+   "name": "19 - Administration : indicateurs",
+   "metaSortKey": 1790000000018
+  },
+  {
+   "_id": "fld_integrations",
+   "_type": "request_group",
+   "parentId": "wrk_baobab",
+   "name": "20 - Integrations externes",
+   "metaSortKey": 1790000000019
+  },
+  {
+   "_id": "fld_core",
+   "_type": "request_group",
+   "parentId": "wrk_baobab",
+   "name": "21 - Administration : systeme",
+   "metaSortKey": 1790000000020
+  },
+  {
+   "_id": "req_001",
+   "_type": "request",
+   "parentId": "fld_accounts",
+   "name": "POST auth/register",
+   "description": "Creer un compte (statut 'pending') et envoyer un code OTP par e-mail.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/auth/register/",
+   "metaSortKey": 1790000000001,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"email\": \"ada@example.com\",\n  \"username\": \"ada\",\n  \"password\": \"Un-mot-de-passe-solide-2026!\"\n}"
+   }
+  },
+  {
+   "_id": "req_002",
+   "_type": "request",
+   "parentId": "fld_accounts",
+   "name": "POST auth/verify-email",
+   "description": "Confirmer l'adresse e-mail avec le code OTP ; renvoie directement les jetons de connexion.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/auth/verify-email/",
+   "metaSortKey": 1790000000002,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"email\": \"ada@example.com\",\n  \"code\": \"123456\"\n}"
+   }
+  },
+  {
+   "_id": "req_003",
+   "_type": "request",
+   "parentId": "fld_accounts",
+   "name": "POST auth/resend-otp",
+   "description": "Renvoyer un code OTP (delai de 60 s entre deux envois). Reponse identique que le compte existe ou non.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/auth/resend-otp/",
+   "metaSortKey": 1790000000003,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"email\": \"ada@example.com\"\n}"
+   }
+  },
+  {
+   "_id": "req_004",
+   "_type": "request",
+   "parentId": "fld_accounts",
+   "name": "POST auth/login",
+   "description": "Se connecter avec e-mail et mot de passe. Refuse les comptes non confirmes ou suspendus.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/auth/login/",
+   "metaSortKey": 1790000000004,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"email\": \"ada@example.com\",\n  \"password\": \"Un-mot-de-passe-solide-2026!\"\n}"
+   }
+  },
+  {
+   "_id": "req_005",
+   "_type": "request",
+   "parentId": "fld_accounts",
+   "name": "POST auth/token/refresh",
+   "description": "Obtenir un nouveau jeton d'acces ; le jeton de rafraichissement est renouvele et l'ancien invalide (rotation).",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/auth/token/refresh/",
+   "metaSortKey": 1790000000005,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"refresh\": \"{{ _.refresh }}\"\n}"
+   }
+  },
+  {
+   "_id": "req_006",
+   "_type": "request",
+   "parentId": "fld_accounts",
+   "name": "POST auth/logout",
+   "description": "Se deconnecter : invalide le jeton de rafraichissement.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/auth/logout/",
+   "metaSortKey": 1790000000006,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"refresh\": \"{{ _.refresh }}\"\n}"
+   }
+  },
+  {
+   "_id": "req_007",
+   "_type": "request",
+   "parentId": "fld_accounts",
+   "name": "POST auth/password/forgot",
+   "description": "Mot de passe oublie : envoie un code OTP. Reponse toujours identique (pas d'enumeration de comptes).",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/auth/password/forgot/",
+   "metaSortKey": 1790000000007,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"email\": \"ada@example.com\"\n}"
+   }
+  },
+  {
+   "_id": "req_008",
+   "_type": "request",
+   "parentId": "fld_accounts",
+   "name": "POST auth/password/reset",
+   "description": "Reinitialiser le mot de passe avec le code OTP ; invalide toutes les sessions existantes.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/auth/password/reset/",
+   "metaSortKey": 1790000000008,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"email\": \"ada@example.com\",\n  \"code\": \"123456\",\n  \"new_password\": \"Un-mot-de-passe-solide-2026!\"\n}"
+   }
+  },
+  {
+   "_id": "req_009",
+   "_type": "request",
+   "parentId": "fld_accounts",
+   "name": "POST me/password",
+   "description": "Changer son mot de passe (connaissant l'ancien) ; revoque les autres sessions.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/me/password/",
+   "metaSortKey": 1790000000009,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"current_password\": \"Un-mot-de-passe-solide-2026!\",\n  \"new_password\": \"Un-mot-de-passe-solide-2026!\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_010",
+   "_type": "request",
+   "parentId": "fld_accounts",
+   "name": "GET me/login-history",
+   "description": "Historique de mes connexions (reussies et echouees).",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/me/login-history/",
+   "metaSortKey": 1790000000010,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_011",
+   "_type": "request",
+   "parentId": "fld_accounts",
+   "name": "GET me/devices",
+   "description": "Mes appareils connus.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/me/devices/",
+   "metaSortKey": 1790000000011,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_012",
+   "_type": "request",
+   "parentId": "fld_storage",
+   "name": "GET files/purposes",
+   "description": "Usages de fichiers autorises (types et tailles maximales).",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/files/purposes/",
+   "metaSortKey": 1790000000012,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false
+  },
+  {
+   "_id": "req_013",
+   "_type": "request",
+   "parentId": "fld_storage",
+   "name": "POST files/uploads",
+   "description": "Demander une URL signee pour ENVOYER un fichier directement au bucket (PUT). Le type et la taille declares sont signes : le bucket refuse tout ecart.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/files/uploads/",
+   "metaSortKey": 1790000000013,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"purpose\": \"ad_creative\",\n  \"filename\": \"exemple\",\n  \"content_type\": \"exemple\",\n  \"size_bytes\": 1\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_014",
+   "_type": "request",
+   "parentId": "fld_storage",
+   "name": "GET files",
+   "description": "Mes fichiers.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/files/",
+   "metaSortKey": 1790000000014,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_015",
+   "_type": "request",
+   "parentId": "fld_storage",
+   "name": "POST files/<uuid:file_id>/complete",
+   "description": "Confirmer l'envoi : le serveur verifie dans le bucket l'existence, la taille et le type du fichier.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/files/{{ _.file_id }}/complete/",
+   "metaSortKey": 1790000000015,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_016",
+   "_type": "request",
+   "parentId": "fld_storage",
+   "name": "GET files/<uuid:file_id>/url",
+   "description": "URL signee de LECTURE (duree courte). Proprietaire, ou tout le monde pour un usage public (avatar, logo...). Sinon 404.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/files/{{ _.file_id }}/url/",
+   "metaSortKey": 1790000000016,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_017",
+   "_type": "request",
+   "parentId": "fld_storage",
+   "name": "DELETE files/<uuid:file_id>",
+   "description": "Supprimer un de mes fichiers (supprime aussi l'objet du bucket).",
+   "method": "DELETE",
+   "url": "{{ _.base_url }}/api/v1/files/{{ _.file_id }}/",
+   "metaSortKey": 1790000000017,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_018",
+   "_type": "request",
+   "parentId": "fld_profiles",
+   "name": "GET me",
+   "description": "Mon compte complet : identite, profil, confidentialite, preferences.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/me/",
+   "metaSortKey": 1790000000018,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_019",
+   "_type": "request",
+   "parentId": "fld_profiles",
+   "name": "PATCH me/profile",
+   "description": "Modifier mon profil (champs facultatifs). avatar_file / cover_file : identifiant d'un fichier envoye (usage 'avatar' / 'cover'), ou null pour effacer.",
+   "method": "PATCH",
+   "url": "{{ _.base_url }}/api/v1/me/profile/",
+   "metaSortKey": 1790000000019,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_020",
+   "_type": "request",
+   "parentId": "fld_profiles",
+   "name": "PATCH me/privacy",
+   "description": "Ma confidentialite.",
+   "method": "PATCH",
+   "url": "{{ _.base_url }}/api/v1/me/privacy/",
+   "metaSortKey": 1790000000020,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_021",
+   "_type": "request",
+   "parentId": "fld_profiles",
+   "name": "PATCH me/preferences",
+   "description": "Mes preferences (langue, fuseau, theme).",
+   "method": "PATCH",
+   "url": "{{ _.base_url }}/api/v1/me/preferences/",
+   "metaSortKey": 1790000000021,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_022",
+   "_type": "request",
+   "parentId": "fld_profiles",
+   "name": "PUT me/skills",
+   "description": "Remplacer la liste de mes competences.",
+   "method": "PUT",
+   "url": "{{ _.base_url }}/api/v1/me/skills/",
+   "metaSortKey": 1790000000022,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"skills\": [\n    {}\n  ]\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_023",
+   "_type": "request",
+   "parentId": "fld_profiles",
+   "name": "PUT me/interests",
+   "description": "Remplacer la liste de mes centres d'interet.",
+   "method": "PUT",
+   "url": "{{ _.base_url }}/api/v1/me/interests/",
+   "metaSortKey": 1790000000023,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"interests\": [\n    \"exemple\"\n  ]\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_024",
+   "_type": "request",
+   "parentId": "fld_profiles",
+   "name": "POST me/links",
+   "description": "Ajouter un lien (GitHub, LinkedIn, site...). https obligatoire.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/me/links/",
+   "metaSortKey": 1790000000024,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"provider\": \"github\",\n  \"url\": \"https://example.com\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_025",
+   "_type": "request",
+   "parentId": "fld_profiles",
+   "name": "DELETE me/links/<uuid:link_id>",
+   "description": "Supprimer un de mes liens.",
+   "method": "DELETE",
+   "url": "{{ _.base_url }}/api/v1/me/links/{{ _.link_id }}/",
+   "metaSortKey": 1790000000025,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_026",
+   "_type": "request",
+   "parentId": "fld_profiles",
+   "name": "POST me/delete",
+   "description": "Supprimer mon compte (anonymisation irreversible). Exige le mot de passe.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/me/delete/",
+   "metaSortKey": 1790000000026,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"password\": \"Un-mot-de-passe-solide-2026!\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_027",
+   "_type": "request",
+   "parentId": "fld_profiles",
+   "name": "GET users",
+   "description": "Rechercher des utilisateurs par nom ou pseudo (profils 'recherchables' uniquement, minimum 2 caracteres).",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/users/?q=exemple",
+   "metaSortKey": 1790000000027,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_028",
+   "_type": "request",
+   "parentId": "fld_profiles",
+   "name": "GET users/<str:username>",
+   "description": "Profil public d'un utilisateur (404 si prive, bloque ou inexistant).",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/users/{{ _.username }}/",
+   "metaSortKey": 1790000000028,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_029",
+   "_type": "request",
+   "parentId": "fld_profiles",
+   "name": "GET skills",
+   "description": "Referentiel : Skill.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/skills/",
+   "metaSortKey": 1790000000029,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false
+  },
+  {
+   "_id": "req_030",
+   "_type": "request",
+   "parentId": "fld_profiles",
+   "name": "GET interests",
+   "description": "Referentiel : Interest.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/interests/",
+   "metaSortKey": 1790000000030,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false
+  },
+  {
+   "_id": "req_031",
+   "_type": "request",
+   "parentId": "fld_profiles",
+   "name": "GET professions",
+   "description": "Referentiel : Profession.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/professions/",
+   "metaSortKey": 1790000000031,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false
+  },
+  {
+   "_id": "req_032",
+   "_type": "request",
+   "parentId": "fld_profiles",
+   "name": "GET countries",
+   "description": "Referentiel : Country.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/countries/",
+   "metaSortKey": 1790000000032,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false
+  },
+  {
+   "_id": "req_033",
+   "_type": "request",
+   "parentId": "fld_friends",
+   "name": "GET friends",
+   "description": "Mes amis (ordre alphabetique des pseudos).",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/friends/",
+   "metaSortKey": 1790000000033,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_034",
+   "_type": "request",
+   "parentId": "fld_friends",
+   "name": "GET friends/requests",
+   "description": "Demandes d'amis recues, en attente.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/friends/requests/",
+   "metaSortKey": 1790000000034,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_035",
+   "_type": "request",
+   "parentId": "fld_friends",
+   "name": "POST friends/requests",
+   "description": "Envoyer une demande d'ami (si l'autre vous en avait deja envoye une, l'amitie est creee).",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/friends/requests/",
+   "metaSortKey": 1790000000035,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"username\": \"ada\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_036",
+   "_type": "request",
+   "parentId": "fld_friends",
+   "name": "GET friends/requests/sent",
+   "description": "Demandes d'amis envoyees, en attente.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/friends/requests/sent/",
+   "metaSortKey": 1790000000036,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_037",
+   "_type": "request",
+   "parentId": "fld_friends",
+   "name": "POST friends/requests/<uuid:request_id>/respond",
+   "description": "Accepter ou refuser une demande d'ami recue.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/friends/requests/{{ _.request_id }}/respond/",
+   "metaSortKey": 1790000000037,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"accept\": true\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_038",
+   "_type": "request",
+   "parentId": "fld_friends",
+   "name": "DELETE friends/<str:username>",
+   "description": "Retirer un ami.",
+   "method": "DELETE",
+   "url": "{{ _.base_url }}/api/v1/friends/{{ _.username }}/",
+   "metaSortKey": 1790000000038,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_039",
+   "_type": "request",
+   "parentId": "fld_friends",
+   "name": "POST users/<str:username>/follow",
+   "description": "Suivre un utilisateur.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/users/{{ _.username }}/follow/",
+   "metaSortKey": 1790000000039,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_040",
+   "_type": "request",
+   "parentId": "fld_friends",
+   "name": "DELETE users/<str:username>/follow",
+   "description": "Ne plus suivre un utilisateur.",
+   "method": "DELETE",
+   "url": "{{ _.base_url }}/api/v1/users/{{ _.username }}/follow/",
+   "metaSortKey": 1790000000040,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_041",
+   "_type": "request",
+   "parentId": "fld_friends",
+   "name": "POST users/<str:username>/block",
+   "description": "Bloquer un utilisateur (supprime amitie et abonnements dans les deux sens ; il ne vous voit plus).",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/users/{{ _.username }}/block/",
+   "metaSortKey": 1790000000041,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_042",
+   "_type": "request",
+   "parentId": "fld_friends",
+   "name": "DELETE users/<str:username>/block",
+   "description": "Debloquer un utilisateur.",
+   "method": "DELETE",
+   "url": "{{ _.base_url }}/api/v1/users/{{ _.username }}/block/",
+   "metaSortKey": 1790000000042,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_043",
+   "_type": "request",
+   "parentId": "fld_friends",
+   "name": "POST users/<str:username>/close-friend",
+   "description": "Ajouter un ami a mes amis proches.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/users/{{ _.username }}/close-friend/",
+   "metaSortKey": 1790000000043,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_044",
+   "_type": "request",
+   "parentId": "fld_friends",
+   "name": "DELETE users/<str:username>/close-friend",
+   "description": "Retirer un ami de mes amis proches.",
+   "method": "DELETE",
+   "url": "{{ _.base_url }}/api/v1/users/{{ _.username }}/close-friend/",
+   "metaSortKey": 1790000000044,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_045",
+   "_type": "request",
+   "parentId": "fld_friends",
+   "name": "POST users/<str:username>/mute",
+   "description": "Mettre un utilisateur en sourdine (ses contenus disparaissent de mon feed).",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/users/{{ _.username }}/mute/",
+   "metaSortKey": 1790000000045,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_046",
+   "_type": "request",
+   "parentId": "fld_friends",
+   "name": "GET me/followers",
+   "description": "Mes abonnes.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/me/followers/",
+   "metaSortKey": 1790000000046,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_047",
+   "_type": "request",
+   "parentId": "fld_friends",
+   "name": "GET me/following",
+   "description": "Les comptes que je suis.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/me/following/",
+   "metaSortKey": 1790000000047,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_048",
+   "_type": "request",
+   "parentId": "fld_friends",
+   "name": "GET me/blocks",
+   "description": "Mes blocages.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/me/blocks/",
+   "metaSortKey": 1790000000048,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_049",
+   "_type": "request",
+   "parentId": "fld_community",
+   "name": "GET groups",
+   "description": "Decouvrir les groupes (publics et prives ; jamais les caches).",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/groups/",
+   "metaSortKey": 1790000000049,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_050",
+   "_type": "request",
+   "parentId": "fld_community",
+   "name": "POST groups",
+   "description": "Creer un groupe (vous en devenez proprietaire).",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/groups/",
+   "metaSortKey": 1790000000050,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"name\": \"exemple\",\n  \"slug\": \"mon-exemple\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_051",
+   "_type": "request",
+   "parentId": "fld_community",
+   "name": "GET me/groups",
+   "description": "Mes groupes.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/me/groups/",
+   "metaSortKey": 1790000000051,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_052",
+   "_type": "request",
+   "parentId": "fld_community",
+   "name": "GET me/group-invitations",
+   "description": "Mes invitations de groupe en attente.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/me/group-invitations/",
+   "metaSortKey": 1790000000052,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_053",
+   "_type": "request",
+   "parentId": "fld_community",
+   "name": "POST group-invitations/<uuid:invitation_id>/respond",
+   "description": "Accepter ou refuser une invitation de groupe.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/group-invitations/{{ _.invitation_id }}/respond/",
+   "metaSortKey": 1790000000053,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"accept\": true\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_054",
+   "_type": "request",
+   "parentId": "fld_community",
+   "name": "POST group-join-requests/<uuid:request_id>/review",
+   "description": "Approuver ou refuser une demande d'adhesion.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/group-join-requests/{{ _.request_id }}/review/",
+   "metaSortKey": 1790000000054,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"approve\": true\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_055",
+   "_type": "request",
+   "parentId": "fld_community",
+   "name": "GET groups/<slug:slug>",
+   "description": "Detail d'un groupe.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/groups/{{ _.slug }}/",
+   "metaSortKey": 1790000000055,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_056",
+   "_type": "request",
+   "parentId": "fld_community",
+   "name": "POST groups/<slug:slug>/join",
+   "description": "Rejoindre un groupe : adhesion immediate, ou demande en attente selon la politique du groupe.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/groups/{{ _.slug }}/join/",
+   "metaSortKey": 1790000000056,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_057",
+   "_type": "request",
+   "parentId": "fld_community",
+   "name": "POST groups/<slug:slug>/leave",
+   "description": "Quitter un groupe.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/groups/{{ _.slug }}/leave/",
+   "metaSortKey": 1790000000057,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_058",
+   "_type": "request",
+   "parentId": "fld_community",
+   "name": "GET groups/<slug:slug>/members",
+   "description": "Membres d'un groupe (public : tout le monde ; sinon membres uniquement).",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/groups/{{ _.slug }}/members/",
+   "metaSortKey": 1790000000058,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_059",
+   "_type": "request",
+   "parentId": "fld_community",
+   "name": "POST groups/<slug:slug>/invite",
+   "description": "Inviter un utilisateur dans le groupe (permission 'member.invite').",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/groups/{{ _.slug }}/invite/",
+   "metaSortKey": 1790000000059,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"username\": \"ada\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_060",
+   "_type": "request",
+   "parentId": "fld_community",
+   "name": "GET groups/<slug:slug>/join-requests",
+   "description": "Demandes d'adhesion en attente (reservees a ceux qui peuvent les approuver).",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/groups/{{ _.slug }}/join-requests/",
+   "metaSortKey": 1790000000060,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_061",
+   "_type": "request",
+   "parentId": "fld_community",
+   "name": "POST groups/<slug:slug>/ban",
+   "description": "Bannir un membre (permission 'member.ban').",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/groups/{{ _.slug }}/ban/",
+   "metaSortKey": 1790000000061,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"username\": \"ada\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_062",
+   "_type": "request",
+   "parentId": "fld_community",
+   "name": "POST groups/<slug:slug>/mute",
+   "description": "Rendre muet un membre (permission 'member.mute').",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/groups/{{ _.slug }}/mute/",
+   "metaSortKey": 1790000000062,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"username\": \"ada\",\n  \"minutes\": 1\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_063",
+   "_type": "request",
+   "parentId": "fld_community",
+   "name": "GET groups/<slug:slug>/channels",
+   "description": "Channels d'un groupe (membres uniquement).",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/groups/{{ _.slug }}/channels/",
+   "metaSortKey": 1790000000063,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_064",
+   "_type": "request",
+   "parentId": "fld_community",
+   "name": "POST groups/<slug:slug>/channels",
+   "description": "Creer un channel dans un groupe (permission 'channel.manage').",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/groups/{{ _.slug }}/channels/",
+   "metaSortKey": 1790000000064,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"name\": \"exemple\",\n  \"slug\": \"mon-exemple\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_065",
+   "_type": "request",
+   "parentId": "fld_community",
+   "name": "GET communities",
+   "description": "Communautes publiques.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/communities/",
+   "metaSortKey": 1790000000065,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false
+  },
+  {
+   "_id": "req_066",
+   "_type": "request",
+   "parentId": "fld_community",
+   "name": "POST communities",
+   "description": "Creer une communaute.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/communities/",
+   "metaSortKey": 1790000000066,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"name\": \"exemple\",\n  \"slug\": \"mon-exemple\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_067",
+   "_type": "request",
+   "parentId": "fld_messaging",
+   "name": "GET conversations",
+   "description": "Ma boite de reception (conversations triees par activite, avec le nombre de non-lus).",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/conversations/",
+   "metaSortKey": 1790000000067,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_068",
+   "_type": "request",
+   "parentId": "fld_messaging",
+   "name": "POST conversations/direct",
+   "description": "Ouvrir (ou retrouver) la conversation directe avec un utilisateur.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/conversations/direct/",
+   "metaSortKey": 1790000000068,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"username\": \"ada\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_069",
+   "_type": "request",
+   "parentId": "fld_messaging",
+   "name": "POST conversations/group",
+   "description": "Creer une conversation de groupe.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/conversations/group/",
+   "metaSortKey": 1790000000069,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"usernames\": [\n    \"exemple\"\n  ]\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_070",
+   "_type": "request",
+   "parentId": "fld_messaging",
+   "name": "GET conversations/<uuid:conversation_id>/messages",
+   "description": "Historique d'une conversation, du plus recent au plus ancien (curseur).",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/conversations/{{ _.conversation_id }}/messages/",
+   "metaSortKey": 1790000000070,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_071",
+   "_type": "request",
+   "parentId": "fld_messaging",
+   "name": "POST conversations/<uuid:conversation_id>/messages",
+   "description": "Envoyer un message. client_msg_id (UUID) rend l'envoi idempotent : un nouvel essai apres coupure reseau ne cree pas de doublon. attachments : identifiants de fichiers (usage 'message_attachment').",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/conversations/{{ _.conversation_id }}/messages/",
+   "metaSortKey": 1790000000071,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_072",
+   "_type": "request",
+   "parentId": "fld_messaging",
+   "name": "GET conversations/<uuid:conversation_id>/messages/<uuid:message_id>/thread",
+   "description": "Fil de discussion d'un message.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/conversations/{{ _.conversation_id }}/messages/{{ _.message_id }}/thread/",
+   "metaSortKey": 1790000000072,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_073",
+   "_type": "request",
+   "parentId": "fld_messaging",
+   "name": "POST conversations/<uuid:conversation_id>/read",
+   "description": "Marquer comme lu jusqu'a un numero de message (seq).",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/conversations/{{ _.conversation_id }}/read/",
+   "metaSortKey": 1790000000073,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"up_to_seq\": 1\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_074",
+   "_type": "request",
+   "parentId": "fld_messaging",
+   "name": "PATCH messages/<uuid:message_id>",
+   "description": "Modifier mon message.",
+   "method": "PATCH",
+   "url": "{{ _.base_url }}/api/v1/messages/{{ _.message_id }}/",
+   "metaSortKey": 1790000000074,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"body\": \"exemple\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_075",
+   "_type": "request",
+   "parentId": "fld_messaging",
+   "name": "DELETE messages/<uuid:message_id>",
+   "description": "Supprimer un message : pour moi seulement, ou pour tous (auteur/moderation).",
+   "method": "DELETE",
+   "url": "{{ _.base_url }}/api/v1/messages/{{ _.message_id }}/",
+   "metaSortKey": 1790000000075,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_076",
+   "_type": "request",
+   "parentId": "fld_messaging",
+   "name": "POST messages/<uuid:message_id>/reactions",
+   "description": "Ajouter/retirer une reaction (emoji) a un message.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/messages/{{ _.message_id }}/reactions/",
+   "metaSortKey": 1790000000076,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"emoji\": \"exemple\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_077",
+   "_type": "request",
+   "parentId": "fld_social",
+   "name": "POST posts",
+   "description": "Publier. media : [{file, alt}] avec des fichiers envoyes (usage 'post_media'). poll : {question, options:[2 a 10], allows_multiple?, is_anonymous?, closes_at?}. audience : pseudos (visibilite 'custom').",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/posts/",
+   "metaSortKey": 1790000000077,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_078",
+   "_type": "request",
+   "parentId": "fld_social",
+   "name": "GET posts/<uuid:post_id>",
+   "description": "Lire une publication (404 si je n'ai pas le droit de la voir).",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/posts/{{ _.post_id }}/",
+   "metaSortKey": 1790000000078,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_079",
+   "_type": "request",
+   "parentId": "fld_social",
+   "name": "PATCH posts/<uuid:post_id>",
+   "description": "Modifier ma publication.",
+   "method": "PATCH",
+   "url": "{{ _.base_url }}/api/v1/posts/{{ _.post_id }}/",
+   "metaSortKey": 1790000000079,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_080",
+   "_type": "request",
+   "parentId": "fld_social",
+   "name": "DELETE posts/<uuid:post_id>",
+   "description": "Supprimer ma publication (ou en moderateur de groupe).",
+   "method": "DELETE",
+   "url": "{{ _.base_url }}/api/v1/posts/{{ _.post_id }}/",
+   "metaSortKey": 1790000000080,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_081",
+   "_type": "request",
+   "parentId": "fld_social",
+   "name": "GET users/<str:username>/posts",
+   "description": "Publications d'un utilisateur (seulement celles que je peux voir).",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/users/{{ _.username }}/posts/",
+   "metaSortKey": 1790000000081,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_082",
+   "_type": "request",
+   "parentId": "fld_social",
+   "name": "GET feed",
+   "description": "Mon fil d'actualite. 'before' : curseur renvoye par la page precedente (next_cursor).",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/feed/",
+   "metaSortKey": 1790000000082,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_083",
+   "_type": "request",
+   "parentId": "fld_social",
+   "name": "POST posts/<uuid:post_id>/reactions",
+   "description": "Reagir a une publication (type = null pour retirer).",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/posts/{{ _.post_id }}/reactions/",
+   "metaSortKey": 1790000000083,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"type\": \"exemple\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_084",
+   "_type": "request",
+   "parentId": "fld_social",
+   "name": "GET posts/<uuid:post_id>/comments",
+   "description": "Commentaires d'une publication (racines).",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/posts/{{ _.post_id }}/comments/",
+   "metaSortKey": 1790000000084,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_085",
+   "_type": "request",
+   "parentId": "fld_social",
+   "name": "POST posts/<uuid:post_id>/comments",
+   "description": "Commenter (parent = identifiant d'un commentaire pour repondre).",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/posts/{{ _.post_id }}/comments/",
+   "metaSortKey": 1790000000085,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"body\": \"exemple\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_086",
+   "_type": "request",
+   "parentId": "fld_social",
+   "name": "GET comments/<uuid:comment_id>/replies",
+   "description": "Reponses a un commentaire.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/comments/{{ _.comment_id }}/replies/",
+   "metaSortKey": 1790000000086,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_087",
+   "_type": "request",
+   "parentId": "fld_social",
+   "name": "DELETE comments/<uuid:comment_id>",
+   "description": "Supprimer un commentaire (auteur, auteur du post ou moderateur de groupe).",
+   "method": "DELETE",
+   "url": "{{ _.base_url }}/api/v1/comments/{{ _.comment_id }}/",
+   "metaSortKey": 1790000000087,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_088",
+   "_type": "request",
+   "parentId": "fld_social",
+   "name": "POST comments/<uuid:comment_id>/reactions",
+   "description": "Reagir a un commentaire.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/comments/{{ _.comment_id }}/reactions/",
+   "metaSortKey": 1790000000088,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"type\": \"exemple\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_089",
+   "_type": "request",
+   "parentId": "fld_social",
+   "name": "POST posts/<uuid:post_id>/share",
+   "description": "Partager une publication.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/posts/{{ _.post_id }}/share/",
+   "metaSortKey": 1790000000089,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_090",
+   "_type": "request",
+   "parentId": "fld_social",
+   "name": "POST posts/<uuid:post_id>/save",
+   "description": "Enregistrer une publication dans mes favoris.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/posts/{{ _.post_id }}/save/",
+   "metaSortKey": 1790000000090,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_091",
+   "_type": "request",
+   "parentId": "fld_social",
+   "name": "DELETE posts/<uuid:post_id>/save",
+   "description": "Retirer une publication de mes favoris.",
+   "method": "DELETE",
+   "url": "{{ _.base_url }}/api/v1/posts/{{ _.post_id }}/save/",
+   "metaSortKey": 1790000000091,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_092",
+   "_type": "request",
+   "parentId": "fld_social",
+   "name": "GET me/saved",
+   "description": "Mes publications enregistrees.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/me/saved/",
+   "metaSortKey": 1790000000092,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_093",
+   "_type": "request",
+   "parentId": "fld_social",
+   "name": "POST posts/<uuid:post_id>/view",
+   "description": "Compter une vue (dedoublonne, au plus une par heure et par utilisateur).",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/posts/{{ _.post_id }}/view/",
+   "metaSortKey": 1790000000093,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_094",
+   "_type": "request",
+   "parentId": "fld_social",
+   "name": "POST posts/<uuid:post_id>/poll/vote",
+   "description": "Voter dans un sondage (options : identifiants d'options).",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/posts/{{ _.post_id }}/poll/vote/",
+   "metaSortKey": 1790000000094,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"options\": [\n    \"{{ _.options_id }}\"\n  ]\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_095",
+   "_type": "request",
+   "parentId": "fld_social",
+   "name": "GET statuses",
+   "description": "Statuts actifs que je peux voir.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/statuses/",
+   "metaSortKey": 1790000000095,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_096",
+   "_type": "request",
+   "parentId": "fld_social",
+   "name": "POST statuses",
+   "description": "Publier un statut ephemere (24 h). file : fichier envoye (usage 'status_media').",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/statuses/",
+   "metaSortKey": 1790000000096,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_097",
+   "_type": "request",
+   "parentId": "fld_social",
+   "name": "POST statuses/<uuid:status_id>/view",
+   "description": "Marquer un statut comme vu.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/statuses/{{ _.status_id }}/view/",
+   "metaSortKey": 1790000000097,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_098",
+   "_type": "request",
+   "parentId": "fld_social",
+   "name": "POST statuses/<uuid:status_id>/react",
+   "description": "Reagir a un statut.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/statuses/{{ _.status_id }}/react/",
+   "metaSortKey": 1790000000098,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"emoji\": \"exemple\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_099",
+   "_type": "request",
+   "parentId": "fld_social",
+   "name": "GET hashtags/trending",
+   "description": "Hashtags tendance (vue materialisee).",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/hashtags/trending/",
+   "metaSortKey": 1790000000099,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false
+  },
+  {
+   "_id": "req_100",
+   "_type": "request",
+   "parentId": "fld_social",
+   "name": "GET hashtags/<str:tag>/posts",
+   "description": "Publications d'un hashtag (seulement celles que je peux voir).",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/hashtags/{{ _.tag }}/posts/",
+   "metaSortKey": 1790000000100,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_101",
+   "_type": "request",
+   "parentId": "fld_notifications",
+   "name": "GET notifications",
+   "description": "Mes notifications (les plus recentes d'abord).",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/notifications/",
+   "metaSortKey": 1790000000101,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_102",
+   "_type": "request",
+   "parentId": "fld_notifications",
+   "name": "GET notifications/unread-count",
+   "description": "Nombre de notifications non lues (cache Redis, O(1)).",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/notifications/unread-count/",
+   "metaSortKey": 1790000000102,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_103",
+   "_type": "request",
+   "parentId": "fld_notifications",
+   "name": "POST notifications/read",
+   "description": "Marquer comme lues (ids facultatif : sans liste, toutes).",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/notifications/read/",
+   "metaSortKey": 1790000000103,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_104",
+   "_type": "request",
+   "parentId": "fld_notifications",
+   "name": "GET notifications/preferences",
+   "description": "Mes preferences de notification.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/notifications/preferences/",
+   "metaSortKey": 1790000000104,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_105",
+   "_type": "request",
+   "parentId": "fld_notifications",
+   "name": "PUT notifications/preferences",
+   "description": "Activer/desactiver un canal (in_app, websocket, email, push) pour un type (ou tous).",
+   "method": "PUT",
+   "url": "{{ _.base_url }}/api/v1/notifications/preferences/",
+   "metaSortKey": 1790000000105,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"channel\": \"in_app\",\n  \"enabled\": true\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_106",
+   "_type": "request",
+   "parentId": "fld_moderation",
+   "name": "GET reports/reasons",
+   "description": "Motifs de signalement.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/reports/reasons/",
+   "metaSortKey": 1790000000106,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false
+  },
+  {
+   "_id": "req_107",
+   "_type": "request",
+   "parentId": "fld_moderation",
+   "name": "POST reports",
+   "description": "Signaler un contenu ou un utilisateur (un meme signalement n'est pas compte deux fois).",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/reports/",
+   "metaSortKey": 1790000000107,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"target_type\": \"exemple\",\n  \"target_id\": \"{{ _.target_id }}\",\n  \"reason\": \"exemple\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_108",
+   "_type": "request",
+   "parentId": "fld_moderation",
+   "name": "GET admin/moderation/cases",
+   "description": "[Moderation] File des dossiers.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/admin/moderation/cases/",
+   "metaSortKey": 1790000000108,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_109",
+   "_type": "request",
+   "parentId": "fld_moderation",
+   "name": "POST admin/moderation/cases/<uuid:case_id>/actions",
+   "description": "[Moderation] Appliquer une decision (masquer, retirer, avertir, suspendre, bannir...).",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/admin/moderation/cases/{{ _.case_id }}/actions/",
+   "metaSortKey": 1790000000109,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"action\": \"exemple\",\n  \"reason\": \"exemple\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_110",
+   "_type": "request",
+   "parentId": "fld_education",
+   "name": "GET classrooms",
+   "description": "Decouvrir les classrooms publiques.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/classrooms/",
+   "metaSortKey": 1790000000110,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_111",
+   "_type": "request",
+   "parentId": "fld_education",
+   "name": "POST classrooms",
+   "description": "Creer une classroom (vous en etes le proprietaire). Une classroom payante exige prix et devise.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/classrooms/",
+   "metaSortKey": 1790000000111,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"title\": \"exemple\",\n  \"slug\": \"mon-exemple\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_112",
+   "_type": "request",
+   "parentId": "fld_education",
+   "name": "GET me/classrooms",
+   "description": "Mes classrooms (membre ou en attente).",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/me/classrooms/",
+   "metaSortKey": 1790000000112,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_113",
+   "_type": "request",
+   "parentId": "fld_education",
+   "name": "GET me/classroom-invitations",
+   "description": "Mes invitations a des classrooms.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/me/classroom-invitations/",
+   "metaSortKey": 1790000000113,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_114",
+   "_type": "request",
+   "parentId": "fld_education",
+   "name": "POST classroom-invitations/<uuid:invitation_id>/respond",
+   "description": "Accepter ou refuser une invitation.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/classroom-invitations/{{ _.invitation_id }}/respond/",
+   "metaSortKey": 1790000000114,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"accept\": true\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_115",
+   "_type": "request",
+   "parentId": "fld_education",
+   "name": "GET classrooms/<slug:slug>",
+   "description": "Detail d'une classroom.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/classrooms/{{ _.slug }}/",
+   "metaSortKey": 1790000000115,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_116",
+   "_type": "request",
+   "parentId": "fld_education",
+   "name": "POST classrooms/<slug:slug>/join",
+   "description": "Rejoindre une classroom (public : immediat ; prive : demande ; sur invitation : invitation requise).",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/classrooms/{{ _.slug }}/join/",
+   "metaSortKey": 1790000000116,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_117",
+   "_type": "request",
+   "parentId": "fld_education",
+   "name": "POST classrooms/<slug:slug>/leave",
+   "description": "Quitter une classroom.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/classrooms/{{ _.slug }}/leave/",
+   "metaSortKey": 1790000000117,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_118",
+   "_type": "request",
+   "parentId": "fld_education",
+   "name": "GET classrooms/<slug:slug>/members",
+   "description": "[Enseignant] Membres d'une classroom.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/classrooms/{{ _.slug }}/members/",
+   "metaSortKey": 1790000000118,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_119",
+   "_type": "request",
+   "parentId": "fld_education",
+   "name": "POST classrooms/<slug:slug>/members/<uuid:member_id>/review",
+   "description": "[Enseignant] Approuver ou refuser une demande d'adhesion.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/classrooms/{{ _.slug }}/members/{{ _.member_id }}/review/",
+   "metaSortKey": 1790000000119,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"approve\": true\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_120",
+   "_type": "request",
+   "parentId": "fld_education",
+   "name": "POST classrooms/<slug:slug>/invite",
+   "description": "[Enseignant] Inviter un utilisateur.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/classrooms/{{ _.slug }}/invite/",
+   "metaSortKey": 1790000000120,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"username\": \"ada\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_121",
+   "_type": "request",
+   "parentId": "fld_education",
+   "name": "POST classrooms/<slug:slug>/ban",
+   "description": "[Enseignant] Bannir un membre.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/classrooms/{{ _.slug }}/ban/",
+   "metaSortKey": 1790000000121,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"username\": \"ada\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_122",
+   "_type": "request",
+   "parentId": "fld_education",
+   "name": "POST classrooms/<slug:slug>/courses",
+   "description": "Creer un cours dans une classroom (enseignants).",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/classrooms/{{ _.slug }}/courses/",
+   "metaSortKey": 1790000000122,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"title\": \"exemple\",\n  \"slug\": \"mon-exemple\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_123",
+   "_type": "request",
+   "parentId": "fld_education",
+   "name": "GET courses",
+   "description": "Catalogue des cours publies (classrooms publiques).",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/courses/",
+   "metaSortKey": 1790000000123,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_124",
+   "_type": "request",
+   "parentId": "fld_education",
+   "name": "GET courses/<uuid:course_id>",
+   "description": "Plan d'un cours : modules, chapitres, prix, et pour chaque chapitre MON acces (autorise ou raison du refus).",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/courses/{{ _.course_id }}/",
+   "metaSortKey": 1790000000124,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_125",
+   "_type": "request",
+   "parentId": "fld_education",
+   "name": "POST courses/<uuid:course_id>/publish",
+   "description": "[Enseignant] Publier le cours (verifie qu'il est exploitable).",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/courses/{{ _.course_id }}/publish/",
+   "metaSortKey": 1790000000125,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_126",
+   "_type": "request",
+   "parentId": "fld_education",
+   "name": "POST courses/<uuid:course_id>/instructors",
+   "description": "[Enseignant principal] Ajouter un co-enseignant (doit etre membre de la classroom).",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/courses/{{ _.course_id }}/instructors/",
+   "metaSortKey": 1790000000126,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"username\": \"ada\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_127",
+   "_type": "request",
+   "parentId": "fld_education",
+   "name": "POST courses/<uuid:course_id>/modules",
+   "description": "[Enseignant] Ajouter un module. Un module payant exige prix et devise.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/courses/{{ _.course_id }}/modules/",
+   "metaSortKey": 1790000000127,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"title\": \"exemple\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_128",
+   "_type": "request",
+   "parentId": "fld_education",
+   "name": "POST modules/<uuid:module_id>/chapters",
+   "description": "[Enseignant] Ajouter un chapitre a un module.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/modules/{{ _.module_id }}/chapters/",
+   "metaSortKey": 1790000000128,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"title\": \"exemple\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_129",
+   "_type": "request",
+   "parentId": "fld_education",
+   "name": "POST chapters/<uuid:chapter_id>/blocks",
+   "description": "[Enseignant] Ajouter un bloc de contenu. file : fichier envoye (usage 'course_content') pour pdf/image/audio/video/notebook/presentation/document ; url https pour link/embed ; ref_id pour quiz/exercise.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/chapters/{{ _.chapter_id }}/blocks/",
+   "metaSortKey": 1790000000129,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"kind\": \"text\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_130",
+   "_type": "request",
+   "parentId": "fld_education",
+   "name": "GET chapters/<uuid:chapter_id>/content",
+   "description": "Contenu d'un chapitre. 200 avec les blocs (fichiers = URL signees courtes) si j'y ai acces ; sinon 402 (payant) ou 403 avec la raison.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/chapters/{{ _.chapter_id }}/content/",
+   "metaSortKey": 1790000000130,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_131",
+   "_type": "request",
+   "parentId": "fld_education",
+   "name": "POST courses/<uuid:course_id>/enroll",
+   "description": "M'inscrire a un cours (idempotent).",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/courses/{{ _.course_id }}/enroll/",
+   "metaSortKey": 1790000000131,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_132",
+   "_type": "request",
+   "parentId": "fld_education",
+   "name": "DELETE courses/<uuid:course_id>/enroll",
+   "description": "Abandonner un cours.",
+   "method": "DELETE",
+   "url": "{{ _.base_url }}/api/v1/courses/{{ _.course_id }}/enroll/",
+   "metaSortKey": 1790000000132,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_133",
+   "_type": "request",
+   "parentId": "fld_education",
+   "name": "GET me/enrollments",
+   "description": "Mes inscriptions avec ma progression.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/me/enrollments/",
+   "metaSortKey": 1790000000133,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_134",
+   "_type": "request",
+   "parentId": "fld_education",
+   "name": "GET courses/<uuid:course_id>/progress",
+   "description": "Ma progression dans un cours (global et par module).",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/courses/{{ _.course_id }}/progress/",
+   "metaSortKey": 1790000000134,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_135",
+   "_type": "request",
+   "parentId": "fld_education",
+   "name": "GET courses/<uuid:course_id>/students",
+   "description": "[Enseignant] Etudiants inscrits.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/courses/{{ _.course_id }}/students/",
+   "metaSortKey": 1790000000135,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_136",
+   "_type": "request",
+   "parentId": "fld_education",
+   "name": "POST courses/<uuid:course_id>/grants",
+   "description": "[Enseignant] Offrir un acces (cours, module ou chapitre) a un utilisateur.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/courses/{{ _.course_id }}/grants/",
+   "metaSortKey": 1790000000136,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"username\": \"ada\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_137",
+   "_type": "request",
+   "parentId": "fld_assessments",
+   "name": "POST courses/<uuid:course_id>/quizzes",
+   "description": "[Enseignant] Creer un quiz.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/courses/{{ _.course_id }}/quizzes/",
+   "metaSortKey": 1790000000137,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"title\": \"exemple\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_138",
+   "_type": "request",
+   "parentId": "fld_assessments",
+   "name": "GET quizzes/<uuid:quiz_id>",
+   "description": "Lire un quiz (questions et choix SANS les bonnes reponses).",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/quizzes/{{ _.quiz_id }}/",
+   "metaSortKey": 1790000000138,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_139",
+   "_type": "request",
+   "parentId": "fld_assessments",
+   "name": "POST quizzes/<uuid:quiz_id>/questions",
+   "description": "[Enseignant] Ajouter une question. kind : single, multiple, true_false, text, code, ordering. choices : [{label, is_correct, correct_order}] ; accepted : reponses acceptees (text).",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/quizzes/{{ _.quiz_id }}/questions/",
+   "metaSortKey": 1790000000139,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"kind\": \"single\",\n  \"prompt\": \"exemple\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_140",
+   "_type": "request",
+   "parentId": "fld_assessments",
+   "name": "POST quizzes/<uuid:quiz_id>/publish",
+   "description": "[Enseignant] Publier / depublier un quiz.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/quizzes/{{ _.quiz_id }}/publish/",
+   "metaSortKey": 1790000000140,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"published\": true\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_141",
+   "_type": "request",
+   "parentId": "fld_assessments",
+   "name": "GET quizzes/<uuid:quiz_id>/attempts",
+   "description": "Mes tentatives sur un quiz.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/quizzes/{{ _.quiz_id }}/attempts/",
+   "metaSortKey": 1790000000141,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_142",
+   "_type": "request",
+   "parentId": "fld_assessments",
+   "name": "POST quizzes/<uuid:quiz_id>/attempts",
+   "description": "Demarrer (ou reprendre) une tentative.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/quizzes/{{ _.quiz_id }}/attempts/",
+   "metaSortKey": 1790000000142,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_143",
+   "_type": "request",
+   "parentId": "fld_assessments",
+   "name": "POST attempts/<uuid:attempt_id>/submit",
+   "description": "Soumettre les reponses : {answers: {<id question>: {selected: [<id choix>], text: \"...\"}}}. Hors delai : note 0.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/attempts/{{ _.attempt_id }}/submit/",
+   "metaSortKey": 1790000000143,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"answers\": {}\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_144",
+   "_type": "request",
+   "parentId": "fld_assessments",
+   "name": "POST attempts/<uuid:attempt_id>/grade-code",
+   "description": "[Enseignant] Corriger une reponse de type 'code'.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/attempts/{{ _.attempt_id }}/grade-code/",
+   "metaSortKey": 1790000000144,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"question\": \"{{ _.question_id }}\",\n  \"correct\": true\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_145",
+   "_type": "request",
+   "parentId": "fld_assessments",
+   "name": "GET courses/<uuid:course_id>/assignments",
+   "description": "Devoirs d'un cours (inscrits et enseignants).",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/courses/{{ _.course_id }}/assignments/",
+   "metaSortKey": 1790000000145,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_146",
+   "_type": "request",
+   "parentId": "fld_assessments",
+   "name": "POST courses/<uuid:course_id>/assignments",
+   "description": "[Enseignant] Creer un devoir. criteria : grille [{label, max_points}] dont la somme egale max_points.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/courses/{{ _.course_id }}/assignments/",
+   "metaSortKey": 1790000000146,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"title\": \"exemple\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_147",
+   "_type": "request",
+   "parentId": "fld_assessments",
+   "name": "GET assignments/<uuid:assignment_id>",
+   "description": "Detail d'un devoir.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/assignments/{{ _.assignment_id }}/",
+   "metaSortKey": 1790000000147,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_148",
+   "_type": "request",
+   "parentId": "fld_assessments",
+   "name": "POST assignments/<uuid:assignment_id>/groups",
+   "description": "Former mon groupe pour un devoir collectif (tous les membres doivent etre inscrits ; un eleve = un seul groupe).",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/assignments/{{ _.assignment_id }}/groups/",
+   "metaSortKey": 1790000000148,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"name\": \"exemple\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_149",
+   "_type": "request",
+   "parentId": "fld_assessments",
+   "name": "GET assignments/<uuid:assignment_id>/submissions",
+   "description": "Rendus d'un devoir : tous pour les enseignants ; seulement les miens (et ceux de mon groupe) pour un etudiant.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/assignments/{{ _.assignment_id }}/submissions/",
+   "metaSortKey": 1790000000149,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_150",
+   "_type": "request",
+   "parentId": "fld_assessments",
+   "name": "POST assignments/<uuid:assignment_id>/submissions",
+   "description": "Rendre un devoir (texte et/ou fichiers envoyes, usage 'assignment_submission'). Pour un devoir collectif, le rendu est celui du groupe.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/assignments/{{ _.assignment_id }}/submissions/",
+   "metaSortKey": 1790000000150,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_151",
+   "_type": "request",
+   "parentId": "fld_assessments",
+   "name": "GET submissions/<uuid:submission_id>",
+   "description": "Lire un rendu (auteur, groupe ou enseignants).",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/submissions/{{ _.submission_id }}/",
+   "metaSortKey": 1790000000151,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_152",
+   "_type": "request",
+   "parentId": "fld_assessments",
+   "name": "POST submissions/<uuid:submission_id>/grade",
+   "description": "[Enseignant] Noter un rendu : points (note globale) OU criteria [{criterion_id, points, comment}] (grille complete). Une nouvelle note remplace l'ancienne.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/submissions/{{ _.submission_id }}/grade/",
+   "metaSortKey": 1790000000152,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_153",
+   "_type": "request",
+   "parentId": "fld_assessments",
+   "name": "POST submissions/<uuid:submission_id>/feedback",
+   "description": "Commenter un rendu (enseignants et auteur/groupe).",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/submissions/{{ _.submission_id }}/feedback/",
+   "metaSortKey": 1790000000153,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"body\": \"exemple\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_154",
+   "_type": "request",
+   "parentId": "fld_progress",
+   "name": "POST chapters/<uuid:chapter_id>/progress",
+   "description": "Enregistrer ma progression dans un chapitre (le pourcentage ne recule jamais ; 100 = chapitre termine ; le temps est plafonne a 1 h par appel).",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/chapters/{{ _.chapter_id }}/progress/",
+   "metaSortKey": 1790000000154,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"percent\": 1\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_155",
+   "_type": "request",
+   "parentId": "fld_progress",
+   "name": "GET me/certificates",
+   "description": "Mes certificats.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/me/certificates/",
+   "metaSortKey": 1790000000155,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_156",
+   "_type": "request",
+   "parentId": "fld_progress",
+   "name": "GET public/certificates/<str:code>",
+   "description": "Verifier PUBLIQUEMENT un certificat par son code (limite par adresse IP). Ne renvoie aucune donnee privee.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/public/certificates/{{ _.code }}/",
+   "metaSortKey": 1790000000156,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false
+  },
+  {
+   "_id": "req_157",
+   "_type": "request",
+   "parentId": "fld_marketplace",
+   "name": "POST stores",
+   "description": "Creer ma boutique.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/stores/",
+   "metaSortKey": 1790000000157,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"name\": \"exemple\",\n  \"slug\": \"mon-exemple\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_158",
+   "_type": "request",
+   "parentId": "fld_marketplace",
+   "name": "GET me/stores",
+   "description": "Mes boutiques.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/me/stores/",
+   "metaSortKey": 1790000000158,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_159",
+   "_type": "request",
+   "parentId": "fld_marketplace",
+   "name": "GET stores/<slug:slug>",
+   "description": "Page publique d'une boutique.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/stores/{{ _.slug }}/",
+   "metaSortKey": 1790000000159,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false
+  },
+  {
+   "_id": "req_160",
+   "_type": "request",
+   "parentId": "fld_marketplace",
+   "name": "POST stores/<slug:slug>/products",
+   "description": "[Vendeur] Creer un produit (brouillon).",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/stores/{{ _.slug }}/products/",
+   "metaSortKey": 1790000000160,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"kind\": \"application\",\n  \"slug\": \"mon-exemple\",\n  \"title\": \"exemple\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_161",
+   "_type": "request",
+   "parentId": "fld_marketplace",
+   "name": "POST stores/<slug:slug>/coupons",
+   "description": "[Vendeur] Creer un coupon pour ma boutique.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/stores/{{ _.slug }}/coupons/",
+   "metaSortKey": 1790000000161,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"code\": \"123456\",\n  \"kind\": \"percent\",\n  \"value\": 1\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_162",
+   "_type": "request",
+   "parentId": "fld_marketplace",
+   "name": "GET stores/<slug:slug>/revenue",
+   "description": "[Vendeur] Mes revenus calcules depuis le grand livre (brut, rembourse, net apres commission).",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/stores/{{ _.slug }}/revenue/",
+   "metaSortKey": 1790000000162,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_163",
+   "_type": "request",
+   "parentId": "fld_marketplace",
+   "name": "GET products",
+   "description": "Catalogue des produits publies.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/products/",
+   "metaSortKey": 1790000000163,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false
+  },
+  {
+   "_id": "req_164",
+   "_type": "request",
+   "parentId": "fld_marketplace",
+   "name": "GET products/<uuid:product_id>",
+   "description": "Fiche produit (version, changelog, prerequis, instructions, fichiers sans lien de telechargement).",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/products/{{ _.product_id }}/",
+   "metaSortKey": 1790000000164,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_165",
+   "_type": "request",
+   "parentId": "fld_marketplace",
+   "name": "POST products/<uuid:product_id>/variants",
+   "description": "[Vendeur] Ajouter une variante (prix en plus petite unite ; stock vide = illimite).",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/products/{{ _.product_id }}/variants/",
+   "metaSortKey": 1790000000165,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"sku\": \"exemple\",\n  \"name\": \"exemple\",\n  \"price_minor\": 1,\n  \"currency\": \"XAF\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_166",
+   "_type": "request",
+   "parentId": "fld_marketplace",
+   "name": "POST products/<uuid:product_id>/media",
+   "description": "[Vendeur] Ajouter une image/video au produit (fichier envoye, usage 'product_media').",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/products/{{ _.product_id }}/media/",
+   "metaSortKey": 1790000000166,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"file\": \"{{ _.file_id }}\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_167",
+   "_type": "request",
+   "parentId": "fld_marketplace",
+   "name": "POST products/<uuid:product_id>/releases",
+   "description": "[Vendeur] Publier une version avec ses fichiers (envoyes, usage 'product_asset'). L'empreinte SHA-256 est fournie par le vendeur.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/products/{{ _.product_id }}/releases/",
+   "metaSortKey": 1790000000167,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"version\": \"exemple\",\n  \"assets\": [\n    {\n      \"file\": \"{{ _.file_id }}\",\n      \"checksum_sha256\": \"exemple\"\n    }\n  ]\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_168",
+   "_type": "request",
+   "parentId": "fld_marketplace",
+   "name": "POST products/<uuid:product_id>/entitlement-targets",
+   "description": "[Vendeur] Ce que l'achat debloque (cours, module, chapitre, classroom) : verifie que vous en etes enseignant.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/products/{{ _.product_id }}/entitlement-targets/",
+   "metaSortKey": 1790000000168,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"scope\": \"classroom\",\n  \"target_id\": \"{{ _.target_id }}\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_169",
+   "_type": "request",
+   "parentId": "fld_marketplace",
+   "name": "POST products/<uuid:product_id>/publish",
+   "description": "[Vendeur] Publier le produit (verifie qu'il est vendable).",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/products/{{ _.product_id }}/publish/",
+   "metaSortKey": 1790000000169,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_170",
+   "_type": "request",
+   "parentId": "fld_marketplace",
+   "name": "GET products/<uuid:product_id>/reviews",
+   "description": "Avis d'un produit.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/products/{{ _.product_id }}/reviews/",
+   "metaSortKey": 1790000000170,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false
+  },
+  {
+   "_id": "req_171",
+   "_type": "request",
+   "parentId": "fld_marketplace",
+   "name": "POST products/<uuid:product_id>/reviews",
+   "description": "Noter un produit (reserve aux acheteurs, un avis par produit).",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/products/{{ _.product_id }}/reviews/",
+   "metaSortKey": 1790000000171,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"rating\": 1\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_172",
+   "_type": "request",
+   "parentId": "fld_marketplace",
+   "name": "POST products/<uuid:product_id>/wishlist",
+   "description": "Ajouter/retirer un produit de ma liste de souhaits.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/products/{{ _.product_id }}/wishlist/",
+   "metaSortKey": 1790000000172,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_173",
+   "_type": "request",
+   "parentId": "fld_marketplace",
+   "name": "GET me/wishlist",
+   "description": "Ma liste de souhaits.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/me/wishlist/",
+   "metaSortKey": 1790000000173,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_174",
+   "_type": "request",
+   "parentId": "fld_marketplace",
+   "name": "GET cart",
+   "description": "Mon panier.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/cart/",
+   "metaSortKey": 1790000000174,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_175",
+   "_type": "request",
+   "parentId": "fld_marketplace",
+   "name": "POST cart/items",
+   "description": "Ajouter au panier (une seule devise par panier ; stock verifie).",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/cart/items/",
+   "metaSortKey": 1790000000175,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"variant\": \"{{ _.variant_id }}\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_176",
+   "_type": "request",
+   "parentId": "fld_marketplace",
+   "name": "PATCH cart/items/<uuid:variant_id>",
+   "description": "Changer la quantite (0 retire la ligne).",
+   "method": "PATCH",
+   "url": "{{ _.base_url }}/api/v1/cart/items/{{ _.variant_id }}/",
+   "metaSortKey": 1790000000176,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"quantity\": 1\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_177",
+   "_type": "request",
+   "parentId": "fld_marketplace",
+   "name": "DELETE cart/items/<uuid:variant_id>",
+   "description": "Retirer une ligne du panier.",
+   "method": "DELETE",
+   "url": "{{ _.base_url }}/api/v1/cart/items/{{ _.variant_id }}/",
+   "metaSortKey": 1790000000177,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_178",
+   "_type": "request",
+   "parentId": "fld_marketplace",
+   "name": "POST checkout",
+   "description": "Passer commande depuis le panier. idempotency_key est OBLIGATOIRE (une cle = une commande, meme si le client clique deux fois). Prix figes ; stock reserve.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/checkout/",
+   "metaSortKey": 1790000000178,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"idempotency_key\": \"exemple\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_179",
+   "_type": "request",
+   "parentId": "fld_marketplace",
+   "name": "GET orders",
+   "description": "Mes commandes.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/orders/",
+   "metaSortKey": 1790000000179,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_180",
+   "_type": "request",
+   "parentId": "fld_marketplace",
+   "name": "GET orders/<uuid:order_id>",
+   "description": "Detail d'une de mes commandes.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/orders/{{ _.order_id }}/",
+   "metaSortKey": 1790000000180,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_181",
+   "_type": "request",
+   "parentId": "fld_marketplace",
+   "name": "POST orders/<uuid:order_id>/cancel",
+   "description": "Annuler une commande non payee (le stock et le coupon sont rendus).",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/orders/{{ _.order_id }}/cancel/",
+   "metaSortKey": 1790000000181,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_182",
+   "_type": "request",
+   "parentId": "fld_marketplace",
+   "name": "GET me/licenses",
+   "description": "Mes licences.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/me/licenses/",
+   "metaSortKey": 1790000000182,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_183",
+   "_type": "request",
+   "parentId": "fld_marketplace",
+   "name": "POST assets/<uuid:asset_id>/download",
+   "description": "Obtenir une URL signee de telechargement (licence active requise ; 20 par minute).",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/assets/{{ _.asset_id }}/download/",
+   "metaSortKey": 1790000000183,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_184",
+   "_type": "request",
+   "parentId": "fld_payments",
+   "name": "POST payments/start",
+   "description": "Initier le paiement d'une de mes commandes (idempotent). Le fournisseur reel n'est pas branche : voir /payments/{id}/simulate/ en phase de test.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/payments/start/",
+   "metaSortKey": 1790000000184,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"order\": \"{{ _.order_id }}\",\n  \"provider\": \"mobile_money\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_185",
+   "_type": "request",
+   "parentId": "fld_payments",
+   "name": "POST payments/<uuid:payment_id>/simulate",
+   "description": "[PHASE DE TEST] Simuler le resultat d'un paiement 'manual' (reussite ou echec). Retourne 404 si PAYMENTS_SIMULATION_ENABLED est desactive.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/payments/{{ _.payment_id }}/simulate/",
+   "metaSortKey": 1790000000185,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_186",
+   "_type": "request",
+   "parentId": "fld_payments",
+   "name": "POST payments/webhooks/<slug:provider>",
+   "description": "Webhook d'un fournisseur de paiement. Corps JSON brut {event_id, provider_ref, status, amount_minor, currency} + en-tete X-Signature = HMAC-SHA256 hexadecimal du corps avec le secret du fournisseur. Idempotent.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/payments/webhooks/{{ _.provider }}/",
+   "metaSortKey": 1790000000186,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false
+  },
+  {
+   "_id": "req_187",
+   "_type": "request",
+   "parentId": "fld_payments",
+   "name": "POST orders/<uuid:order_id>/pay-free",
+   "description": "Valider une commande GRATUITE (total 0).",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/orders/{{ _.order_id }}/pay-free/",
+   "metaSortKey": 1790000000187,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_188",
+   "_type": "request",
+   "parentId": "fld_payments",
+   "name": "POST refunds",
+   "description": "Demander un remboursement (delai de 14 jours ; une demande ouverte par article).",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/refunds/",
+   "metaSortKey": 1790000000188,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"order_item\": \"{{ _.order_item_id }}\",\n  \"reason\": \"exemple\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_189",
+   "_type": "request",
+   "parentId": "fld_payments",
+   "name": "GET me/refunds",
+   "description": "Mes demandes de remboursement.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/me/refunds/",
+   "metaSortKey": 1790000000189,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_190",
+   "_type": "request",
+   "parentId": "fld_payments",
+   "name": "GET admin/refunds",
+   "description": "[Administration] File des remboursements.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/admin/refunds/",
+   "metaSortKey": 1790000000190,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_191",
+   "_type": "request",
+   "parentId": "fld_payments",
+   "name": "POST admin/refunds/<uuid:refund_id>/decision",
+   "description": "[Administration] Approuver ou refuser un remboursement (reversement comptable proportionnel, licence et acces retires).",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/admin/refunds/{{ _.refund_id }}/decision/",
+   "metaSortKey": 1790000000191,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"approve\": true\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_192",
+   "_type": "request",
+   "parentId": "fld_payments",
+   "name": "GET admin/ledger/orders/<uuid:order_id>",
+   "description": "[Administration] Ecritures du grand livre d'une commande (le solde doit valoir 0).",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/admin/ledger/orders/{{ _.order_id }}/",
+   "metaSortKey": 1790000000192,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_193",
+   "_type": "request",
+   "parentId": "fld_companies",
+   "name": "POST companies",
+   "description": "Creer une entreprise (vous en etes le proprietaire).",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/companies/",
+   "metaSortKey": 1790000000193,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"name\": \"exemple\",\n  \"slug\": \"mon-exemple\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_194",
+   "_type": "request",
+   "parentId": "fld_companies",
+   "name": "GET me/companies",
+   "description": "Mes entreprises.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/me/companies/",
+   "metaSortKey": 1790000000194,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_195",
+   "_type": "request",
+   "parentId": "fld_companies",
+   "name": "GET companies/<slug:slug>",
+   "description": "Page publique d'une entreprise.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/companies/{{ _.slug }}/",
+   "metaSortKey": 1790000000195,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false
+  },
+  {
+   "_id": "req_196",
+   "_type": "request",
+   "parentId": "fld_companies",
+   "name": "PATCH companies/<slug:slug>",
+   "description": "[Gestionnaire/editeur] Modifier l'entreprise. logo_file / cover_file : fichiers envoyes (usages 'company_logo' / 'company_cover').",
+   "method": "PATCH",
+   "url": "{{ _.base_url }}/api/v1/companies/{{ _.slug }}/",
+   "metaSortKey": 1790000000196,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_197",
+   "_type": "request",
+   "parentId": "fld_companies",
+   "name": "GET companies/<slug:slug>/members",
+   "description": "Equipe visible sur la page publique.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/companies/{{ _.slug }}/members/",
+   "metaSortKey": 1790000000197,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false
+  },
+  {
+   "_id": "req_198",
+   "_type": "request",
+   "parentId": "fld_companies",
+   "name": "POST companies/<slug:slug>/members",
+   "description": "[Gestionnaire] Ajouter un membre (role : admin, recruiter, editor, employee).",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/companies/{{ _.slug }}/members/",
+   "metaSortKey": 1790000000198,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"username\": \"ada\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_199",
+   "_type": "request",
+   "parentId": "fld_companies",
+   "name": "PATCH companies/<slug:slug>/members/<str:username>",
+   "description": "[Gestionnaire] Changer le role d'un membre.",
+   "method": "PATCH",
+   "url": "{{ _.base_url }}/api/v1/companies/{{ _.slug }}/members/{{ _.username }}/",
+   "metaSortKey": 1790000000199,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"role\": \"owner\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_200",
+   "_type": "request",
+   "parentId": "fld_companies",
+   "name": "DELETE companies/<slug:slug>/members/<str:username>",
+   "description": "Retirer un membre (ou quitter l'entreprise). Le dernier proprietaire ne peut pas partir.",
+   "method": "DELETE",
+   "url": "{{ _.base_url }}/api/v1/companies/{{ _.slug }}/members/{{ _.username }}/",
+   "metaSortKey": 1790000000200,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_201",
+   "_type": "request",
+   "parentId": "fld_companies",
+   "name": "POST companies/<slug:slug>/verification",
+   "description": "[Gestionnaire] Demander la verification de l'entreprise.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/companies/{{ _.slug }}/verification/",
+   "metaSortKey": 1790000000201,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"method\": \"domain_email\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_202",
+   "_type": "request",
+   "parentId": "fld_companies",
+   "name": "POST companies/<slug:slug>/links",
+   "description": "[Editeur] Ajouter un lien (https).",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/companies/{{ _.slug }}/links/",
+   "metaSortKey": 1790000000202,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"provider\": \"exemple\",\n  \"url\": \"https://example.com\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_203",
+   "_type": "request",
+   "parentId": "fld_companies",
+   "name": "POST companies/<slug:slug>/projects",
+   "description": "[Editeur] Ajouter un projet a la page.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/companies/{{ _.slug }}/projects/",
+   "metaSortKey": 1790000000203,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"title\": \"exemple\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_204",
+   "_type": "request",
+   "parentId": "fld_companies",
+   "name": "POST companies/<slug:slug>/services",
+   "description": "[Editeur] Ajouter un service propose.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/companies/{{ _.slug }}/services/",
+   "metaSortKey": 1790000000204,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"title\": \"exemple\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_205",
+   "_type": "request",
+   "parentId": "fld_companies",
+   "name": "GET admin/company-verifications",
+   "description": "[Administration] Demandes de verification en attente.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/admin/company-verifications/",
+   "metaSortKey": 1790000000205,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_206",
+   "_type": "request",
+   "parentId": "fld_companies",
+   "name": "POST admin/company-verifications/<uuid:verification_id>/review",
+   "description": "[Administration] Approuver ou rejeter une verification.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/admin/company-verifications/{{ _.verification_id }}/review/",
+   "metaSortKey": 1790000000206,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"approve\": true\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_207",
+   "_type": "request",
+   "parentId": "fld_portfolio",
+   "name": "GET me/portfolio",
+   "description": "Mon portfolio complet.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/me/portfolio/",
+   "metaSortKey": 1790000000207,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_208",
+   "_type": "request",
+   "parentId": "fld_portfolio",
+   "name": "PATCH me/portfolio",
+   "description": "Modifier mon portfolio (titre, resume, visibilite).",
+   "method": "PATCH",
+   "url": "{{ _.base_url }}/api/v1/me/portfolio/",
+   "metaSortKey": 1790000000208,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_209",
+   "_type": "request",
+   "parentId": "fld_portfolio",
+   "name": "GET users/<str:username>/portfolio",
+   "description": "Portfolio d'un utilisateur (404 si prive pour moi).",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/users/{{ _.username }}/portfolio/",
+   "metaSortKey": 1790000000209,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_210",
+   "_type": "request",
+   "parentId": "fld_portfolio",
+   "name": "POST me/portfolio/projects",
+   "description": "Ajouter un projet. technologies : slugs de competences.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/me/portfolio/projects/",
+   "metaSortKey": 1790000000210,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"slug\": \"mon-exemple\",\n  \"title\": \"exemple\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_211",
+   "_type": "request",
+   "parentId": "fld_portfolio",
+   "name": "POST me/portfolio/projects/<uuid:project_id>/links",
+   "description": "Ajouter un lien a un de mes projets.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/me/portfolio/projects/{{ _.project_id }}/links/",
+   "metaSortKey": 1790000000211,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"url\": \"https://example.com\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_212",
+   "_type": "request",
+   "parentId": "fld_portfolio",
+   "name": "POST me/portfolio/projects/<uuid:project_id>/media",
+   "description": "Ajouter une image/video a un de mes projets (fichier envoye, usage 'portfolio_media').",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/me/portfolio/projects/{{ _.project_id }}/media/",
+   "metaSortKey": 1790000000212,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"file\": \"{{ _.file_id }}\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_213",
+   "_type": "request",
+   "parentId": "fld_portfolio",
+   "name": "POST me/portfolio/repositories",
+   "description": "Declarer un depot (saisie manuelle).",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/me/portfolio/repositories/",
+   "metaSortKey": 1790000000213,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"provider\": \"github\",\n  \"full_name\": \"exemple\",\n  \"url\": \"https://example.com\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_214",
+   "_type": "request",
+   "parentId": "fld_portfolio",
+   "name": "POST me/portfolio/experiences",
+   "description": "Ajouter une experience.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/me/portfolio/experiences/",
+   "metaSortKey": 1790000000214,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"company_name\": \"exemple\",\n  \"title\": \"exemple\",\n  \"started_on\": \"2026-01-15\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_215",
+   "_type": "request",
+   "parentId": "fld_portfolio",
+   "name": "POST me/portfolio/educations",
+   "description": "Ajouter une formation.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/me/portfolio/educations/",
+   "metaSortKey": 1790000000215,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"institution\": \"exemple\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_216",
+   "_type": "request",
+   "parentId": "fld_portfolio",
+   "name": "POST me/portfolio/achievements",
+   "description": "Ajouter une realisation.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/me/portfolio/achievements/",
+   "metaSortKey": 1790000000216,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"title\": \"exemple\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_217",
+   "_type": "request",
+   "parentId": "fld_portfolio",
+   "name": "POST me/portfolio/certificates",
+   "description": "Afficher un de MES certificats LE BAOBAB (verifiable publiquement).",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/me/portfolio/certificates/",
+   "metaSortKey": 1790000000217,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"certificate_id\": \"{{ _.certificate_id }}\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_218",
+   "_type": "request",
+   "parentId": "fld_portfolio",
+   "name": "DELETE me/portfolio/<slug:kind>/<uuid:entry_id>",
+   "description": "Supprimer une entree de mon portfolio. kind : projects, experiences, educations, achievements, certificates, repositories.",
+   "method": "DELETE",
+   "url": "{{ _.base_url }}/api/v1/me/portfolio/{{ _.kind }}/{{ _.entry_id }}/",
+   "metaSortKey": 1790000000218,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_219",
+   "_type": "request",
+   "parentId": "fld_jobs",
+   "name": "GET jobs",
+   "description": "Offres ouvertes (emplois et missions freelance).",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/jobs/",
+   "metaSortKey": 1790000000219,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false
+  },
+  {
+   "_id": "req_220",
+   "_type": "request",
+   "parentId": "fld_jobs",
+   "name": "POST jobs",
+   "description": "Creer une offre (brouillon). Un emploi exige une entreprise dont vous etes recruteur ; une mission freelance peut etre publiee a titre individuel.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/jobs/",
+   "metaSortKey": 1790000000220,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"title\": \"exemple\",\n  \"description\": \"exemple\",\n  \"job_type\": \"full_time\",\n  \"contract_type\": \"permanent\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_221",
+   "_type": "request",
+   "parentId": "fld_jobs",
+   "name": "GET jobs/<uuid:job_id>",
+   "description": "Detail d'une offre.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/jobs/{{ _.job_id }}/",
+   "metaSortKey": 1790000000221,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_222",
+   "_type": "request",
+   "parentId": "fld_jobs",
+   "name": "POST jobs/<uuid:job_id>/publish",
+   "description": "[Recruteur] Publier l'offre.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/jobs/{{ _.job_id }}/publish/",
+   "metaSortKey": 1790000000222,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_223",
+   "_type": "request",
+   "parentId": "fld_jobs",
+   "name": "POST jobs/<uuid:job_id>/close",
+   "description": "[Recruteur] Fermer l'offre (filled=true : poste pourvu).",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/jobs/{{ _.job_id }}/close/",
+   "metaSortKey": 1790000000223,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_224",
+   "_type": "request",
+   "parentId": "fld_jobs",
+   "name": "POST jobs/<uuid:job_id>/apply",
+   "description": "Postuler a une offre (une seule candidature par offre). cv_file : fichier envoye (usage 'cv').",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/jobs/{{ _.job_id }}/apply/",
+   "metaSortKey": 1790000000224,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_225",
+   "_type": "request",
+   "parentId": "fld_jobs",
+   "name": "GET jobs/<uuid:job_id>/applications",
+   "description": "[Recruteur] Candidatures recues pour une offre.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/jobs/{{ _.job_id }}/applications/",
+   "metaSortKey": 1790000000225,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_226",
+   "_type": "request",
+   "parentId": "fld_jobs",
+   "name": "GET jobs/<uuid:job_id>/slots",
+   "description": "Creneaux libres (recruteurs ; candidats pre-selectionnes de cette offre).",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/jobs/{{ _.job_id }}/slots/",
+   "metaSortKey": 1790000000226,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_227",
+   "_type": "request",
+   "parentId": "fld_jobs",
+   "name": "POST jobs/<uuid:job_id>/slots",
+   "description": "[Recruteur] Proposer un creneau d'entretien (deux creneaux d'un meme recruteur ne peuvent pas se chevaucher).",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/jobs/{{ _.job_id }}/slots/",
+   "metaSortKey": 1790000000227,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"starts_at\": \"2026-12-01T10:00:00Z\",\n  \"ends_at\": \"2026-12-01T10:00:00Z\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_228",
+   "_type": "request",
+   "parentId": "fld_jobs",
+   "name": "GET jobs/<uuid:job_id>/proposals",
+   "description": "[Client] Propositions recues pour une mission.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/jobs/{{ _.job_id }}/proposals/",
+   "metaSortKey": 1790000000228,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_229",
+   "_type": "request",
+   "parentId": "fld_jobs",
+   "name": "POST jobs/<uuid:job_id>/proposals",
+   "description": "Repondre a une mission freelance par une proposition (une par mission).",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/jobs/{{ _.job_id }}/proposals/",
+   "metaSortKey": 1790000000229,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"cover_letter\": \"exemple\",\n  \"bid_minor\": 1,\n  \"currency\": \"XAF\",\n  \"delivery_days\": 1\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_230",
+   "_type": "request",
+   "parentId": "fld_jobs",
+   "name": "GET me/applications",
+   "description": "Mes candidatures.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/me/applications/",
+   "metaSortKey": 1790000000230,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_231",
+   "_type": "request",
+   "parentId": "fld_jobs",
+   "name": "GET applications/<uuid:application_id>",
+   "description": "Detail d'une candidature (le candidat ou les recruteurs de l'offre ; sinon 404).",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/applications/{{ _.application_id }}/",
+   "metaSortKey": 1790000000231,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_232",
+   "_type": "request",
+   "parentId": "fld_jobs",
+   "name": "POST applications/<uuid:application_id>/transition",
+   "description": "Changer le statut d'une candidature. Recruteur : reviewing, shortlisted, interview, offer, hired, rejected. Candidat : withdrawn. Seules les transitions valides sont acceptees.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/applications/{{ _.application_id }}/transition/",
+   "metaSortKey": 1790000000232,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"to_status\": \"submitted\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_233",
+   "_type": "request",
+   "parentId": "fld_jobs",
+   "name": "POST applications/<uuid:application_id>/book",
+   "description": "Reserver un creneau pour une candidature (candidat ou recruteur) : passe la candidature en 'interview'.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/applications/{{ _.application_id }}/book/",
+   "metaSortKey": 1790000000233,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"slot\": \"{{ _.slot_id }}\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_234",
+   "_type": "request",
+   "parentId": "fld_jobs",
+   "name": "POST applications/<uuid:application_id>/offer",
+   "description": "[Recruteur] Envoyer une offre d'embauche (apres un entretien).",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/applications/{{ _.application_id }}/offer/",
+   "metaSortKey": 1790000000234,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"amount_minor\": 1,\n  \"currency\": \"XAF\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_235",
+   "_type": "request",
+   "parentId": "fld_jobs",
+   "name": "GET me/offers",
+   "description": "Mes offres d'embauche recues.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/me/offers/",
+   "metaSortKey": 1790000000235,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_236",
+   "_type": "request",
+   "parentId": "fld_jobs",
+   "name": "POST offers/<uuid:offer_id>/respond",
+   "description": "Accepter ou refuser une offre d'embauche (l'acceptation cree le contrat).",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/offers/{{ _.offer_id }}/respond/",
+   "metaSortKey": 1790000000236,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"accept\": true\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_237",
+   "_type": "request",
+   "parentId": "fld_jobs",
+   "name": "GET me/freelancer-profile",
+   "description": "Mon profil freelance.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/me/freelancer-profile/",
+   "metaSortKey": 1790000000237,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_238",
+   "_type": "request",
+   "parentId": "fld_jobs",
+   "name": "PUT me/freelancer-profile",
+   "description": "Creer/mettre a jour mon profil freelance (un tarif exige une devise).",
+   "method": "PUT",
+   "url": "{{ _.base_url }}/api/v1/me/freelancer-profile/",
+   "metaSortKey": 1790000000238,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_239",
+   "_type": "request",
+   "parentId": "fld_jobs",
+   "name": "GET me/proposals",
+   "description": "Mes propositions.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/me/proposals/",
+   "metaSortKey": 1790000000239,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_240",
+   "_type": "request",
+   "parentId": "fld_jobs",
+   "name": "POST proposals/<uuid:proposal_id>/accept",
+   "description": "[Client] Accepter une proposition : cree le contrat et ses jalons (leur somme doit egaler l'offre), refuse les autres propositions, marque la mission pourvue.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/proposals/{{ _.proposal_id }}/accept/",
+   "metaSortKey": 1790000000240,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_241",
+   "_type": "request",
+   "parentId": "fld_jobs",
+   "name": "GET me/contracts",
+   "description": "Mes contrats (comme client ou prestataire).",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/me/contracts/",
+   "metaSortKey": 1790000000241,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_242",
+   "_type": "request",
+   "parentId": "fld_jobs",
+   "name": "GET contracts/<uuid:contract_id>",
+   "description": "Detail d'un contrat (parties uniquement).",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/contracts/{{ _.contract_id }}/",
+   "metaSortKey": 1790000000242,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_243",
+   "_type": "request",
+   "parentId": "fld_jobs",
+   "name": "POST contracts/<uuid:contract_id>/terminate",
+   "description": "Resilier un contrat (l'une des parties).",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/contracts/{{ _.contract_id }}/terminate/",
+   "metaSortKey": 1790000000243,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_244",
+   "_type": "request",
+   "parentId": "fld_jobs",
+   "name": "POST milestones/<uuid:milestone_id>/advance",
+   "description": "Faire avancer un jalon : start et submit par le prestataire, approve par le client. Le contrat se termine quand tous les jalons sont valides.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/milestones/{{ _.milestone_id }}/advance/",
+   "metaSortKey": 1790000000244,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"action\": \"start\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_245",
+   "_type": "request",
+   "parentId": "fld_advertising",
+   "name": "POST ads/accounts",
+   "description": "Creer mon compte annonceur et son portefeuille prepaye.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/ads/accounts/",
+   "metaSortKey": 1790000000245,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"name\": \"exemple\",\n  \"currency\": \"XAF\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_246",
+   "_type": "request",
+   "parentId": "fld_advertising",
+   "name": "GET me/ads/accounts",
+   "description": "Mes comptes annonceur.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/me/ads/accounts/",
+   "metaSortKey": 1790000000246,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_247",
+   "_type": "request",
+   "parentId": "fld_advertising",
+   "name": "POST admin/ads/accounts/<uuid:account_id>/topup",
+   "description": "[Administration] Crediter un portefeuille (virement verifie). reference unique : un rejeu ne credite pas deux fois.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/admin/ads/accounts/{{ _.account_id }}/topup/",
+   "metaSortKey": 1790000000247,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"amount_minor\": 1,\n  \"reference\": \"exemple\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_248",
+   "_type": "request",
+   "parentId": "fld_advertising",
+   "name": "GET ads/campaigns",
+   "description": "Mes campagnes.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/ads/campaigns/",
+   "metaSortKey": 1790000000248,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_249",
+   "_type": "request",
+   "parentId": "fld_advertising",
+   "name": "POST ads/campaigns",
+   "description": "Creer une campagne (brouillon).",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/ads/campaigns/",
+   "metaSortKey": 1790000000249,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"account\": \"{{ _.account_id }}\",\n  \"name\": \"exemple\",\n  \"starts_at\": \"2026-12-01T10:00:00Z\",\n  \"daily_budget_minor\": 1,\n  \"total_budget_minor\": 1\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_250",
+   "_type": "request",
+   "parentId": "fld_advertising",
+   "name": "POST ads/campaigns/<uuid:campaign_id>/ad-sets",
+   "description": "Creer un groupe d'annonces. Ciblage = regles ET entre elles (in = OU, all = ET, not_in = NON) ; criteres limites a une liste blanche, AUCUNE donnee sensible. frequency_cap_per_day : impressions max par utilisateur et par jour.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/ads/campaigns/{{ _.campaign_id }}/ad-sets/",
+   "metaSortKey": 1790000000250,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"name\": \"exemple\",\n  \"bid_minor\": 1,\n  \"placements\": [\n    \"feed\"\n  ]\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_251",
+   "_type": "request",
+   "parentId": "fld_advertising",
+   "name": "POST ads/campaigns/<uuid:campaign_id>/activate",
+   "description": "Activer la campagne (portefeuille non vide et au moins une annonce validee).",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/ads/campaigns/{{ _.campaign_id }}/activate/",
+   "metaSortKey": 1790000000251,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_252",
+   "_type": "request",
+   "parentId": "fld_advertising",
+   "name": "POST ads/campaigns/<uuid:campaign_id>/pause",
+   "description": "Mettre la campagne en pause.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/ads/campaigns/{{ _.campaign_id }}/pause/",
+   "metaSortKey": 1790000000252,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_253",
+   "_type": "request",
+   "parentId": "fld_advertising",
+   "name": "GET ads/campaigns/<uuid:campaign_id>/stats",
+   "description": "Statistiques d'une campagne (depense reglee, impressions, clics, CTR, budget restant) et solde du portefeuille.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/ads/campaigns/{{ _.campaign_id }}/stats/",
+   "metaSortKey": 1790000000253,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_254",
+   "_type": "request",
+   "parentId": "fld_advertising",
+   "name": "POST ads/creatives",
+   "description": "Creer une creation publicitaire (https obligatoire ; image/video : fichier envoye, usage 'ad_creative').",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/ads/creatives/",
+   "metaSortKey": 1790000000254,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"account\": \"{{ _.account_id }}\",\n  \"headline\": \"exemple\",\n  \"destination_url\": \"https://example.com\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_255",
+   "_type": "request",
+   "parentId": "fld_advertising",
+   "name": "POST ads/ad-sets/<uuid:ad_set_id>/ads",
+   "description": "Creer une annonce (creation + groupe d'annonces).",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/ads/ad-sets/{{ _.ad_set_id }}/ads/",
+   "metaSortKey": 1790000000255,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"creative\": \"{{ _.creative_id }}\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_256",
+   "_type": "request",
+   "parentId": "fld_advertising",
+   "name": "POST ads/ads/<uuid:ad_id>/submit",
+   "description": "Soumettre l'annonce a la moderation (aucune annonce ne diffuse sans validation humaine).",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/ads/ads/{{ _.ad_id }}/submit/",
+   "metaSortKey": 1790000000256,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_257",
+   "_type": "request",
+   "parentId": "fld_advertising",
+   "name": "GET admin/ads/review-queue",
+   "description": "[Moderation] File des annonces a valider.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/admin/ads/review-queue/",
+   "metaSortKey": 1790000000257,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_258",
+   "_type": "request",
+   "parentId": "fld_advertising",
+   "name": "POST admin/ads/<uuid:ad_id>/review",
+   "description": "[Moderation] Valider ou refuser une annonce.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/admin/ads/{{ _.ad_id }}/review/",
+   "metaSortKey": 1790000000258,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"approve\": true\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_259",
+   "_type": "request",
+   "parentId": "fld_advertising",
+   "name": "POST ads/audiences",
+   "description": "Creer une audience personnalisee.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/ads/audiences/",
+   "metaSortKey": 1790000000259,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"account\": \"{{ _.account_id }}\",\n  \"name\": \"exemple\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_260",
+   "_type": "request",
+   "parentId": "fld_advertising",
+   "name": "POST ads/audiences/<uuid:audience_id>/members",
+   "description": "Ajouter des utilisateurs (pseudos) a une de mes audiences.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/ads/audiences/{{ _.audience_id }}/members/",
+   "metaSortKey": 1790000000260,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"usernames\": [\n    \"exemple\"\n  ]\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_261",
+   "_type": "request",
+   "parentId": "fld_advertising",
+   "name": "GET ads/serve",
+   "description": "Annonces a afficher a cet emplacement (classees par valeur, respect du ciblage, du plafond de frequence et des budgets). Chaque annonce porte un impression_id a rapporter via /ads/impressions/.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/ads/serve/?placement=feed",
+   "metaSortKey": 1790000000261,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_262",
+   "_type": "request",
+   "parentId": "fld_advertising",
+   "name": "POST ads/impressions",
+   "description": "Rapporter qu'une annonce a ete AFFICHEE (compte une seule fois par impression_id ; plafond de frequence et budget appliques).",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/ads/impressions/",
+   "metaSortKey": 1790000000262,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"ad\": \"{{ _.ad_id }}\",\n  \"placement\": \"feed\",\n  \"impression_id\": \"exemple\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_263",
+   "_type": "request",
+   "parentId": "fld_advertising",
+   "name": "POST ads/clicks",
+   "description": "Rapporter un CLIC (une impression connue, du meme utilisateur, de moins de 24 h ; un clic par impression). Renvoie l'URL de destination.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/ads/clicks/",
+   "metaSortKey": 1790000000263,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"impression_id\": \"exemple\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_264",
+   "_type": "request",
+   "parentId": "fld_advertising",
+   "name": "POST ads/conversions",
+   "description": "Rapporter une CONVERSION attribuee a un clic (fenetre de 7 jours, une par clic).",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/ads/conversions/",
+   "metaSortKey": 1790000000264,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"impression_id\": \"exemple\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_265",
+   "_type": "request",
+   "parentId": "fld_advertising",
+   "name": "GET me/ad-preferences",
+   "description": "Mes preferences publicitaires.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/me/ad-preferences/",
+   "metaSortKey": 1790000000265,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_266",
+   "_type": "request",
+   "parentId": "fld_advertising",
+   "name": "PUT me/ad-preferences",
+   "description": "Accepter ou refuser la publicite personnalisee (refus : seules des annonces SANS ciblage personnel vous sont montrees).",
+   "method": "PUT",
+   "url": "{{ _.base_url }}/api/v1/me/ad-preferences/",
+   "metaSortKey": 1790000000266,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"personalized_ads\": true\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_267",
+   "_type": "request",
+   "parentId": "fld_analytics",
+   "name": "GET admin/metrics/platform-daily",
+   "description": "[Administration] Indicateurs quotidiens de la plateforme (vue materialisee).",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/admin/metrics/platform-daily/",
+   "metaSortKey": 1790000000267,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_268",
+   "_type": "request",
+   "parentId": "fld_integrations",
+   "name": "GET integrations/providers",
+   "description": "Fournisseurs externes pris en charge (la connexion n'est pas encore disponible).",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/integrations/providers/",
+   "metaSortKey": 1790000000268,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false
+  },
+  {
+   "_id": "req_269",
+   "_type": "request",
+   "parentId": "fld_integrations",
+   "name": "GET me/integrations",
+   "description": "Mes comptes externes connectes (jamais les jetons).",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/me/integrations/",
+   "metaSortKey": 1790000000269,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_270",
+   "_type": "request",
+   "parentId": "fld_integrations",
+   "name": "DELETE me/integrations/<uuid:account_id>",
+   "description": "Deconnecter un de mes comptes externes.",
+   "method": "DELETE",
+   "url": "{{ _.base_url }}/api/v1/me/integrations/{{ _.account_id }}/",
+   "metaSortKey": 1790000000270,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_271",
+   "_type": "request",
+   "parentId": "fld_core",
+   "name": "GET admin/system/status",
+   "description": "[Administration] Etat du systeme : interrupteurs de TEST encore actifs (a couper avant la production), quota d'e-mails OTP, SMTP et stockage.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/admin/system/status/",
+   "metaSortKey": 1790000000271,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "env_baobab",
+   "_type": "environment",
+   "parentId": "wrk_baobab",
+   "name": "Base Environment",
+   "data": {
+    "base_url": "https://baobab-router.pages.dev",
+    "access": "",
+    "refresh": "",
+    "account_id": "A-REMPLACER",
+    "ad_id": "A-REMPLACER",
+    "ad_set_id": "A-REMPLACER",
+    "application_id": "A-REMPLACER",
+    "asset_id": "A-REMPLACER",
+    "assignment_id": "A-REMPLACER",
+    "attempt_id": "A-REMPLACER",
+    "audience_id": "A-REMPLACER",
+    "campaign_id": "A-REMPLACER",
+    "case_id": "A-REMPLACER",
+    "certificate_id": "A-REMPLACER",
+    "chapter_id": "A-REMPLACER",
+    "code": "A-REMPLACER",
+    "comment_id": "A-REMPLACER",
+    "contract_id": "A-REMPLACER",
+    "conversation_id": "A-REMPLACER",
+    "course_id": "A-REMPLACER",
+    "creative_id": "A-REMPLACER",
+    "entry_id": "A-REMPLACER",
+    "file_id": "A-REMPLACER",
+    "invitation_id": "A-REMPLACER",
+    "job_id": "A-REMPLACER",
+    "kind": "A-REMPLACER",
+    "link_id": "A-REMPLACER",
+    "member_id": "A-REMPLACER",
+    "message_id": "A-REMPLACER",
+    "milestone_id": "A-REMPLACER",
+    "module_id": "A-REMPLACER",
+    "offer_id": "A-REMPLACER",
+    "options_id": "A-REMPLACER",
+    "order_id": "A-REMPLACER",
+    "order_item_id": "A-REMPLACER",
+    "payment_id": "A-REMPLACER",
+    "post_id": "A-REMPLACER",
+    "product_id": "A-REMPLACER",
+    "project_id": "A-REMPLACER",
+    "proposal_id": "A-REMPLACER",
+    "provider": "A-REMPLACER",
+    "question_id": "A-REMPLACER",
+    "quiz_id": "A-REMPLACER",
+    "refund_id": "A-REMPLACER",
+    "request_id": "A-REMPLACER",
+    "slot_id": "A-REMPLACER",
+    "slug": "A-REMPLACER",
+    "status_id": "A-REMPLACER",
+    "submission_id": "A-REMPLACER",
+    "tag": "A-REMPLACER",
+    "target_id": "A-REMPLACER",
+    "username": "A-REMPLACER",
+    "variant_id": "A-REMPLACER",
+    "verification_id": "A-REMPLACER"
+   },
+   "dataPropertyOrder": null,
+   "color": null,
+   "isPrivate": false,
+   "metaSortKey": 1790000000000
+  },
+  {
+   "_id": "env_alice",
+   "_type": "environment",
+   "parentId": "env_baobab",
+   "name": "Alice",
+   "data": {
+    "access": "",
+    "refresh": ""
+   },
+   "isPrivate": false,
+   "color": "#7d69cb",
+   "metaSortKey": 1790000000001
+  },
+  {
+   "_id": "env_bob",
+   "_type": "environment",
+   "parentId": "env_baobab",
+   "name": "Bob",
+   "data": {
+    "access": "",
+    "refresh": ""
+   },
+   "isPrivate": false,
+   "color": "#d79b00",
+   "metaSortKey": 1790000000002
+  },
+  {
+   "_id": "env_prof",
+   "_type": "environment",
+   "parentId": "env_baobab",
+   "name": "Prof",
+   "data": {
+    "access": "",
+    "refresh": ""
+   },
+   "isPrivate": false,
+   "color": "#1c8a4b",
+   "metaSortKey": 1790000000003
+  },
+  {
+   "_id": "env_admin",
+   "_type": "environment",
+   "parentId": "env_baobab",
+   "name": "Admin",
+   "data": {
+    "access": "",
+    "refresh": ""
+   },
+   "isPrivate": false,
+   "color": "#c0392b",
+   "metaSortKey": 1790000000004
+  }
+ ]
+}

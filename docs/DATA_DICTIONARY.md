@@ -100,6 +100,25 @@ Tentatives par identifiant (meme inconnu) pour detection de brute force. Le comp
 
 **Index :** `loginatt_ident_idx` ; `loginatt_ip_idx`
 
+### `accounts_email_otp` (EmailOTP)
+
+Code a usage unique envoye par e-mail. Seul le HACHAGE (HMAC) est stocke : un vol de base ne revele aucun code valide.
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | BigAutoField | non | PK |  |
+| `email` | CharField(254) | non |  |  |
+| `purpose` | CharField(16) | non |  |  |
+| `code_hash` | CharField(64) | non |  |  |
+| `expires_at` | DateTimeField | non |  |  |
+| `attempts` | PositiveSmallIntegerField | non |  | 0 |
+| `consumed_at` | DateTimeField | oui |  |  |
+| `emailed` | BooleanField | non |  | False |
+| `ip_address` | GenericIPAddressField(39) | oui |  |  |
+| `created_at` | DateTimeField | non |  | (fonction) |
+
+**Index :** `otp_lookup_idx` ; `otp_emailed_day_idx`
+
 ## profiles
 
 **Source of truth :** PostgreSQL — profil, referentiels, confidentialite
@@ -1945,6 +1964,31 @@ Journal des verifications publiques (employeur qui controle un certificat).
 | `ip_address` | GenericIPAddressField(39) | oui |  |  |
 
 **Index :** `certverif_cert_idx`
+
+## storage
+
+**Source of truth :** PostgreSQL + bucket S3 — registre des fichiers (proprietaire, usage, taille, statut) ; les octets sont dans le bucket, jamais dans l'API
+
+### `storage_file` (StoredFile)
+
+StoredFile(id, owner, purpose, key, filename, content_type, size_bytes, status, created_at, uploaded_at)
+
+| Champ | Type | Null | Unique | Defaut |
+|---|---|---|---|---|
+| `id` | UUIDField(32) | non | PK | (fonction) |
+| `owner` | FK -> accounts.User | non |  |  |
+| `purpose` | CharField(24) | non |  |  |
+| `key` | CharField(500) | non | oui |  |
+| `filename` | CharField(200) | non |  |  |
+| `content_type` | CharField(100) | non |  |  |
+| `size_bytes` | BigIntegerField | non |  |  |
+| `status` | CharField(8) | non |  | pending |
+| `created_at` | DateTimeField | non |  | (fonction) |
+| `uploaded_at` | DateTimeField | oui |  |  |
+
+**Contraintes :** `chk_file_size` ; `chk_file_uploaded_dated`
+
+**Index :** `file_owner_idx` ; `file_pending_idx`
 
 ## marketplace
 

@@ -4,12 +4,12 @@ African Developer Platform — Connect · Learn · Build · Grow.
 Monolithe modulaire Django (DRF + Channels) sur **PostgreSQL (Supabase) + MongoDB (Atlas) + Redis**, deploye **gratuitement** : Render (Django) + Cloudflare Worker (routeur) + GitHub Actions.
 
 ## Etat
-**Couche data complete**, 21 domaines, **312 tests** (PostgreSQL et Redis reels), 175 entites documentees :
+**Backend complet** : 22 domaines, **API REST v1 de 271 endpoints** (`docs/ENDPOINTS_POUR_DEV_BACKEND.txt`), **394 tests** (PostgreSQL et Redis reels), 190+ entites documentees. Fichiers par URL signee (jamais via l'API), isolation stricte entre comptes, OTP par SMTP.
 core, accounts, profiles, friends, community, messaging, social (posts, statuts, feed hybride), notifications, audit, moderation, integrations, analytics,
 **education** (classrooms, cours payants par module/chapitre), **assessments** (quiz, devoirs), **progress** (progression, certificats),
 **marketplace** (catalogue, commandes, licences), **payments** (grand livre equilibre, remboursements, webhooks), **companies**, **portfolio**, **jobs** (emplois + freelance), **advertising**.
 Migrations et `/ready/` valides sur de vrais Supabase, Atlas et Upstash jusqu'au domaine education ; **les derniers domaines n'ont pas encore ete deployes**.
-**Non realise** : AI Gateway, couche API REST (vues/URLs), integration d'un fournisseur de paiement reel. Voir `docs/DATABASE_REVIEW.md` (notes honnetes : plusieurs axes restent sous 90, avec la raison et la mesure manquante).
+**Non realise** : AI Gateway, fournisseurs de paiement reels, GitHub/GitLab/TikTok/YouTube/LinkedIn (voir `docs/RESTE_A_FAIRE.md`). **Avant la production : `docs/A_NE_PAS_OUBLIER.md`** (interrupteurs de test a couper). Tests a la main : `docs/INSOMNIA_TESTS.md`. Voir `docs/DATABASE_REVIEW.md` (notes honnetes : plusieurs axes restent sous 90, avec la raison et la mesure manquante).
 
 ## Demarrage local
 ```bash

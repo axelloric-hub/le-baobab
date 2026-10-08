@@ -22,6 +22,7 @@ TRUTH = {
     "education": ("PostgreSQL", "classrooms, cours, modules/chapitres (prix par niveau), blocs de contenu, inscriptions, droits d'acces"),
     "assessments": ("PostgreSQL", "quiz (correction auto), devoirs, groupes, grille de notation, notes"),
     "progress": ("PostgreSQL", "progression par chapitre (module/cours calcules en SQL), certificats verifiables"),
+    "storage": ("PostgreSQL + bucket S3", "registre des fichiers (proprietaire, usage, taille, statut) ; les octets sont dans le bucket, jamais dans l'API"),
     "marketplace": ("PostgreSQL", "catalogue, panier, commandes (prix figes), licences, avis"),
     "payments": ("PostgreSQL", "paiements, grand livre equilibre et inalterable, remboursements, webhooks dedoublonnes"),
     "companies": ("PostgreSQL", "entreprises, membres et roles, verification"),

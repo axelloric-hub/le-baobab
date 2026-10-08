@@ -163,3 +163,27 @@ class LoginAttempt(models.Model):
             models.Index(fields=["identifier", "-created_at"], name="loginatt_ident_idx"),
             models.Index(fields=["ip_address", "-created_at"], name="loginatt_ip_idx"),
         ]
+
+
+class EmailOTP(models.Model):
+    """Code a usage unique envoye par e-mail. Seul le HACHAGE (HMAC) est stocke : un vol de base ne revele aucun code valide."""
+
+    class Purpose(models.TextChoices):
+        VERIFY_EMAIL = "verify_email", "Confirmation du compte"
+        RESET_PASSWORD = "reset_password", "Mot de passe oublie"
+
+    id = models.BigAutoField(primary_key=True)
+    email = models.EmailField(max_length=254)
+    purpose = models.CharField(max_length=16, choices=Purpose.choices)
+    code_hash = models.CharField(max_length=64)
+    expires_at = models.DateTimeField()
+    attempts = models.PositiveSmallIntegerField(default=0)
+    consumed_at = models.DateTimeField(null=True, blank=True)
+    emailed = models.BooleanField(default=False)  # le message est-il reellement parti ? (alimente le plafond quotidien)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        db_table = "accounts_email_otp"
+        indexes = [models.Index(fields=["email", "purpose", "-created_at"], name="otp_lookup_idx"),
+                   models.Index(fields=["created_at"], name="otp_emailed_day_idx", condition=models.Q(emailed=True))]

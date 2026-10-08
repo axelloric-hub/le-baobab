@@ -1,0 +1,30 @@
+from apps.core.api import route
+from apps.marketplace import api
+
+urlpatterns = [
+    route("stores/", POST=api.create_store),
+    route("me/stores/", GET=api.my_stores),
+    route("stores/<slug:slug>/", GET=api.store_detail),
+    route("stores/<slug:slug>/products/", POST=api.create_product),
+    route("stores/<slug:slug>/coupons/", POST=api.create_coupon),
+    route("stores/<slug:slug>/revenue/", GET=api.revenue),
+    route("products/", GET=api.list_products),
+    route("products/<uuid:product_id>/", GET=api.product_detail),
+    route("products/<uuid:product_id>/variants/", POST=api.add_variant),
+    route("products/<uuid:product_id>/media/", POST=api.add_media),
+    route("products/<uuid:product_id>/releases/", POST=api.add_release),
+    route("products/<uuid:product_id>/entitlement-targets/", POST=api.add_target),
+    route("products/<uuid:product_id>/publish/", POST=api.publish_product),
+    route("products/<uuid:product_id>/reviews/", GET=api.reviews, POST=api.review),
+    route("products/<uuid:product_id>/wishlist/", POST=api.wishlist_toggle),
+    route("me/wishlist/", GET=api.wishlist),
+    route("cart/", GET=api.get_cart),
+    route("cart/items/", POST=api.cart_add),
+    route("cart/items/<uuid:variant_id>/", PATCH=api.cart_set, DELETE=api.cart_remove),
+    route("checkout/", POST=api.checkout),
+    route("orders/", GET=api.orders),
+    route("orders/<uuid:order_id>/", GET=api.order_detail),
+    route("orders/<uuid:order_id>/cancel/", POST=api.cancel_order),
+    route("me/licenses/", GET=api.licenses),
+    route("assets/<uuid:asset_id>/download/", POST=api.download),
+]

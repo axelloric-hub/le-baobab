@@ -36,6 +36,12 @@ jobs:
         run: python manage.py migrate --noinput
       - name: "MongoDB : collections, validateurs, index"
         run: python manage.py mongo_setup
+      - name: "Administrateur initial (facultatif : ignore si le secret ADMIN_EMAIL est vide)"
+        run: python manage.py ensure_admin
+        env:
+          ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+          ADMIN_USERNAME: ${{ vars.ADMIN_USERNAME }}
 
   deploy:
     needs: migrate

@@ -31,7 +31,7 @@ class SchedulerTests(SimpleTestCase):
 
     def test_default_jobs_are_declared_and_runnable_names(self):
         names = [j.name for j in S.default_jobs()]
-        self.assertEqual(names, ["relay-outbox", "flush-counters", "refresh-trending", "refresh-platform", "refresh-metrics", "housekeeping", "ads-settle", "ads-recover", "expire-orders"])
+        self.assertEqual(names, ["relay-outbox", "flush-counters", "refresh-trending", "refresh-platform", "refresh-metrics", "housekeeping", "ads-settle", "ads-recover", "storage-cleanup", "expire-orders"])
         self.assertFalse(S.default_jobs()[0].singleton)
 
     def test_background_thread_starts_once(self):

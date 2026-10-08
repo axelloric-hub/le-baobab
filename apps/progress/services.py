@@ -7,7 +7,7 @@ from django.db.models import Avg
 from django.utils import timezone
 
 from apps.core import redis as R
-from apps.core.exceptions import DomainError, PermissionDeniedError, RateLimitedError
+from apps.core.exceptions import DomainError, PaymentRequiredError, PermissionDeniedError, RateLimitedError
 from apps.core.outbox import publish_event
 from apps.education.access import access_decision
 from apps.education.models import Chapter, Course, Enrollment
@@ -37,7 +37,7 @@ def record_progress(user, chapter_id, *, percent: int, seconds: int = 0) -> Chap
     chapter = Chapter.objects.select_related("module__course__classroom").get(pk=chapter_id)
     decision = access_decision(user, chapter)
     if not decision:
-        raise PermissionDeniedError("Acces au chapitre refuse.", code=decision.reason)
+        raise (PaymentRequiredError if decision.reason in ("payment_required", "classroom_payment_required") else PermissionDeniedError)("Acces au chapitre refuse.", code=decision.reason)
     if not 0 <= percent <= 100 or seconds < 0:
         raise DomainError("Valeurs de progression invalides.", code="invalid_progress")
     seconds = min(seconds, MAX_SECONDS_PER_CALL)

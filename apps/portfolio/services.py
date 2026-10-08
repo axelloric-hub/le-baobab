@@ -84,3 +84,41 @@ def add_platform_certificate(user, certificate_id) -> CertificateEntry:
         raise ConflictError("Certificat deja ajoute.", code="duplicate")
     return CertificateEntry.objects.create(user=user, name=cert.course.title, issuer="LE BAOBAB", issued_on=cert.issued_at.date(), platform_certificate_ref=cert.pk,
                                            credential_url=f"/verify/{cert.verification_code}")
+
+
+def update_portfolio(user, **fields) -> Portfolio:
+    from django.utils import timezone
+
+    p = ensure_portfolio(user)
+    for k, v in fields.items():
+        setattr(p, k, v)
+    p.updated_at = timezone.now()
+    p.save()
+    return p
+
+
+_ENTRY_MODELS = {"projects": Project, "experiences": Experience, "educations": Education, "achievements": Achievement, "certificates": CertificateEntry, "repositories": Repository}
+
+
+@transaction.atomic
+def delete_entry(user, kind: str, entry_id) -> None:
+    """Supprime UNE entree de MON portfolio (le filtre de proprietaire est dans la requete : l'entree d'un autre est introuvable)."""
+    model = _ENTRY_MODELS.get(kind)
+    if model is None:
+        raise DomainError("Type d'entree inconnu.", code="invalid_kind")
+    qs = model.objects.filter(pk=entry_id, portfolio__user=user) if model is Project else model.objects.filter(pk=entry_id, user=user)
+    deleted, _ = qs.delete()
+    if not deleted:
+        from rest_framework.exceptions import NotFound
+
+        raise NotFound()
+
+
+@transaction.atomic
+def add_project_media(user, project_id, *, storage_key: str, kind: str = "image"):
+    from apps.portfolio.models import ProjectMedia
+
+    project = Project.objects.select_related("portfolio").get(pk=project_id)
+    _owned(user, project)
+    pos = (ProjectMedia.objects.filter(project=project).count())
+    return ProjectMedia.objects.create(project=project, kind=kind, storage_key=storage_key, position=pos)
