@@ -213,7 +213,7 @@ def add_chapter(request, module_id):
     return {"id": str(ch.pk), "position": ch.position}
 
 
-@endpoint("[Enseignant] Ajouter un bloc de contenu. file : fichier envoye (usage 'course_content') pour pdf/image/audio/video/notebook/presentation/document ; url https pour link/embed ; ref_id pour quiz/exercise.", status=201,
+@endpoint("[Enseignant] Ajouter un bloc de contenu. file : fichier envoye (usage 'course_content') pour pdf/image/audio/video/notebook/presentation/document ; url pour video/embed (YouTube : lecteur integre, voir payload.embed_url), repository (depot GitHub public verifie) et link (LinkedIn, GitHub... normalises) ; ref_id pour quiz/exercise.", status=201,
           body={"kind": s.ChoiceField(choices=[c[0] for c in ContentBlock.Kind.choices]), "title": s.CharField(max_length=160, required=False, allow_blank=True, default=""), "body": s.CharField(max_length=100000, required=False, allow_blank=True, default=""),
                 "file": s.UUIDField(required=False), "url": s.URLField(required=False, allow_blank=True, default=""), "ref_id": s.UUIDField(required=False), "payload": s.DictField(required=False),
                 "duration_seconds": s.IntegerField(min_value=1, required=False)})
@@ -221,8 +221,35 @@ def add_block(request, chapter_id):
     d = request.input
     ch = get_or_404(Chapter.objects.filter(pk=chapter_id).select_related("module__course__classroom"))
     key = resolve_owned(request.user, d["file"], ("course_content",)).key if d.get("file") else ""
-    b = E.add_block(ch, request.user, kind=d["kind"], title=d["title"], body=d["body"], storage_key=key, url=d["url"], ref_id=d.get("ref_id"), payload=d.get("payload"), duration_seconds=d.get("duration_seconds"))
+    url, payload = _checked_link(request.user, d["kind"], d["url"], d.get("payload"), has_file=bool(key))
+    b = E.add_block(ch, request.user, kind=d["kind"], title=d["title"], body=d["body"], storage_key=key, url=url, ref_id=d.get("ref_id"), payload=payload, duration_seconds=d.get("duration_seconds"))
     return {"id": str(b.pk), "position": b.position}
+
+
+def _checked_link(user, kind: str, url: str, payload, *, has_file: bool):
+    """Les liens video/embed/depot sont analyses par le SERVEUR : l'adresse du lecteur integre est reconstruite, jamais copiee depuis la requete.
+    video / embed : YouTube uniquement (la video se lit dans l'application) ; repository : depot GitHub PUBLIC verifie ; link : LinkedIn/GitHub/YouTube normalises, autres sites tels quels."""
+    from apps.core.exceptions import DomainError
+    from apps.integrations import services as IS
+
+    if kind not in ("video", "embed", "link", "repository") or (kind == "video" and has_file):
+        return url, payload
+    if not url:
+        raise DomainError("Une adresse (url) est obligatoire pour ce type de bloc.", code="url_required")
+    if kind == "link":
+        try:
+            desc = IS.links.resolve(url)
+        except DomainError as exc:
+            if exc.code != "unsupported_link":
+                raise
+            return url, payload  # lien ordinaire vers un autre site
+        return desc["canonical_url"], IS.block_payload(desc)
+    desc = IS.describe_link(url, user)
+    if kind in ("video", "embed") and desc["provider"] != "youtube":
+        raise DomainError("Seuls les liens YouTube peuvent etre lus dans l'application. Pour un autre site, utilisez un bloc « link ».", code="unsupported_video_link")
+    if kind == "repository" and not (desc["provider"] == "github" and desc["kind"] == "repository"):
+        raise DomainError("Collez l'adresse d'un depot GitHub (github.com/proprietaire/depot).", code="repository_link_required")
+    return desc["canonical_url"], IS.block_payload(desc)
 
 
 @endpoint("Contenu d'un chapitre. 200 avec les blocs (fichiers = URL signees courtes) si j'y ai acces ; sinon 402 (payant) ou 403 avec la raison.", auth="optional")

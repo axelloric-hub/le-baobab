@@ -41,6 +41,13 @@ class RateLimitedError(DomainError):
     status_code = 429
 
 
+class ExternalServiceError(DomainError):
+    """Un service externe (GitHub, Gemini...) est indisponible, refuse ou n'est pas configure : 503, jamais de details internes."""
+
+    code = "external_service_unavailable"
+    status_code = 503
+
+
 def api_exception_handler(exc, context):
     """Format d'erreur UNIQUE pour tout le frontend : {"error": {"code", "message", "fields"?}}."""
     from django.core.exceptions import ObjectDoesNotExist

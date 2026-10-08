@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from rest_framework import serializers as s
+from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
 
 from apps.assessments import services as A
@@ -114,31 +115,44 @@ def _assignment(request, assignment_id) -> Assignment:
     return a
 
 
-def _assignment_json(a: Assignment) -> dict:
+def _assignment_json(a: Assignment, *, staff: bool = False) -> dict:
+    out = _assignment_base(a)
+    out["auto_grade"] = a.auto_grade
+    if staff:  # la reponse attendue ne sort JAMAIS vers un etudiant
+        out["reference_answer"], out["grading_notes"] = a.reference_answer, a.grading_notes
+    return out
+
+
+def _assignment_base(a: Assignment) -> dict:
     return {"id": str(a.pk), "course": str(a.course_id), "title": a.title, "instructions": a.instructions, "max_points": a.max_points, "due_at": a.due_at, "allow_late": a.allow_late,
             "max_attempts": a.max_attempts, "is_group": a.is_group, "criteria": [{"id": str(c.pk), "label": c.label, "max_points": c.max_points} for c in a.criteria.order_by("position")]}
 
 
-@endpoint("[Enseignant] Creer un devoir. criteria : grille [{label, max_points}] dont la somme egale max_points.", status=201,
+@endpoint("[Enseignant] Creer un devoir. criteria : grille [{label, max_points}] dont la somme egale max_points. auto_grade=true : Gemini corrige chaque rendu en comparant a reference_answer (obligatoire dans ce cas ; jamais montree aux etudiants) ; grading_notes = consignes de correction facultatives.", status=201,
           body={"title": s.CharField(max_length=160), "instructions": s.CharField(max_length=20000, required=False, allow_blank=True, default=""), "max_points": s.IntegerField(min_value=1, max_value=1000, default=20),
                 "due_at": s.DateTimeField(required=False), "allow_late": s.BooleanField(default=True), "max_attempts": s.IntegerField(min_value=1, max_value=20, default=1), "is_group": s.BooleanField(default=False),
-                "criteria": s.ListField(child=_Criterion(), required=False, max_length=20), "chapter": s.UUIDField(required=False)})
+                "criteria": s.ListField(child=_Criterion(), required=False, max_length=20), "chapter": s.UUIDField(required=False),
+                "auto_grade": s.BooleanField(default=False), "reference_answer": s.CharField(max_length=20000, required=False, allow_blank=True, default=""),
+                "grading_notes": s.CharField(max_length=5000, required=False, allow_blank=True, default="")})
 def create_assignment(request, course_id):
     d, c = request.input, _course(request, course_id)
     a = A.create_assignment(c, request.user, title=d["title"], instructions=d["instructions"], max_points=d["max_points"], due_at=d.get("due_at"), allow_late=d["allow_late"], max_attempts=d["max_attempts"],
-                            is_group=d["is_group"], criteria=[dict(x) for x in d.get("criteria", [])], chapter=_chapter(c, d.get("chapter")))
-    return _assignment_json(a)
+                            is_group=d["is_group"], criteria=[dict(x) for x in d.get("criteria", [])], chapter=_chapter(c, d.get("chapter")),
+                            auto_grade=d["auto_grade"], reference_answer=d["reference_answer"], grading_notes=d["grading_notes"])
+    return _assignment_json(a, staff=True)
 
 
 @endpoint("Devoirs d'un cours (inscrits et enseignants).")
 def list_assignments(request, course_id):
     c = _course(request, course_id)
-    return [_assignment_json(a) for a in Assignment.objects.filter(course=c, is_published=True).prefetch_related("criteria")]
+    staff = is_course_staff(request.user, c)
+    return [_assignment_json(a, staff=staff) for a in Assignment.objects.filter(course=c, is_published=True).prefetch_related("criteria")]
 
 
 @endpoint("Detail d'un devoir.")
 def get_assignment(request, assignment_id):
-    return _assignment_json(_assignment(request, assignment_id))
+    a = _assignment(request, assignment_id)
+    return _assignment_json(a, staff=is_course_staff(request.user, a.course))
 
 
 @endpoint("Former mon groupe pour un devoir collectif (tous les membres doivent etre inscrits ; un eleve = un seul groupe).", status=201, body={"name": s.CharField(max_length=100), "usernames": s.ListField(child=s.CharField(max_length=30), max_length=20, required=False)})
@@ -153,7 +167,9 @@ def _submission(sub: AssignmentSubmission) -> dict:
     return {"id": str(sub.pk), "assignment": str(sub.assignment_id), "student": user_brief(sub.user) if sub.user_id else None, "group": sub.group.name if sub.group_id else None, "submitted_by": user_brief(sub.submitted_by),
             "attempt_no": sub.attempt_no, "status": sub.status, "text": sub.text, "is_late": sub.is_late, "submitted_at": sub.submitted_at,
             "attachments": [{"filename": x["filename"], "size_bytes": x.get("size_bytes"), "url": signed_url(x["storage_key"], x["filename"])} for x in sub.attachments],
-            "grade": {"points": float(g.points), "feedback": g.feedback, "graded_at": g.graded_at} if g else None}
+            "ai_status": sub.ai_status,
+            "grade": {"points": float(g.points), "feedback": g.feedback, "graded_at": g.graded_at, "source": g.source,
+                      "ai_confidence": float(g.ai_confidence) if g.ai_confidence is not None else None} if g else None}
 
 
 @endpoint("Rendre un devoir (texte et/ou fichiers envoyes, usage 'assignment_submission'). Pour un devoir collectif, le rendu est celui du groupe.", status=201,
@@ -211,3 +227,18 @@ def feedback(request, submission_id):
     get_or_404(_visible_submissions(request, sub.assignment).filter(pk=submission_id))  # rendu invisible pour moi : 404, pas 403
     f = A.add_feedback(submission_id, request.user, request.input["body"])
     return {"id": str(f.pk)}
+
+
+@endpoint("[Enseignant] Lancer (ou relancer) la correction automatique par Gemini d'un rendu. Remplace une note IA existante, jamais une note d'enseignant "
+          "(pour la remplacer, notez a la main). Dure quelques secondes.")
+def auto_grade(request, submission_id):
+    sub = get_or_404(AssignmentSubmission.objects.filter(pk=submission_id).select_related("assignment__course"))
+    if not is_course_staff(request.user, sub.assignment.course):
+        raise NotFound()  # 404 : on ne revele pas l'existence du rendu
+    from apps.assessments import ai_grading
+
+    ai_grading.conflict_if_busy(sub)
+    g = ai_grading.grade_with_ai(sub.pk, force=True)
+    if g is None or g.source == "teacher":
+        raise PermissionDeniedError("Ce rendu a deja ete note par un enseignant : il n'est pas ecrase.", code="already_graded_by_teacher")
+    return {"points": float(g.points), "feedback": g.feedback, "source": g.source, "ai_confidence": float(g.ai_confidence), "model": g.ai_model}

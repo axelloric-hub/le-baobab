@@ -111,11 +111,16 @@ class Assignment(UUIDModel):
     max_attempts = models.PositiveSmallIntegerField(default=1)
     is_group = models.BooleanField(default=False)
     is_published = models.BooleanField(default=False)
+    # Correction automatique par IA (Gemini) : la reponse attendue est un SECRET serveur, jamais renvoyee aux etudiants.
+    auto_grade = models.BooleanField(default=False)
+    reference_answer = models.TextField(blank=True)
+    grading_notes = models.TextField(blank=True)
     created_at = models.DateTimeField(default=timezone.now, editable=False)
 
     class Meta:
         db_table = "assessments_assignment"
         constraints = [models.CheckConstraint(condition=Q(max_points__gt=0), name="chk_assignment_points"),
+                       models.CheckConstraint(condition=Q(auto_grade=False) | ~Q(reference_answer=""), name="chk_assignment_autograde_ref"),
                        models.CheckConstraint(condition=Q(max_attempts__gt=0), name="chk_assignment_attempts")]
 
 
@@ -166,6 +171,8 @@ class AssignmentSubmission(UUIDModel):
     text = models.TextField(blank=True)
     attachments = models.JSONField(default=list, blank=True)  # [{"storage_key","filename","size_bytes"}]
     is_late = models.BooleanField(default=False)
+    ai_status = models.CharField(max_length=8, default="none")  # none | pending | done | failed
+    ai_error = models.CharField(max_length=60, blank=True)
     submitted_at = models.DateTimeField(default=timezone.now, editable=False)
 
     class Meta:
@@ -184,6 +191,9 @@ class Grade(UUIDModel):
     points = models.DecimalField(max_digits=6, decimal_places=2)
     feedback = models.TextField(blank=True)
     graded_at = models.DateTimeField(default=timezone.now)
+    source = models.CharField(max_length=7, default="teacher")  # teacher | ai
+    ai_model = models.CharField(max_length=60, blank=True)
+    ai_confidence = models.DecimalField(max_digits=3, decimal_places=2, null=True, blank=True)
 
     class Meta:
         db_table = "assessments_grade"

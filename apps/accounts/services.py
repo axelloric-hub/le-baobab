@@ -51,6 +51,7 @@ def anonymize_user(*, user: User) -> User:
     user.set_unusable_password()
     user.save()
     user.devices.all().delete()
+    user.external_accounts.all().delete()  # jetons GitHub chiffres : a effacer avec le compte
     user.login_history.all().delete()
     from apps.profiles.services import wipe_profile
 

@@ -41,7 +41,7 @@ def message_mentions(ev):
 # ------------------------------------------------------------------ education
 @subscribe("SubmissionGraded")
 def submission_graded(ev):
-    grader = User.objects.get(pk=ev.payload["grader"])
+    grader = User.objects.filter(pk=ev.payload["grader"]).first() if ev.payload.get("grader") else None  # None = correction automatique (IA)
     for sid in ev.payload["students"]:
         notify(recipient=User.objects.get(pk=sid), type_code="assignment_graded", actor=grader, target_type="submission", target_id=ev.aggregate_id,
                data={"points": ev.payload["points"], "assignment": ev.payload["assignment"]}, dedupe_key=f"sg:{ev.event_id}:{sid}")

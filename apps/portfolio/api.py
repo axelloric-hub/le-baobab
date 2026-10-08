@@ -28,7 +28,7 @@ def _full(owner) -> dict:
     u = owner
     return {"owner": user_brief(u), "title": pf.title, "summary": pf.summary, "visibility": pf.visibility,
             "projects": [_project(p) for p in pf.projects.prefetch_related("technologies", "links", "media")],
-            "repositories": [{"id": str(r.pk), "provider": r.provider, "full_name": r.full_name, "url": r.url, "description": r.description, "language": r.language, "stars": r.stars} for r in u.repositories.all()],
+            "repositories": [{"id": str(r.pk), "provider": r.provider, "full_name": r.full_name, "url": r.url, "description": r.description, "language": r.language, "stars": r.stars, "verified": r.verified_at is not None, "owner_verified": r.owner_verified} for r in u.repositories.all()],
             "experiences": [{"id": str(e.pk), "company_name": e.company_name, "title": e.title, "location": e.location, "started_on": e.started_on, "ended_on": e.ended_on, "description": e.description} for e in u.experiences.order_by("-started_on")],
             "educations": [{"id": str(e.pk), "institution": e.institution, "degree": e.degree, "field": e.field, "started_on": e.started_on, "ended_on": e.ended_on} for e in u.educations.all()],
             "achievements": [{"id": str(a.pk), "title": a.title, "issuer": a.issuer, "achieved_on": a.achieved_on, "url": a.url} for a in u.achievements.all()],
@@ -88,6 +88,13 @@ def add_repository(request):
     d = dict(request.input)
     r = P.register_repository(request.user, provider=d.pop("provider"), full_name=d.pop("full_name"), url=d.pop("url"), **d)
     return {"id": str(r.pk)}
+
+
+@endpoint("Ajouter un depot GitHub PAR SON LIEN : le serveur le verifie aupres de GitHub (public, existant) et en recupere description, langage et etoiles. `owner_verified` = vrai si vous etes bien son proprietaire (compte GitHub lie).",
+          status=201, body={"url": s.CharField(max_length=400)})
+def add_repository_from_url(request):
+    r = P.register_repository_from_url(request.user, request.input["url"])
+    return {"id": str(r.pk), "full_name": r.full_name, "url": r.url, "description": r.description, "language": r.language, "stars": r.stars, "verified": True, "owner_verified": r.owner_verified}
 
 
 @endpoint("Ajouter une experience.", status=201, body={"company_name": s.CharField(max_length=140), "title": s.CharField(max_length=140), "location": s.CharField(max_length=100, required=False, allow_blank=True), "started_on": s.DateField(), "ended_on": s.DateField(required=False), "description": s.CharField(max_length=5000, required=False, allow_blank=True)})

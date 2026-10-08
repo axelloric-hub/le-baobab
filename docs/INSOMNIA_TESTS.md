@@ -1,7 +1,7 @@
 # Tester LE BAOBAB avec Insomnia — guide complet
 
 > Tout se teste **sans frontend**, par l'adresse du routeur Cloudflare (le `.dev` / `.pages.dev`), jamais par `onrender.com` (elle refuse l'accès direct).
-> Les 271 requêtes sont déjà prêtes dans `insomnia_collection.json`. Ce guide dit **dans quel ordre** les lancer et **quoi vérifier**.
+> Les 278 requêtes sont déjà prêtes dans `insomnia_collection.json`. Ce guide dit **dans quel ordre** les lancer et **quoi vérifier**.
 
 ## 0. Avant de commencer (une seule fois)
 

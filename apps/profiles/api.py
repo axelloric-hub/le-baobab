@@ -103,8 +103,16 @@ def add_link(request):
     d = request.input
     if not d["url"].startswith("https://"):
         raise s.ValidationError({"url": "Le lien doit commencer par https://"})
-    l = P.add_social_link(request.user, provider=d["provider"], url=d["url"], handle=d.get("handle", ""))
-    return {"id": str(l.pk), "provider": l.provider, "url": l.url}
+    url, handle = d["url"], d.get("handle", "")
+    if d["provider"] in ("linkedin", "github"):
+        from apps.integrations import links
+
+        desc = links.resolve_for(d["provider"], url)  # refuse un lien qui n'est pas du bon site ; reconstruit l'adresse propre
+        if desc["provider"] == "github" and desc["kind"] == "repository":
+            desc = {**desc, "handle": desc["owner"], "canonical_url": f"https://github.com/{desc['owner']}"}  # un lien de depot donne le profil de son proprietaire
+        url, handle = desc["canonical_url"], handle or desc.get("handle", "")
+    l = P.add_social_link(request.user, provider=d["provider"], url=url, handle=handle)
+    return {"id": str(l.pk), "provider": l.provider, "url": l.url, "handle": l.handle}
 
 
 @endpoint("Supprimer un de mes liens.", status=204)

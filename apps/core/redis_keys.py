@@ -23,6 +23,15 @@ def _k(*parts: object) -> str:
     return ":".join([PREFIX, *(str(p) for p in parts)])
 
 
+TTL_OAUTH_STATE: Final = 600
+TTL_LOGIN_TICKET: Final = 90
+
+
+def oauth_state(state: str) -> str: return _k("oauth", "state", state)
+def login_ticket(ticket: str) -> str: return _k("oauth", "ticket", ticket)
+def github_repo_cache(full_name: str) -> str: return _k("github", "repo", full_name.lower())
+def ai_grading_daily(day: str) -> str: return _k("ai", "grading", day)
+def youtube_oembed(video_id: str) -> str: return _k("youtube", "oembed", video_id)
 def user(uid) -> str: return _k("user", uid)
 def user_profile(uid) -> str: return _k("user", uid, "profile")
 def user_presence(uid) -> str: return _k("user", uid, "presence")

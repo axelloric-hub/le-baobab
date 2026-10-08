@@ -85,6 +85,8 @@ class Repository(UUIDModel):
     language = models.CharField(max_length=40, blank=True)
     stars = models.PositiveIntegerField(default=0)
     last_synced_at = models.DateTimeField(null=True, blank=True)
+    verified_at = models.DateTimeField(null=True, blank=True)  # depot public confirme par l'API GitHub
+    owner_verified = models.BooleanField(default=False)  # le compte GitHub lie a l'utilisateur EST le proprietaire du depot
 
     class Meta:
         db_table = "portfolio_repository"

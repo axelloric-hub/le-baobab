@@ -180,3 +180,18 @@ Le serveur a un planificateur interne, mais Render gratuit s'endort apres 15 min
 `/internal/jobs/all/` execute toutes les taches echues (relais d'evenements, compteurs, vues, publicite, expiration des commandes, nettoyage des fichiers). Chaque tache a son propre rythme (verrou Redis) : appeler plus souvent ne les lance pas plus souvent.
 Taches individuelles (optionnel) : `relay-outbox`, `flush-counters`, `refresh-metrics`, `refresh-trending`, `housekeeping`.
 Limite : cron-job.org gratuit = intervalle minimal 1 min ; chaque appel reveille Render (750 h gratuites/mois = un service 24 h/24, donc OK).
+
+## Connexion GitHub et correction automatique (Gemini)
+
+### GitHub (OAuth App, gratuit)
+1. GitHub > Settings > Developer settings > OAuth Apps > **New OAuth App**.
+2. Homepage URL : l'adresse du routeur (`https://baobab-router.pages.dev`).
+3. **Authorization callback URL** : `https://baobab-router.pages.dev/api/v1/auth/github/callback/` (au caractere pres, avec le `/` final).
+4. Creer, copier le **Client ID**, puis **Generate a new client secret** (ne l'afficher/partager nulle part : il est montre une seule fois).
+5. Render > Environment : `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `GITHUB_REDIRECT_URI` (= l'adresse du point 3). `FIELD_ENCRYPTION_KEY` doit deja etre renseignee.
+6. Redeployer, puis tester `GET /api/v1/auth/github/start/` : il doit renvoyer `authorize_url`.
+
+### Gemini (cle gratuite)
+1. https://aistudio.google.com/apikey > creer une cle. 2. Render : `GEMINI_API_KEY` (et, si besoin, `GEMINI_MODEL`). 3. Redeployer.
+Le palier gratuit est limite en requetes/minute et par jour : `AI_GRADING_DAILY_LIMIT` (200 par defaut) plafonne les corrections quotidiennes.
+Test sans serveur : `python scripts/gemini_grade_demo.py` (reponses pre-remplies).

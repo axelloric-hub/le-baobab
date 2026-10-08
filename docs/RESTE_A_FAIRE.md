@@ -8,7 +8,7 @@ Les failles et interrupteurs de test sont dans `A_NE_PAS_OUBLIER.md`.
 |---|---|---|
 | 🔴 **Agrégateurs de paiement** (Mobile Money, carte) | Seule la réception d'un webhook signé existe. `POST /payments/start/` crée un paiement « initié » sans fournisseur. | Choisir le fournisseur ; à `start` : appeler son API pour ouvrir une session de paiement puis enregistrer sa référence (`payments.services.attach_provider_ref`) et renvoyer l'URL de paiement au frontend ; faire pointer son webhook vers `/api/v1/payments/webhooks/<provider>/` ; adapter le format du corps/signature du fournisseur dans `ingest_webhook` ; **rembourser chez le fournisseur** (aujourd'hui `process_refund` ne fait que l'écriture comptable) ; réconciliation quotidienne ; secret `PAYMENT_WEBHOOK_SECRET_<PROVIDER>`. |
 | 🟠 **Versements aux vendeurs** | Le grand livre calcule le net vendeur (`GET /stores/{slug}/revenue/`) ; **aucun versement** n'est exécuté. | Modèle de paiement des vendeurs (RIB / Mobile Money), seuil, cycle, vérification d'identité (KYC), écritures `payout` au grand livre. |
-| 🟠 **GitHub, GitLab, TikTok, YouTube, LinkedIn** | `GET /integrations/providers/` et `/me/integrations/` ne font que lister. Les dépôts du portfolio sont saisis à la main. | OAuth (GitHub/GitLab/LinkedIn), synchronisation des dépôts (API officielles), embeds officiels (oEmbed YouTube/TikTok). Les modèles et le chiffrement des jetons existent déjà. |
+| 🟠 **TikTok, GitLab** | Non branchés. | TikTok (oEmbed/Display API) et GitLab (OAuth) à faire sur demande. **Déjà livrés** : connexion GitHub (OAuth), dépôts GitHub validés, vidéos YouTube lues dans l'application, liens LinkedIn — voir `NOUVEAUX_ENDPOINTS.txt`. |
 | 🟠 **AI Gateway** | Non commencé. | Accès IA en lecture seule aux données (vues SQL dédiées, rôle PostgreSQL en lecture seule, quotas, journalisation). |
 
 ## 2. Fonctionnel non livré
@@ -18,12 +18,12 @@ Les failles et interrupteurs de test sont dans `A_NE_PAS_OUBLIER.md`.
 - 🟠 **Vérification d'e-mail lors d'un changement d'adresse**, double authentification (2FA), gestion fine des rôles d'administration (aujourd'hui `is_staff` ou rien).
 - 🟠 **Administration par API** : suspendre/réactiver un utilisateur, créer un coupon plateforme (le service existe, pas l'endpoint), gérer les référentiels (compétences, métiers).
 - 🔵 **Certificats en PDF** (le certificat existe en base, vérifiable par code, mais pas de document).
-- 🔵 **Vidéo en streaming** (aujourd'hui : fichier envoyé au bucket) et **exécution de code** pour la correction automatique des questions de type `code`.
+- 🔵 **Vidéo en streaming** (aujourd'hui : fichier envoyé au bucket) et **exécution de code** pour les questions de type `code`. Les **devoirs** peuvent déjà être corrigés par Gemini (comparaison réponse attendue / réponse fournie, texte uniquement) ; correction par exécution réelle du code : à faire.
 - 🔵 **Recherche plein texte** (publications, offres, produits : index SQL prêts, endpoints de recherche non écrits), export des données personnelles (droit d'accès RGPD), messages d'erreur traduits.
 - 🔵 **Classroom ↔ organisation** (`organization_ref` existe, pas de logique d'appartenance).
 
 ## 3. Technique
-- 🟠 **Schéma OpenAPI** : `/api/docs/` ne décrit pas les 271 endpoints (vues fonctionnelles). Générer un schéma depuis le registre `apps.core.api.ROUTES` (déjà utilisé pour `ENDPOINTS_POUR_DEV_BACKEND.txt` et la collection Insomnia).
+- 🟠 **Schéma OpenAPI** : `/api/docs/` ne décrit pas les 278 endpoints (vues fonctionnelles). Générer un schéma depuis le registre `apps.core.api.ROUTES` (déjà utilisé pour `ENDPOINTS_POUR_DEV_BACKEND.txt` et la collection Insomnia).
 - 🟠 **Tests de charge** (aucun) et **métriques** (aucune) : Prometheus/Grafana, temps par requête SQL/Redis/Mongo, alertes.
 - 🟠 **Performance** : plan d'un cours en une requête (voir `A_NE_PAS_OUBLIER.md` n°7) ; `EXPLAIN` sur des volumes réalistes.
 - 🟠 **WebSocket multi-instances** : le channel layer est en mémoire (une instance). Pour plus : Redis comme channel layer + hébergement payant.

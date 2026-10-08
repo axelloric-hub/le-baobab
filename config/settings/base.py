@@ -210,6 +210,20 @@ STORAGES = {
 # Jobs planifies : le Worker Cloudflare (cron trigger) appelle /internal/jobs/<nom>/ signe en HMAC.
 INTERNAL_JOB_SECRET = env("INTERNAL_JOB_SECRET", "")
 CRON_JOB_TOKEN = env("CRON_JOB_TOKEN", "")  # jeton fixe pour un cron externe (cron-job.org) ; vide = desactive
+
+# ---- GitHub (OAuth App) : connexion avec GitHub, liaison de compte, verification des depots
+GITHUB_CLIENT_ID = env("GITHUB_CLIENT_ID", "")
+GITHUB_CLIENT_SECRET = env("GITHUB_CLIENT_SECRET", "")
+GITHUB_REDIRECT_URI = env("GITHUB_REDIRECT_URI", "")  # EXACTEMENT l'adresse declaree dans l'OAuth App GitHub
+GITHUB_LOGIN_FRONTEND_URL = env("GITHUB_LOGIN_FRONTEND_URL", "")  # page du frontend vers laquelle renvoyer le navigateur (avec ?ticket=) ; vide = reponse JSON
+GITHUB_API_TOKEN = env("GITHUB_API_TOKEN", "")  # facultatif : jeton serveur pour lire les depots publics (5000 req/h au lieu de 60/h par IP)
+YOUTUBE_OEMBED_ENABLED = env_bool("YOUTUBE_OEMBED_ENABLED", True)  # titre/auteur de la video (appel officiel oEmbed, facultatif)
+
+# ---- Correction automatique des devoirs (Gemini)
+GEMINI_API_KEY = env("GEMINI_API_KEY", "")
+GEMINI_MODEL = env("GEMINI_MODEL", "gemini-2.5-flash")
+GEMINI_TIMEOUT_SECONDS = int(env("GEMINI_TIMEOUT_SECONDS", "25"))
+AI_GRADING_DAILY_LIMIT = int(env("AI_GRADING_DAILY_LIMIT", "200"))  # plafond global/jour : protege le quota gratuit de Gemini
 # Secret partage avec le Worker routeur : refuse tout acces direct a l'origine (vide = desactive).
 EDGE_SHARED_SECRET = env("EDGE_SHARED_SECRET", "")
 # Planificateur interne (thread) : a activer sur le SEUL service web ; voir apps/core/scheduler.py.

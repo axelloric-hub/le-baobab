@@ -49,3 +49,11 @@ services:
       - { key: INTERNAL_JOB_SECRET, sync: false }
       - { key: CRON_JOB_TOKEN, sync: false }          # jeton du cron externe (cron-job.org), >= 24 caracteres
       - { key: EDGE_SHARED_SECRET, sync: false }
+      # ---- Connexion GitHub + correction automatique (valeurs saisies UNIQUEMENT dans le tableau de bord Render, jamais ici) ----
+      - { key: GITHUB_CLIENT_ID, sync: false }
+      - { key: GITHUB_CLIENT_SECRET, sync: false }
+      - { key: GITHUB_REDIRECT_URI, sync: false }
+      - { key: GITHUB_LOGIN_FRONTEND_URL, sync: false }
+      - { key: GITHUB_API_TOKEN, sync: false }
+      - { key: GEMINI_API_KEY, sync: false }
+      - { key: GEMINI_MODEL, sync: false }

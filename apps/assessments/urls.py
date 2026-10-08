@@ -15,5 +15,6 @@ urlpatterns = [
     route("assignments/<uuid:assignment_id>/submissions/", GET=api.list_submissions, POST=api.submit),
     route("submissions/<uuid:submission_id>/", GET=api.get_submission),
     route("submissions/<uuid:submission_id>/grade/", POST=api.grade),
+    route("submissions/<uuid:submission_id>/auto-grade/", POST=api.auto_grade),
     route("submissions/<uuid:submission_id>/feedback/", POST=api.feedback),
 ]

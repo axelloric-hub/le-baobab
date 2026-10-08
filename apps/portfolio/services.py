@@ -52,6 +52,24 @@ def register_repository(user, *, provider: str, full_name: str, url: str, **extr
         raise DomainError("Depot invalide (URL ou nom).", code="invalid_repository") from exc
 
 
+def register_repository_from_url(user, url: str) -> Repository:
+    """« Je colle le lien de mon depot, ca valide » : le depot est lu via l'API officielle de GitHub (public, existant) et ses donnees sont celles de GitHub,
+    pas celles saisies. `owner_verified` n'est vrai que si le compte GitHub LIE a l'utilisateur est le proprietaire du depot."""
+    from django.utils import timezone
+
+    from apps.integrations import github, links
+    from apps.integrations import services as IS
+
+    desc = links.resolve_for("github", url)
+    if desc["kind"] != "repository":
+        raise DomainError("Collez l'adresse d'un depot (github.com/proprietaire/depot), pas celle d'un profil.", code="repository_link_required")
+    info = github.fetch_repo(desc["owner"], desc["repo"], IS.github_token_of(user))
+    acc = IS.github_account_of(user)
+    now = timezone.now()
+    return register_repository(user, provider="github", full_name=info["full_name"], url=info["url"], description=info["description"], language=info["language"],
+                               stars=info["stars"], last_synced_at=now, verified_at=now, owner_verified=bool(acc and acc.external_id == info["owner_id"]))
+
+
 def _dated(model, user, **fields):
     try:
         with transaction.atomic():

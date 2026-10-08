@@ -1,6 +1,6 @@
 LE BAOBAB - API REST v1 : REFERENCE POUR LE DEVELOPPEUR BACKEND
 ==============================================================================
-271 endpoints. Genere automatiquement a partir du code (scripts/gen_api_docs.py) : cette liste ne peut pas diverger de la realite.
+278 endpoints. Genere automatiquement a partir du code (scripts/gen_api_docs.py) : cette liste ne peut pas diverger de la realite.
 
 1. CONVENTIONS
 ------------------------------------------------------------------------------
@@ -809,8 +809,9 @@ POST   /api/v1/modules/<uuid:module_id>/chapters/   [user]  succes: 201
 
 POST   /api/v1/chapters/<uuid:chapter_id>/blocks/   [user]  succes: 201
        [Enseignant] Ajouter un bloc de contenu. file : fichier envoye (usage 'course_content')
-       pour pdf/image/audio/video/notebook/presentation/document ; url https pour link/embed ;
-       ref_id pour quiz/exercise.
+       pour pdf/image/audio/video/notebook/presentation/document ; url pour video/embed (YouTube
+       : lecteur integre, voir payload.embed_url), repository (depot GitHub public verifie) et
+       link (LinkedIn, GitHub... normalises) ; ref_id pour quiz/exercise.
        Dans l'URL : chapter_id
        Corps JSON :
          kind  choix : text | pdf | image | audio | video | code | notebook | presentation | document | link | embed | quiz  (requis)
@@ -854,7 +855,7 @@ POST   /api/v1/courses/<uuid:course_id>/grants/   [user]  succes: 201
          scope  choix : course | module | chapter  (facultatif)
          target_id  uuid  (facultatif)
 
-### QUIZ ET DEVOIRS  (17)
+### QUIZ ET DEVOIRS  (18)
 
 POST   /api/v1/courses/<uuid:course_id>/quizzes/   [user]  succes: 201
        [Enseignant] Creer un quiz.
@@ -917,7 +918,9 @@ GET    /api/v1/courses/<uuid:course_id>/assignments/   [user]  succes: 200
 
 POST   /api/v1/courses/<uuid:course_id>/assignments/   [user]  succes: 201
        [Enseignant] Creer un devoir. criteria : grille [{label, max_points}] dont la somme egale
-       max_points.
+       max_points. auto_grade=true : Gemini corrige chaque rendu en comparant a reference_answer
+       (obligatoire dans ce cas ; jamais montree aux etudiants) ; grading_notes = consignes de
+       correction facultatives.
        Dans l'URL : course_id
        Corps JSON :
          title  texte (max 160 car.)  (requis)
@@ -929,6 +932,9 @@ POST   /api/v1/courses/<uuid:course_id>/assignments/   [user]  succes: 201
          is_group  booleen  (facultatif)
          criteria  liste de objet {label: texte (max 200 car.), max_points: entier (min 1, max 1000)} (max 20)  (facultatif)
          chapter  uuid  (facultatif)
+         auto_grade  booleen  (facultatif)
+         reference_answer  texte (max 20000 car.)  (facultatif)
+         grading_notes  texte (max 5000 car.)  (facultatif)
 
 GET    /api/v1/assignments/<uuid:assignment_id>/   [user]  succes: 200
        Detail d'un devoir.
@@ -967,6 +973,12 @@ POST   /api/v1/submissions/<uuid:submission_id>/grade/   [user]  succes: 200
          points  decimal  (facultatif)
          criteria  liste de objet {criterion_id: uuid, points: decimal (min 0), comment?: texte (max 500 car.)} (max 20)  (facultatif)
          feedback  texte (max 5000 car.)  (facultatif)
+
+POST   /api/v1/submissions/<uuid:submission_id>/auto-grade/   [user]  succes: 200
+       [Enseignant] Lancer (ou relancer) la correction automatique par Gemini d'un rendu.
+       Remplace une note IA existante, jamais une note d'enseignant (pour la remplacer, notez a
+       la main). Dure quelques secondes.
+       Dans l'URL : submission_id
 
 POST   /api/v1/submissions/<uuid:submission_id>/feedback/   [user]  succes: 201
        Commenter un rendu (enseignants et auteur/groupe).
@@ -1304,7 +1316,7 @@ POST   /api/v1/admin/company-verifications/<uuid:verification_id>/review/   [sta
          approve  booleen  (requis)
          notes  texte (max 500 car.)  (facultatif)
 
-### PORTFOLIO  (12)
+### PORTFOLIO  (13)
 
 GET    /api/v1/me/portfolio/   [user]  succes: 200
        Mon portfolio complet.
@@ -1354,6 +1366,13 @@ POST   /api/v1/me/portfolio/repositories/   [user]  succes: 201
          url  url (https) (max 400 car.)  (requis)
          description  texte (max 500 car.)  (facultatif)
          language  texte (max 40 car.)  (facultatif)
+
+POST   /api/v1/me/portfolio/repositories/from-url/   [user]  succes: 201
+       Ajouter un depot GitHub PAR SON LIEN : le serveur le verifie aupres de GitHub (public,
+       existant) et en recupere description, langage et etoiles. `owner_verified` = vrai si vous
+       etes bien son proprietaire (compte GitHub lie).
+       Corps JSON :
+         url  texte (max 400 car.)  (requis)
 
 POST   /api/v1/me/portfolio/experiences/   [user]  succes: 201
        Ajouter une experience.
@@ -1711,17 +1730,49 @@ GET    /api/v1/admin/metrics/platform-daily/   [staff]  succes: 200
        Parametres de requete :
          days  entier (min 1, max 366)  (facultatif)
 
-### INTEGRATIONS EXTERNES  (3)
+### INTEGRATIONS EXTERNES  (8)
 
 GET    /api/v1/integrations/providers/   [public]  succes: 200
-       Fournisseurs externes pris en charge (la connexion n'est pas encore disponible).
+       Fournisseurs externes pris en charge. `available` : la connexion OAuth est-elle configuree
+       sur ce serveur ?
 
 GET    /api/v1/me/integrations/   [user]  succes: 200
        Mes comptes externes connectes (jamais les jetons).
 
 DELETE /api/v1/me/integrations/<uuid:account_id>/   [user]  succes: 204
-       Deconnecter un de mes comptes externes.
+       Deconnecter un de mes comptes externes. Refuse si c'est votre seul moyen de connexion
+       (compte cree via GitHub, sans mot de passe).
        Dans l'URL : account_id
+
+POST   /api/v1/me/integrations/github/connect/   [user]  succes: 200
+       Lier GitHub a MON compte (connecte), etape 1 : meme principe que la connexion, mais le
+       compte lie sera le mien.
+
+GET    /api/v1/auth/github/start/   [public]  succes: 200
+       Connexion avec GitHub, etape 1 : renvoie l'adresse GitHub vers laquelle envoyer le
+       navigateur de l'utilisateur.
+
+GET    /api/v1/auth/github/callback/   [public]  succes: 200
+       Retour de GitHub (adresse declaree dans l'OAuth App). Sans frontend configure : reponse
+       JSON avec un billet a echanger. Avec frontend : redirection vers lui (?ticket=... ou
+       ?error=...).
+       Parametres de requete :
+         code  texte (max 300 car.)  (facultatif)
+         state  texte (max 200 car.)  (facultatif)
+         error  texte (max 100 car.)  (facultatif)
+
+POST   /api/v1/auth/github/exchange/   [public]  succes: 200
+       Connexion avec GitHub, etape finale : echange le billet (usage unique, 90 s) contre les
+       jetons de connexion.
+       Corps JSON :
+         ticket  texte (max 100 car.)  (requis)
+
+POST   /api/v1/media/resolve/   [user]  succes: 200
+       Analyser un lien YouTube, LinkedIn ou GitHub : renvoie le fournisseur, l'adresse propre,
+       et pour YouTube l'adresse du lecteur integre (la video se lit dans l'application). Un
+       depot GitHub est verifie via l'API officielle.
+       Corps JSON :
+         url  texte (max 600 car.)  (requis)
 
 ### ADMINISTRATION : SYSTEME  (1)
 

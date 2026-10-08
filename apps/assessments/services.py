@@ -176,14 +176,18 @@ def grade_code_answer(attempt_id, question_id, grader, *, correct: bool) -> Quiz
 # ------------------------------------------------------------------ devoirs
 @transaction.atomic
 def create_assignment(course: Course, actor, *, title: str, instructions: str = "", max_points: int = 20, due_at=None, allow_late: bool = True,
-                      max_attempts: int = 1, is_group: bool = False, criteria: list[dict] | None = None, chapter=None) -> Assignment:
+                      max_attempts: int = 1, is_group: bool = False, criteria: list[dict] | None = None, chapter=None,
+                      auto_grade: bool = False, reference_answer: str = "", grading_notes: str = "") -> Assignment:
     if not is_course_staff(actor, course):
         raise PermissionDeniedError("Reserve aux enseignants du cours.")
+    if auto_grade and not reference_answer.strip():
+        raise DomainError("La correction automatique exige la reponse attendue (reference_answer).", code="reference_answer_required")
     criteria = criteria or []
     if criteria and sum(c["max_points"] for c in criteria) != max_points:
         raise DomainError("La somme des criteres doit egaler le total du devoir.", code="rubric_total_mismatch")
     a = Assignment.objects.create(course=course, chapter=chapter, title=title, instructions=instructions, max_points=max_points, due_at=due_at,
-                                  allow_late=allow_late, max_attempts=max_attempts, is_group=is_group, is_published=True)
+                                  allow_late=allow_late, max_attempts=max_attempts, is_group=is_group, is_published=True,
+                                  auto_grade=auto_grade, reference_answer=reference_answer.strip(), grading_notes=grading_notes.strip())
     RubricCriterion.objects.bulk_create([RubricCriterion(assignment=a, position=i + 1, label=c["label"], max_points=c["max_points"]) for i, c in enumerate(criteria)])
     return a
 
@@ -266,7 +270,8 @@ def grade_submission(submission_id, grader, *, points: Decimal | int | None = No
     points = Decimal(points)
     if not 0 <= points <= a.max_points:
         raise DomainError("Note hors bornes.", code="points_out_of_range")
-    grade, _ = Grade.objects.update_or_create(submission=sub, defaults={"grader": grader, "points": points, "feedback": feedback, "graded_at": timezone.now()})
+    grade, _ = Grade.objects.update_or_create(submission=sub, defaults={"grader": grader, "points": points, "feedback": feedback, "graded_at": timezone.now(),
+                                                                                        "source": "teacher", "ai_model": "", "ai_confidence": None})
     if criteria:
         grade.criteria.all().delete()
         GradeCriterion.objects.bulk_create([GradeCriterion(grade=grade, criterion_id=c["criterion_id"], points=Decimal(c["points"]), comment=c.get("comment", "")) for c in criteria])

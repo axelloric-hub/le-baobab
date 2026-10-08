@@ -201,6 +201,7 @@ class ContentBlock(UUIDModel):
         EMBED = "embed", "Embed"
         QUIZ = "quiz", "Quiz"
         EXERCISE = "exercise", "Exercice"
+        REPOSITORY = "repository", "Depot GitHub"
 
     FILE_KINDS = ("pdf", "image", "audio", "video", "notebook", "presentation", "document")
 
@@ -224,6 +225,7 @@ class ContentBlock(UUIDModel):
             models.CheckConstraint(condition=~Q(kind__in=["pdf", "image", "audio", "video", "notebook", "presentation", "document"]) | ~Q(storage_key="") | ~Q(url=""), name="chk_block_file_source"),
             models.CheckConstraint(condition=~Q(kind__in=["link", "embed"]) | Q(url__startswith="https://"), name="chk_block_link_https"),
             models.CheckConstraint(condition=~Q(kind__in=["quiz", "exercise"]) | Q(ref_id__isnull=False), name="chk_block_ref"),
+            models.CheckConstraint(condition=~Q(kind="repository") | Q(url__startswith="https://github.com/"), name="chk_block_repo_github"),
         ]
 
 

@@ -6,3 +6,6 @@ class AssessmentsConfig(AppConfig):
     name = "apps.assessments"
     label = "assessments"
     verbose_name = "Evaluations (quiz, devoirs, notes)"
+
+    def ready(self) -> None:
+        from apps.assessments import handlers  # noqa: F401

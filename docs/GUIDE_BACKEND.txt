@@ -8,7 +8,7 @@ realite.
 ==============================================================================
 0. A LIRE EN PREMIER : CE QUI EXISTE
 ==============================================================================
-Le backend expose une API REST versionnee (271 endpoints sous /api/v1/) et
+Le backend expose une API REST versionnee (278 endpoints sous /api/v1/) et
 deux WebSocket. Chaque endpoint est une fonction decoree @endpoint (fichier
 apps/<app>/api.py) : elle valide l'entree, applique l'authentification,
 appelle UN service (la logique metier, decrite plus bas, testee), puis
@@ -29,15 +29,15 @@ Endpoints par domaine :
   social          24 endpoints
   notifications    5 endpoints
   moderation       4 endpoints
-  integrations     3 endpoints
+  integrations     8 endpoints
   analytics        1 endpoints
   education       27 endpoints
-  assessments     17 endpoints
+  assessments     18 endpoints
   progress         3 endpoints
   marketplace     27 endpoints
   payments         9 endpoints
   companies       14 endpoints
-  portfolio       12 endpoints
+  portfolio       13 endpoints
   jobs            26 endpoints
   advertising     22 endpoints
 
@@ -552,7 +552,7 @@ Modeles (13) : Quiz, Question, Choice, QuizAttempt, AttemptAnswer, Assignment, R
         answers = {question_id: {"selected": [choice_id...], "text": "..."}}.
         Hors delai : note 0 (la tentative est consommee).
     grade_code_answer(attempt_id, question_id, grader, *, correct: bool)
-    create_assignment(course: Course, actor, *, title: str, instructions: str='', max_points: int=20, due_at=None, allow_late: bool=True, max_attempts: int=1, is_group: bool=False, criteria: list[dict] | None=None, chapter=None)
+    create_assignment(course: Course, actor, *, title: str, instructions: str='', max_points: int=20, due_at=None, allow_late: bool=True, max_attempts: int=1, is_group: bool=False, criteria: list[dict] | None=None, chapter=None, auto_grade: bool=False, reference_answer: str='', grading_notes: str='')
     create_group(assignment_id, creator, member_users: list, name: str)
     submit_assignment(assignment_id, user, *, text: str='', attachments: list[dict] | None=None)
     grade_submission(submission_id, grader, *, points: Decimal | int | None=None, criteria: list[dict] | None=None, feedback: str='')
@@ -686,6 +686,10 @@ Modeles (9) : Portfolio, Project, ProjectMedia, ProjectLink, Repository, Experie
     create_project(user, *, slug: str, title: str, description: str='', role: str='', started_on=None, ended_on=None, technologies=(), links: list[dict] | None=None)
     add_project_link(user, project_id, *, kind: str, url: str, provider: str='')
     register_repository(user, *, provider: str, full_name: str, url: str, **extra)
+    register_repository_from_url(user, url: str)
+        « Je colle le lien de mon depot, ca valide » : le depot est lu via
+        l'API officielle de GitHub (public, existant) et ses donnees sont
+        celles de GitHub,
     add_experience(user, **fields)
     add_education(user, **fields)
     add_achievement(user, **fields)
@@ -780,7 +784,7 @@ Modeles (12) : Advertiser, AdAccount, AdAccountTransaction, Audience, AudienceMe
         (eligible, bonus). ET entre les regles obligatoires ; les regles
         souples n'excluent personne mais ajoutent leur poids.
 
-Total : 279 fonctions publiques de services/selecteurs/moteurs.
+Total : 280 fonctions publiques de services/selecteurs/moteurs.
 
 ==============================================================================
 4. EVENEMENTS (qui les publie, qui les ecoute)
@@ -789,7 +793,7 @@ Total : 279 fonctions publiques de services/selecteurs/moteurs.
   AdReviewed                       publie par: advertising    ecoute par: (personne pour l instant)
   AdSubmitted                      publie par: advertising    ecoute par: (personne pour l instant)
   ApplicationStatusChanged         publie par: jobs           ecoute par: notifications
-  AssignmentSubmitted              publie par: assessments    ecoute par: (personne pour l instant)
+  AssignmentSubmitted              publie par: assessments    ecoute par: assessments
   CertificateIssued                publie par: progress       ecoute par: notifications
   ChapterCompleted                 publie par: progress       ecoute par: (personne pour l instant)
   ClassroomCreated                 publie par: education      ecoute par: (personne pour l instant)
@@ -967,6 +971,7 @@ JWT_REFRESH_LIFETIME_DAYS=14
 
 # ---- Jobs planifies (cron Cloudflare -> /internal/jobs/*) : secret partage, >= 32 caracteres (python -c "import secrets;print(secrets.token_hex(32))") ----
 INTERNAL_JOB_SECRET=
+CRON_JOB_TOKEN=
 
 # ---- Edge : secret partage avec le Worker routeur (refuse tout acces direct a l'origine). Vide = desactive.
 EDGE_SHARED_SECRET=
@@ -1011,6 +1016,20 @@ STORAGE_SECRET_ACCESS_KEY=
 STORAGE_REGION=auto
 USER_STORAGE_QUOTA_BYTES=524288000
 JWT_ACCESS_LIFETIME_MINUTES=15
+
+# ---- Connexion avec GitHub (OAuth App) : https://github.com/settings/developers
+GITHUB_CLIENT_ID=
+GITHUB_CLIENT_SECRET=
+# EXACTEMENT l'adresse declaree dans l'OAuth App, ex. https://baobab-router.pages.dev/api/v1/auth/github/callback/
+GITHUB_REDIRECT_URI=
+# Page du frontend qui recevra ?ticket=... (vide = l'API repond en JSON, pratique pour tester avec Insomnia)
+GITHUB_LOGIN_FRONTEND_URL=
+# Facultatif : jeton GitHub du serveur pour lire les depots publics (5000 appels/h au lieu de 60/h)
+GITHUB_API_TOKEN=
+
+# ---- Correction automatique des devoirs (Gemini, cle gratuite : https://aistudio.google.com/apikey)
+GEMINI_API_KEY=
+GEMINI_MODEL=gemini-2.5-flash
 
 ==============================================================================
 9. REGLES ET PIEGES A CONNAITRE

@@ -2956,7 +2956,7 @@
    "_type": "request",
    "parentId": "fld_education",
    "name": "POST chapters/<uuid:chapter_id>/blocks",
-   "description": "[Enseignant] Ajouter un bloc de contenu. file : fichier envoye (usage 'course_content') pour pdf/image/audio/video/notebook/presentation/document ; url https pour link/embed ; ref_id pour quiz/exercise.",
+   "description": "[Enseignant] Ajouter un bloc de contenu. file : fichier envoye (usage 'course_content') pour pdf/image/audio/video/notebook/presentation/document ; url pour video/embed (YouTube : lecteur integre, voir payload.embed_url), repository (depot GitHub public verifie) et link (LinkedIn, GitHub... normalises) ; ref_id pour quiz/exercise.",
    "method": "POST",
    "url": "{{ _.base_url }}/api/v1/chapters/{{ _.chapter_id }}/blocks/",
    "metaSortKey": 1790000000129,
@@ -3335,7 +3335,7 @@
    "_type": "request",
    "parentId": "fld_assessments",
    "name": "POST courses/<uuid:course_id>/assignments",
-   "description": "[Enseignant] Creer un devoir. criteria : grille [{label, max_points}] dont la somme egale max_points.",
+   "description": "[Enseignant] Creer un devoir. criteria : grille [{label, max_points}] dont la somme egale max_points. auto_grade=true : Gemini corrige chaque rendu en comparant a reference_answer (obligatoire dans ce cas ; jamais montree aux etudiants) ; grading_notes = consignes de correction facultatives.",
    "method": "POST",
    "url": "{{ _.base_url }}/api/v1/courses/{{ _.course_id }}/assignments/",
    "metaSortKey": 1790000000146,
@@ -3496,11 +3496,34 @@
    "_id": "req_153",
    "_type": "request",
    "parentId": "fld_assessments",
+   "name": "POST submissions/<uuid:submission_id>/auto-grade",
+   "description": "[Enseignant] Lancer (ou relancer) la correction automatique par Gemini d'un rendu. Remplace une note IA existante, jamais une note d'enseignant (pour la remplacer, notez a la main). Dure quelques secondes.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/submissions/{{ _.submission_id }}/auto-grade/",
+   "metaSortKey": 1790000000153,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_154",
+   "_type": "request",
+   "parentId": "fld_assessments",
    "name": "POST submissions/<uuid:submission_id>/feedback",
    "description": "Commenter un rendu (enseignants et auteur/groupe).",
    "method": "POST",
    "url": "{{ _.base_url }}/api/v1/submissions/{{ _.submission_id }}/feedback/",
-   "metaSortKey": 1790000000153,
+   "metaSortKey": 1790000000154,
    "headers": [
     {
      "name": "Content-Type",
@@ -3520,14 +3543,14 @@
    }
   },
   {
-   "_id": "req_154",
+   "_id": "req_155",
    "_type": "request",
    "parentId": "fld_progress",
    "name": "POST chapters/<uuid:chapter_id>/progress",
    "description": "Enregistrer ma progression dans un chapitre (le pourcentage ne recule jamais ; 100 = chapitre termine ; le temps est plafonne a 1 h par appel).",
    "method": "POST",
    "url": "{{ _.base_url }}/api/v1/chapters/{{ _.chapter_id }}/progress/",
-   "metaSortKey": 1790000000154,
+   "metaSortKey": 1790000000155,
    "headers": [
     {
      "name": "Content-Type",
@@ -3547,14 +3570,14 @@
    }
   },
   {
-   "_id": "req_155",
+   "_id": "req_156",
    "_type": "request",
    "parentId": "fld_progress",
    "name": "GET me/certificates",
    "description": "Mes certificats.",
    "method": "GET",
    "url": "{{ _.base_url }}/api/v1/me/certificates/",
-   "metaSortKey": 1790000000155,
+   "metaSortKey": 1790000000156,
    "headers": [],
    "parameters": [],
    "settingSendCookies": false,
@@ -3565,27 +3588,27 @@
    }
   },
   {
-   "_id": "req_156",
+   "_id": "req_157",
    "_type": "request",
    "parentId": "fld_progress",
    "name": "GET public/certificates/<str:code>",
    "description": "Verifier PUBLIQUEMENT un certificat par son code (limite par adresse IP). Ne renvoie aucune donnee privee.",
    "method": "GET",
    "url": "{{ _.base_url }}/api/v1/public/certificates/{{ _.code }}/",
-   "metaSortKey": 1790000000156,
+   "metaSortKey": 1790000000157,
    "headers": [],
    "parameters": [],
    "settingSendCookies": false
   },
   {
-   "_id": "req_157",
+   "_id": "req_158",
    "_type": "request",
    "parentId": "fld_marketplace",
    "name": "POST stores",
    "description": "Creer ma boutique.",
    "method": "POST",
    "url": "{{ _.base_url }}/api/v1/stores/",
-   "metaSortKey": 1790000000157,
+   "metaSortKey": 1790000000158,
    "headers": [
     {
      "name": "Content-Type",
@@ -3605,14 +3628,14 @@
    }
   },
   {
-   "_id": "req_158",
+   "_id": "req_159",
    "_type": "request",
    "parentId": "fld_marketplace",
    "name": "GET me/stores",
    "description": "Mes boutiques.",
    "method": "GET",
    "url": "{{ _.base_url }}/api/v1/me/stores/",
-   "metaSortKey": 1790000000158,
+   "metaSortKey": 1790000000159,
    "headers": [],
    "parameters": [],
    "settingSendCookies": false,
@@ -3623,27 +3646,27 @@
    }
   },
   {
-   "_id": "req_159",
+   "_id": "req_160",
    "_type": "request",
    "parentId": "fld_marketplace",
    "name": "GET stores/<slug:slug>",
    "description": "Page publique d'une boutique.",
    "method": "GET",
    "url": "{{ _.base_url }}/api/v1/stores/{{ _.slug }}/",
-   "metaSortKey": 1790000000159,
+   "metaSortKey": 1790000000160,
    "headers": [],
    "parameters": [],
    "settingSendCookies": false
   },
   {
-   "_id": "req_160",
+   "_id": "req_161",
    "_type": "request",
    "parentId": "fld_marketplace",
    "name": "POST stores/<slug:slug>/products",
    "description": "[Vendeur] Creer un produit (brouillon).",
    "method": "POST",
    "url": "{{ _.base_url }}/api/v1/stores/{{ _.slug }}/products/",
-   "metaSortKey": 1790000000160,
+   "metaSortKey": 1790000000161,
    "headers": [
     {
      "name": "Content-Type",
@@ -3663,14 +3686,14 @@
    }
   },
   {
-   "_id": "req_161",
+   "_id": "req_162",
    "_type": "request",
    "parentId": "fld_marketplace",
    "name": "POST stores/<slug:slug>/coupons",
    "description": "[Vendeur] Creer un coupon pour ma boutique.",
    "method": "POST",
    "url": "{{ _.base_url }}/api/v1/stores/{{ _.slug }}/coupons/",
-   "metaSortKey": 1790000000161,
+   "metaSortKey": 1790000000162,
    "headers": [
     {
      "name": "Content-Type",
@@ -3690,14 +3713,14 @@
    }
   },
   {
-   "_id": "req_162",
+   "_id": "req_163",
    "_type": "request",
    "parentId": "fld_marketplace",
    "name": "GET stores/<slug:slug>/revenue",
    "description": "[Vendeur] Mes revenus calcules depuis le grand livre (brut, rembourse, net apres commission).",
    "method": "GET",
    "url": "{{ _.base_url }}/api/v1/stores/{{ _.slug }}/revenue/",
-   "metaSortKey": 1790000000162,
+   "metaSortKey": 1790000000163,
    "headers": [],
    "parameters": [],
    "settingSendCookies": false,
@@ -3708,27 +3731,27 @@
    }
   },
   {
-   "_id": "req_163",
+   "_id": "req_164",
    "_type": "request",
    "parentId": "fld_marketplace",
    "name": "GET products",
    "description": "Catalogue des produits publies.",
    "method": "GET",
    "url": "{{ _.base_url }}/api/v1/products/",
-   "metaSortKey": 1790000000163,
+   "metaSortKey": 1790000000164,
    "headers": [],
    "parameters": [],
    "settingSendCookies": false
   },
   {
-   "_id": "req_164",
+   "_id": "req_165",
    "_type": "request",
    "parentId": "fld_marketplace",
    "name": "GET products/<uuid:product_id>",
    "description": "Fiche produit (version, changelog, prerequis, instructions, fichiers sans lien de telechargement).",
    "method": "GET",
    "url": "{{ _.base_url }}/api/v1/products/{{ _.product_id }}/",
-   "metaSortKey": 1790000000164,
+   "metaSortKey": 1790000000165,
    "headers": [],
    "parameters": [],
    "settingSendCookies": false,
@@ -3739,14 +3762,14 @@
    }
   },
   {
-   "_id": "req_165",
+   "_id": "req_166",
    "_type": "request",
    "parentId": "fld_marketplace",
    "name": "POST products/<uuid:product_id>/variants",
    "description": "[Vendeur] Ajouter une variante (prix en plus petite unite ; stock vide = illimite).",
    "method": "POST",
    "url": "{{ _.base_url }}/api/v1/products/{{ _.product_id }}/variants/",
-   "metaSortKey": 1790000000165,
+   "metaSortKey": 1790000000166,
    "headers": [
     {
      "name": "Content-Type",
@@ -3766,14 +3789,14 @@
    }
   },
   {
-   "_id": "req_166",
+   "_id": "req_167",
    "_type": "request",
    "parentId": "fld_marketplace",
    "name": "POST products/<uuid:product_id>/media",
    "description": "[Vendeur] Ajouter une image/video au produit (fichier envoye, usage 'product_media').",
    "method": "POST",
    "url": "{{ _.base_url }}/api/v1/products/{{ _.product_id }}/media/",
-   "metaSortKey": 1790000000166,
+   "metaSortKey": 1790000000167,
    "headers": [
     {
      "name": "Content-Type",
@@ -3793,14 +3816,14 @@
    }
   },
   {
-   "_id": "req_167",
+   "_id": "req_168",
    "_type": "request",
    "parentId": "fld_marketplace",
    "name": "POST products/<uuid:product_id>/releases",
    "description": "[Vendeur] Publier une version avec ses fichiers (envoyes, usage 'product_asset'). L'empreinte SHA-256 est fournie par le vendeur.",
    "method": "POST",
    "url": "{{ _.base_url }}/api/v1/products/{{ _.product_id }}/releases/",
-   "metaSortKey": 1790000000167,
+   "metaSortKey": 1790000000168,
    "headers": [
     {
      "name": "Content-Type",
@@ -3820,14 +3843,14 @@
    }
   },
   {
-   "_id": "req_168",
+   "_id": "req_169",
    "_type": "request",
    "parentId": "fld_marketplace",
    "name": "POST products/<uuid:product_id>/entitlement-targets",
    "description": "[Vendeur] Ce que l'achat debloque (cours, module, chapitre, classroom) : verifie que vous en etes enseignant.",
    "method": "POST",
    "url": "{{ _.base_url }}/api/v1/products/{{ _.product_id }}/entitlement-targets/",
-   "metaSortKey": 1790000000168,
+   "metaSortKey": 1790000000169,
    "headers": [
     {
      "name": "Content-Type",
@@ -3847,14 +3870,14 @@
    }
   },
   {
-   "_id": "req_169",
+   "_id": "req_170",
    "_type": "request",
    "parentId": "fld_marketplace",
    "name": "POST products/<uuid:product_id>/publish",
    "description": "[Vendeur] Publier le produit (verifie qu'il est vendable).",
    "method": "POST",
    "url": "{{ _.base_url }}/api/v1/products/{{ _.product_id }}/publish/",
-   "metaSortKey": 1790000000169,
+   "metaSortKey": 1790000000170,
    "headers": [
     {
      "name": "Content-Type",
@@ -3870,27 +3893,27 @@
    }
   },
   {
-   "_id": "req_170",
+   "_id": "req_171",
    "_type": "request",
    "parentId": "fld_marketplace",
    "name": "GET products/<uuid:product_id>/reviews",
    "description": "Avis d'un produit.",
    "method": "GET",
    "url": "{{ _.base_url }}/api/v1/products/{{ _.product_id }}/reviews/",
-   "metaSortKey": 1790000000170,
+   "metaSortKey": 1790000000171,
    "headers": [],
    "parameters": [],
    "settingSendCookies": false
   },
   {
-   "_id": "req_171",
+   "_id": "req_172",
    "_type": "request",
    "parentId": "fld_marketplace",
    "name": "POST products/<uuid:product_id>/reviews",
    "description": "Noter un produit (reserve aux acheteurs, un avis par produit).",
    "method": "POST",
    "url": "{{ _.base_url }}/api/v1/products/{{ _.product_id }}/reviews/",
-   "metaSortKey": 1790000000171,
+   "metaSortKey": 1790000000172,
    "headers": [
     {
      "name": "Content-Type",
@@ -3910,14 +3933,14 @@
    }
   },
   {
-   "_id": "req_172",
+   "_id": "req_173",
    "_type": "request",
    "parentId": "fld_marketplace",
    "name": "POST products/<uuid:product_id>/wishlist",
    "description": "Ajouter/retirer un produit de ma liste de souhaits.",
    "method": "POST",
    "url": "{{ _.base_url }}/api/v1/products/{{ _.product_id }}/wishlist/",
-   "metaSortKey": 1790000000172,
+   "metaSortKey": 1790000000173,
    "headers": [
     {
      "name": "Content-Type",
@@ -3933,31 +3956,13 @@
    }
   },
   {
-   "_id": "req_173",
+   "_id": "req_174",
    "_type": "request",
    "parentId": "fld_marketplace",
    "name": "GET me/wishlist",
    "description": "Ma liste de souhaits.",
    "method": "GET",
    "url": "{{ _.base_url }}/api/v1/me/wishlist/",
-   "metaSortKey": 1790000000173,
-   "headers": [],
-   "parameters": [],
-   "settingSendCookies": false,
-   "authentication": {
-    "type": "bearer",
-    "token": "{{ _.access }}",
-    "prefix": ""
-   }
-  },
-  {
-   "_id": "req_174",
-   "_type": "request",
-   "parentId": "fld_marketplace",
-   "name": "GET cart",
-   "description": "Mon panier.",
-   "method": "GET",
-   "url": "{{ _.base_url }}/api/v1/cart/",
    "metaSortKey": 1790000000174,
    "headers": [],
    "parameters": [],
@@ -3972,11 +3977,29 @@
    "_id": "req_175",
    "_type": "request",
    "parentId": "fld_marketplace",
+   "name": "GET cart",
+   "description": "Mon panier.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/cart/",
+   "metaSortKey": 1790000000175,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_176",
+   "_type": "request",
+   "parentId": "fld_marketplace",
    "name": "POST cart/items",
    "description": "Ajouter au panier (une seule devise par panier ; stock verifie).",
    "method": "POST",
    "url": "{{ _.base_url }}/api/v1/cart/items/",
-   "metaSortKey": 1790000000175,
+   "metaSortKey": 1790000000176,
    "headers": [
     {
      "name": "Content-Type",
@@ -3996,14 +4019,14 @@
    }
   },
   {
-   "_id": "req_176",
+   "_id": "req_177",
    "_type": "request",
    "parentId": "fld_marketplace",
    "name": "PATCH cart/items/<uuid:variant_id>",
    "description": "Changer la quantite (0 retire la ligne).",
    "method": "PATCH",
    "url": "{{ _.base_url }}/api/v1/cart/items/{{ _.variant_id }}/",
-   "metaSortKey": 1790000000176,
+   "metaSortKey": 1790000000177,
    "headers": [
     {
      "name": "Content-Type",
@@ -4023,14 +4046,14 @@
    }
   },
   {
-   "_id": "req_177",
+   "_id": "req_178",
    "_type": "request",
    "parentId": "fld_marketplace",
    "name": "DELETE cart/items/<uuid:variant_id>",
    "description": "Retirer une ligne du panier.",
    "method": "DELETE",
    "url": "{{ _.base_url }}/api/v1/cart/items/{{ _.variant_id }}/",
-   "metaSortKey": 1790000000177,
+   "metaSortKey": 1790000000178,
    "headers": [],
    "parameters": [],
    "settingSendCookies": false,
@@ -4041,14 +4064,14 @@
    }
   },
   {
-   "_id": "req_178",
+   "_id": "req_179",
    "_type": "request",
    "parentId": "fld_marketplace",
    "name": "POST checkout",
    "description": "Passer commande depuis le panier. idempotency_key est OBLIGATOIRE (une cle = une commande, meme si le client clique deux fois). Prix figes ; stock reserve.",
    "method": "POST",
    "url": "{{ _.base_url }}/api/v1/checkout/",
-   "metaSortKey": 1790000000178,
+   "metaSortKey": 1790000000179,
    "headers": [
     {
      "name": "Content-Type",
@@ -4068,31 +4091,13 @@
    }
   },
   {
-   "_id": "req_179",
+   "_id": "req_180",
    "_type": "request",
    "parentId": "fld_marketplace",
    "name": "GET orders",
    "description": "Mes commandes.",
    "method": "GET",
    "url": "{{ _.base_url }}/api/v1/orders/",
-   "metaSortKey": 1790000000179,
-   "headers": [],
-   "parameters": [],
-   "settingSendCookies": false,
-   "authentication": {
-    "type": "bearer",
-    "token": "{{ _.access }}",
-    "prefix": ""
-   }
-  },
-  {
-   "_id": "req_180",
-   "_type": "request",
-   "parentId": "fld_marketplace",
-   "name": "GET orders/<uuid:order_id>",
-   "description": "Detail d'une de mes commandes.",
-   "method": "GET",
-   "url": "{{ _.base_url }}/api/v1/orders/{{ _.order_id }}/",
    "metaSortKey": 1790000000180,
    "headers": [],
    "parameters": [],
@@ -4107,17 +4112,12 @@
    "_id": "req_181",
    "_type": "request",
    "parentId": "fld_marketplace",
-   "name": "POST orders/<uuid:order_id>/cancel",
-   "description": "Annuler une commande non payee (le stock et le coupon sont rendus).",
-   "method": "POST",
-   "url": "{{ _.base_url }}/api/v1/orders/{{ _.order_id }}/cancel/",
+   "name": "GET orders/<uuid:order_id>",
+   "description": "Detail d'une de mes commandes.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/orders/{{ _.order_id }}/",
    "metaSortKey": 1790000000181,
-   "headers": [
-    {
-     "name": "Content-Type",
-     "value": "application/json"
-    }
-   ],
+   "headers": [],
    "parameters": [],
    "settingSendCookies": false,
    "authentication": {
@@ -4130,29 +4130,11 @@
    "_id": "req_182",
    "_type": "request",
    "parentId": "fld_marketplace",
-   "name": "GET me/licenses",
-   "description": "Mes licences.",
-   "method": "GET",
-   "url": "{{ _.base_url }}/api/v1/me/licenses/",
-   "metaSortKey": 1790000000182,
-   "headers": [],
-   "parameters": [],
-   "settingSendCookies": false,
-   "authentication": {
-    "type": "bearer",
-    "token": "{{ _.access }}",
-    "prefix": ""
-   }
-  },
-  {
-   "_id": "req_183",
-   "_type": "request",
-   "parentId": "fld_marketplace",
-   "name": "POST assets/<uuid:asset_id>/download",
-   "description": "Obtenir une URL signee de telechargement (licence active requise ; 20 par minute).",
+   "name": "POST orders/<uuid:order_id>/cancel",
+   "description": "Annuler une commande non payee (le stock et le coupon sont rendus).",
    "method": "POST",
-   "url": "{{ _.base_url }}/api/v1/assets/{{ _.asset_id }}/download/",
-   "metaSortKey": 1790000000183,
+   "url": "{{ _.base_url }}/api/v1/orders/{{ _.order_id }}/cancel/",
+   "metaSortKey": 1790000000182,
    "headers": [
     {
      "name": "Content-Type",
@@ -4168,14 +4150,55 @@
    }
   },
   {
+   "_id": "req_183",
+   "_type": "request",
+   "parentId": "fld_marketplace",
+   "name": "GET me/licenses",
+   "description": "Mes licences.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/me/licenses/",
+   "metaSortKey": 1790000000183,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
    "_id": "req_184",
+   "_type": "request",
+   "parentId": "fld_marketplace",
+   "name": "POST assets/<uuid:asset_id>/download",
+   "description": "Obtenir une URL signee de telechargement (licence active requise ; 20 par minute).",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/assets/{{ _.asset_id }}/download/",
+   "metaSortKey": 1790000000184,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_185",
    "_type": "request",
    "parentId": "fld_payments",
    "name": "POST payments/start",
    "description": "Initier le paiement d'une de mes commandes (idempotent). Le fournisseur reel n'est pas branche : voir /payments/{id}/simulate/ en phase de test.",
    "method": "POST",
    "url": "{{ _.base_url }}/api/v1/payments/start/",
-   "metaSortKey": 1790000000184,
+   "metaSortKey": 1790000000185,
    "headers": [
     {
      "name": "Content-Type",
@@ -4195,14 +4218,14 @@
    }
   },
   {
-   "_id": "req_185",
+   "_id": "req_186",
    "_type": "request",
    "parentId": "fld_payments",
    "name": "POST payments/<uuid:payment_id>/simulate",
    "description": "[PHASE DE TEST] Simuler le resultat d'un paiement 'manual' (reussite ou echec). Retourne 404 si PAYMENTS_SIMULATION_ENABLED est desactive.",
    "method": "POST",
    "url": "{{ _.base_url }}/api/v1/payments/{{ _.payment_id }}/simulate/",
-   "metaSortKey": 1790000000185,
+   "metaSortKey": 1790000000186,
    "headers": [
     {
      "name": "Content-Type",
@@ -4222,14 +4245,14 @@
    }
   },
   {
-   "_id": "req_186",
+   "_id": "req_187",
    "_type": "request",
    "parentId": "fld_payments",
    "name": "POST payments/webhooks/<slug:provider>",
    "description": "Webhook d'un fournisseur de paiement. Corps JSON brut {event_id, provider_ref, status, amount_minor, currency} + en-tete X-Signature = HMAC-SHA256 hexadecimal du corps avec le secret du fournisseur. Idempotent.",
    "method": "POST",
    "url": "{{ _.base_url }}/api/v1/payments/webhooks/{{ _.provider }}/",
-   "metaSortKey": 1790000000186,
+   "metaSortKey": 1790000000187,
    "headers": [
     {
      "name": "Content-Type",
@@ -4240,14 +4263,14 @@
    "settingSendCookies": false
   },
   {
-   "_id": "req_187",
+   "_id": "req_188",
    "_type": "request",
    "parentId": "fld_payments",
    "name": "POST orders/<uuid:order_id>/pay-free",
    "description": "Valider une commande GRATUITE (total 0).",
    "method": "POST",
    "url": "{{ _.base_url }}/api/v1/orders/{{ _.order_id }}/pay-free/",
-   "metaSortKey": 1790000000187,
+   "metaSortKey": 1790000000188,
    "headers": [
     {
      "name": "Content-Type",
@@ -4263,14 +4286,14 @@
    }
   },
   {
-   "_id": "req_188",
+   "_id": "req_189",
    "_type": "request",
    "parentId": "fld_payments",
    "name": "POST refunds",
    "description": "Demander un remboursement (delai de 14 jours ; une demande ouverte par article).",
    "method": "POST",
    "url": "{{ _.base_url }}/api/v1/refunds/",
-   "metaSortKey": 1790000000188,
+   "metaSortKey": 1790000000189,
    "headers": [
     {
      "name": "Content-Type",
@@ -4290,31 +4313,13 @@
    }
   },
   {
-   "_id": "req_189",
+   "_id": "req_190",
    "_type": "request",
    "parentId": "fld_payments",
    "name": "GET me/refunds",
    "description": "Mes demandes de remboursement.",
    "method": "GET",
    "url": "{{ _.base_url }}/api/v1/me/refunds/",
-   "metaSortKey": 1790000000189,
-   "headers": [],
-   "parameters": [],
-   "settingSendCookies": false,
-   "authentication": {
-    "type": "bearer",
-    "token": "{{ _.access }}",
-    "prefix": ""
-   }
-  },
-  {
-   "_id": "req_190",
-   "_type": "request",
-   "parentId": "fld_payments",
-   "name": "GET admin/refunds",
-   "description": "[Administration] File des remboursements.",
-   "method": "GET",
-   "url": "{{ _.base_url }}/api/v1/admin/refunds/",
    "metaSortKey": 1790000000190,
    "headers": [],
    "parameters": [],
@@ -4329,11 +4334,29 @@
    "_id": "req_191",
    "_type": "request",
    "parentId": "fld_payments",
+   "name": "GET admin/refunds",
+   "description": "[Administration] File des remboursements.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/admin/refunds/",
+   "metaSortKey": 1790000000191,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_192",
+   "_type": "request",
+   "parentId": "fld_payments",
    "name": "POST admin/refunds/<uuid:refund_id>/decision",
    "description": "[Administration] Approuver ou refuser un remboursement (reversement comptable proportionnel, licence et acces retires).",
    "method": "POST",
    "url": "{{ _.base_url }}/api/v1/admin/refunds/{{ _.refund_id }}/decision/",
-   "metaSortKey": 1790000000191,
+   "metaSortKey": 1790000000192,
    "headers": [
     {
      "name": "Content-Type",
@@ -4353,14 +4376,14 @@
    }
   },
   {
-   "_id": "req_192",
+   "_id": "req_193",
    "_type": "request",
    "parentId": "fld_payments",
    "name": "GET admin/ledger/orders/<uuid:order_id>",
    "description": "[Administration] Ecritures du grand livre d'une commande (le solde doit valoir 0).",
    "method": "GET",
    "url": "{{ _.base_url }}/api/v1/admin/ledger/orders/{{ _.order_id }}/",
-   "metaSortKey": 1790000000192,
+   "metaSortKey": 1790000000193,
    "headers": [],
    "parameters": [],
    "settingSendCookies": false,
@@ -4371,14 +4394,14 @@
    }
   },
   {
-   "_id": "req_193",
+   "_id": "req_194",
    "_type": "request",
    "parentId": "fld_companies",
    "name": "POST companies",
    "description": "Creer une entreprise (vous en etes le proprietaire).",
    "method": "POST",
    "url": "{{ _.base_url }}/api/v1/companies/",
-   "metaSortKey": 1790000000193,
+   "metaSortKey": 1790000000194,
    "headers": [
     {
      "name": "Content-Type",
@@ -4398,14 +4421,14 @@
    }
   },
   {
-   "_id": "req_194",
+   "_id": "req_195",
    "_type": "request",
    "parentId": "fld_companies",
    "name": "GET me/companies",
    "description": "Mes entreprises.",
    "method": "GET",
    "url": "{{ _.base_url }}/api/v1/me/companies/",
-   "metaSortKey": 1790000000194,
+   "metaSortKey": 1790000000195,
    "headers": [],
    "parameters": [],
    "settingSendCookies": false,
@@ -4416,27 +4439,27 @@
    }
   },
   {
-   "_id": "req_195",
+   "_id": "req_196",
    "_type": "request",
    "parentId": "fld_companies",
    "name": "GET companies/<slug:slug>",
    "description": "Page publique d'une entreprise.",
    "method": "GET",
    "url": "{{ _.base_url }}/api/v1/companies/{{ _.slug }}/",
-   "metaSortKey": 1790000000195,
+   "metaSortKey": 1790000000196,
    "headers": [],
    "parameters": [],
    "settingSendCookies": false
   },
   {
-   "_id": "req_196",
+   "_id": "req_197",
    "_type": "request",
    "parentId": "fld_companies",
    "name": "PATCH companies/<slug:slug>",
    "description": "[Gestionnaire/editeur] Modifier l'entreprise. logo_file / cover_file : fichiers envoyes (usages 'company_logo' / 'company_cover').",
    "method": "PATCH",
    "url": "{{ _.base_url }}/api/v1/companies/{{ _.slug }}/",
-   "metaSortKey": 1790000000196,
+   "metaSortKey": 1790000000197,
    "headers": [
     {
      "name": "Content-Type",
@@ -4456,27 +4479,27 @@
    }
   },
   {
-   "_id": "req_197",
+   "_id": "req_198",
    "_type": "request",
    "parentId": "fld_companies",
    "name": "GET companies/<slug:slug>/members",
    "description": "Equipe visible sur la page publique.",
    "method": "GET",
    "url": "{{ _.base_url }}/api/v1/companies/{{ _.slug }}/members/",
-   "metaSortKey": 1790000000197,
+   "metaSortKey": 1790000000198,
    "headers": [],
    "parameters": [],
    "settingSendCookies": false
   },
   {
-   "_id": "req_198",
+   "_id": "req_199",
    "_type": "request",
    "parentId": "fld_companies",
    "name": "POST companies/<slug:slug>/members",
    "description": "[Gestionnaire] Ajouter un membre (role : admin, recruiter, editor, employee).",
    "method": "POST",
    "url": "{{ _.base_url }}/api/v1/companies/{{ _.slug }}/members/",
-   "metaSortKey": 1790000000198,
+   "metaSortKey": 1790000000199,
    "headers": [
     {
      "name": "Content-Type",
@@ -4496,14 +4519,14 @@
    }
   },
   {
-   "_id": "req_199",
+   "_id": "req_200",
    "_type": "request",
    "parentId": "fld_companies",
    "name": "PATCH companies/<slug:slug>/members/<str:username>",
    "description": "[Gestionnaire] Changer le role d'un membre.",
    "method": "PATCH",
    "url": "{{ _.base_url }}/api/v1/companies/{{ _.slug }}/members/{{ _.username }}/",
-   "metaSortKey": 1790000000199,
+   "metaSortKey": 1790000000200,
    "headers": [
     {
      "name": "Content-Type",
@@ -4523,14 +4546,14 @@
    }
   },
   {
-   "_id": "req_200",
+   "_id": "req_201",
    "_type": "request",
    "parentId": "fld_companies",
    "name": "DELETE companies/<slug:slug>/members/<str:username>",
    "description": "Retirer un membre (ou quitter l'entreprise). Le dernier proprietaire ne peut pas partir.",
    "method": "DELETE",
    "url": "{{ _.base_url }}/api/v1/companies/{{ _.slug }}/members/{{ _.username }}/",
-   "metaSortKey": 1790000000200,
+   "metaSortKey": 1790000000201,
    "headers": [],
    "parameters": [],
    "settingSendCookies": false,
@@ -4541,14 +4564,14 @@
    }
   },
   {
-   "_id": "req_201",
+   "_id": "req_202",
    "_type": "request",
    "parentId": "fld_companies",
    "name": "POST companies/<slug:slug>/verification",
    "description": "[Gestionnaire] Demander la verification de l'entreprise.",
    "method": "POST",
    "url": "{{ _.base_url }}/api/v1/companies/{{ _.slug }}/verification/",
-   "metaSortKey": 1790000000201,
+   "metaSortKey": 1790000000202,
    "headers": [
     {
      "name": "Content-Type",
@@ -4568,14 +4591,14 @@
    }
   },
   {
-   "_id": "req_202",
+   "_id": "req_203",
    "_type": "request",
    "parentId": "fld_companies",
    "name": "POST companies/<slug:slug>/links",
    "description": "[Editeur] Ajouter un lien (https).",
    "method": "POST",
    "url": "{{ _.base_url }}/api/v1/companies/{{ _.slug }}/links/",
-   "metaSortKey": 1790000000202,
+   "metaSortKey": 1790000000203,
    "headers": [
     {
      "name": "Content-Type",
@@ -4595,40 +4618,13 @@
    }
   },
   {
-   "_id": "req_203",
+   "_id": "req_204",
    "_type": "request",
    "parentId": "fld_companies",
    "name": "POST companies/<slug:slug>/projects",
    "description": "[Editeur] Ajouter un projet a la page.",
    "method": "POST",
    "url": "{{ _.base_url }}/api/v1/companies/{{ _.slug }}/projects/",
-   "metaSortKey": 1790000000203,
-   "headers": [
-    {
-     "name": "Content-Type",
-     "value": "application/json"
-    }
-   ],
-   "parameters": [],
-   "settingSendCookies": false,
-   "body": {
-    "mimeType": "application/json",
-    "text": "{\n  \"title\": \"exemple\"\n}"
-   },
-   "authentication": {
-    "type": "bearer",
-    "token": "{{ _.access }}",
-    "prefix": ""
-   }
-  },
-  {
-   "_id": "req_204",
-   "_type": "request",
-   "parentId": "fld_companies",
-   "name": "POST companies/<slug:slug>/services",
-   "description": "[Editeur] Ajouter un service propose.",
-   "method": "POST",
-   "url": "{{ _.base_url }}/api/v1/companies/{{ _.slug }}/services/",
    "metaSortKey": 1790000000204,
    "headers": [
     {
@@ -4652,281 +4648,11 @@
    "_id": "req_205",
    "_type": "request",
    "parentId": "fld_companies",
-   "name": "GET admin/company-verifications",
-   "description": "[Administration] Demandes de verification en attente.",
-   "method": "GET",
-   "url": "{{ _.base_url }}/api/v1/admin/company-verifications/",
+   "name": "POST companies/<slug:slug>/services",
+   "description": "[Editeur] Ajouter un service propose.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/companies/{{ _.slug }}/services/",
    "metaSortKey": 1790000000205,
-   "headers": [],
-   "parameters": [],
-   "settingSendCookies": false,
-   "authentication": {
-    "type": "bearer",
-    "token": "{{ _.access }}",
-    "prefix": ""
-   }
-  },
-  {
-   "_id": "req_206",
-   "_type": "request",
-   "parentId": "fld_companies",
-   "name": "POST admin/company-verifications/<uuid:verification_id>/review",
-   "description": "[Administration] Approuver ou rejeter une verification.",
-   "method": "POST",
-   "url": "{{ _.base_url }}/api/v1/admin/company-verifications/{{ _.verification_id }}/review/",
-   "metaSortKey": 1790000000206,
-   "headers": [
-    {
-     "name": "Content-Type",
-     "value": "application/json"
-    }
-   ],
-   "parameters": [],
-   "settingSendCookies": false,
-   "body": {
-    "mimeType": "application/json",
-    "text": "{\n  \"approve\": true\n}"
-   },
-   "authentication": {
-    "type": "bearer",
-    "token": "{{ _.access }}",
-    "prefix": ""
-   }
-  },
-  {
-   "_id": "req_207",
-   "_type": "request",
-   "parentId": "fld_portfolio",
-   "name": "GET me/portfolio",
-   "description": "Mon portfolio complet.",
-   "method": "GET",
-   "url": "{{ _.base_url }}/api/v1/me/portfolio/",
-   "metaSortKey": 1790000000207,
-   "headers": [],
-   "parameters": [],
-   "settingSendCookies": false,
-   "authentication": {
-    "type": "bearer",
-    "token": "{{ _.access }}",
-    "prefix": ""
-   }
-  },
-  {
-   "_id": "req_208",
-   "_type": "request",
-   "parentId": "fld_portfolio",
-   "name": "PATCH me/portfolio",
-   "description": "Modifier mon portfolio (titre, resume, visibilite).",
-   "method": "PATCH",
-   "url": "{{ _.base_url }}/api/v1/me/portfolio/",
-   "metaSortKey": 1790000000208,
-   "headers": [
-    {
-     "name": "Content-Type",
-     "value": "application/json"
-    }
-   ],
-   "parameters": [],
-   "settingSendCookies": false,
-   "body": {
-    "mimeType": "application/json",
-    "text": "{}"
-   },
-   "authentication": {
-    "type": "bearer",
-    "token": "{{ _.access }}",
-    "prefix": ""
-   }
-  },
-  {
-   "_id": "req_209",
-   "_type": "request",
-   "parentId": "fld_portfolio",
-   "name": "GET users/<str:username>/portfolio",
-   "description": "Portfolio d'un utilisateur (404 si prive pour moi).",
-   "method": "GET",
-   "url": "{{ _.base_url }}/api/v1/users/{{ _.username }}/portfolio/",
-   "metaSortKey": 1790000000209,
-   "headers": [],
-   "parameters": [],
-   "settingSendCookies": false,
-   "authentication": {
-    "type": "bearer",
-    "token": "{{ _.access }}",
-    "prefix": ""
-   }
-  },
-  {
-   "_id": "req_210",
-   "_type": "request",
-   "parentId": "fld_portfolio",
-   "name": "POST me/portfolio/projects",
-   "description": "Ajouter un projet. technologies : slugs de competences.",
-   "method": "POST",
-   "url": "{{ _.base_url }}/api/v1/me/portfolio/projects/",
-   "metaSortKey": 1790000000210,
-   "headers": [
-    {
-     "name": "Content-Type",
-     "value": "application/json"
-    }
-   ],
-   "parameters": [],
-   "settingSendCookies": false,
-   "body": {
-    "mimeType": "application/json",
-    "text": "{\n  \"slug\": \"mon-exemple\",\n  \"title\": \"exemple\"\n}"
-   },
-   "authentication": {
-    "type": "bearer",
-    "token": "{{ _.access }}",
-    "prefix": ""
-   }
-  },
-  {
-   "_id": "req_211",
-   "_type": "request",
-   "parentId": "fld_portfolio",
-   "name": "POST me/portfolio/projects/<uuid:project_id>/links",
-   "description": "Ajouter un lien a un de mes projets.",
-   "method": "POST",
-   "url": "{{ _.base_url }}/api/v1/me/portfolio/projects/{{ _.project_id }}/links/",
-   "metaSortKey": 1790000000211,
-   "headers": [
-    {
-     "name": "Content-Type",
-     "value": "application/json"
-    }
-   ],
-   "parameters": [],
-   "settingSendCookies": false,
-   "body": {
-    "mimeType": "application/json",
-    "text": "{\n  \"url\": \"https://example.com\"\n}"
-   },
-   "authentication": {
-    "type": "bearer",
-    "token": "{{ _.access }}",
-    "prefix": ""
-   }
-  },
-  {
-   "_id": "req_212",
-   "_type": "request",
-   "parentId": "fld_portfolio",
-   "name": "POST me/portfolio/projects/<uuid:project_id>/media",
-   "description": "Ajouter une image/video a un de mes projets (fichier envoye, usage 'portfolio_media').",
-   "method": "POST",
-   "url": "{{ _.base_url }}/api/v1/me/portfolio/projects/{{ _.project_id }}/media/",
-   "metaSortKey": 1790000000212,
-   "headers": [
-    {
-     "name": "Content-Type",
-     "value": "application/json"
-    }
-   ],
-   "parameters": [],
-   "settingSendCookies": false,
-   "body": {
-    "mimeType": "application/json",
-    "text": "{\n  \"file\": \"{{ _.file_id }}\"\n}"
-   },
-   "authentication": {
-    "type": "bearer",
-    "token": "{{ _.access }}",
-    "prefix": ""
-   }
-  },
-  {
-   "_id": "req_213",
-   "_type": "request",
-   "parentId": "fld_portfolio",
-   "name": "POST me/portfolio/repositories",
-   "description": "Declarer un depot (saisie manuelle).",
-   "method": "POST",
-   "url": "{{ _.base_url }}/api/v1/me/portfolio/repositories/",
-   "metaSortKey": 1790000000213,
-   "headers": [
-    {
-     "name": "Content-Type",
-     "value": "application/json"
-    }
-   ],
-   "parameters": [],
-   "settingSendCookies": false,
-   "body": {
-    "mimeType": "application/json",
-    "text": "{\n  \"provider\": \"github\",\n  \"full_name\": \"exemple\",\n  \"url\": \"https://example.com\"\n}"
-   },
-   "authentication": {
-    "type": "bearer",
-    "token": "{{ _.access }}",
-    "prefix": ""
-   }
-  },
-  {
-   "_id": "req_214",
-   "_type": "request",
-   "parentId": "fld_portfolio",
-   "name": "POST me/portfolio/experiences",
-   "description": "Ajouter une experience.",
-   "method": "POST",
-   "url": "{{ _.base_url }}/api/v1/me/portfolio/experiences/",
-   "metaSortKey": 1790000000214,
-   "headers": [
-    {
-     "name": "Content-Type",
-     "value": "application/json"
-    }
-   ],
-   "parameters": [],
-   "settingSendCookies": false,
-   "body": {
-    "mimeType": "application/json",
-    "text": "{\n  \"company_name\": \"exemple\",\n  \"title\": \"exemple\",\n  \"started_on\": \"2026-01-15\"\n}"
-   },
-   "authentication": {
-    "type": "bearer",
-    "token": "{{ _.access }}",
-    "prefix": ""
-   }
-  },
-  {
-   "_id": "req_215",
-   "_type": "request",
-   "parentId": "fld_portfolio",
-   "name": "POST me/portfolio/educations",
-   "description": "Ajouter une formation.",
-   "method": "POST",
-   "url": "{{ _.base_url }}/api/v1/me/portfolio/educations/",
-   "metaSortKey": 1790000000215,
-   "headers": [
-    {
-     "name": "Content-Type",
-     "value": "application/json"
-    }
-   ],
-   "parameters": [],
-   "settingSendCookies": false,
-   "body": {
-    "mimeType": "application/json",
-    "text": "{\n  \"institution\": \"exemple\"\n}"
-   },
-   "authentication": {
-    "type": "bearer",
-    "token": "{{ _.access }}",
-    "prefix": ""
-   }
-  },
-  {
-   "_id": "req_216",
-   "_type": "request",
-   "parentId": "fld_portfolio",
-   "name": "POST me/portfolio/achievements",
-   "description": "Ajouter une realisation.",
-   "method": "POST",
-   "url": "{{ _.base_url }}/api/v1/me/portfolio/achievements/",
-   "metaSortKey": 1790000000216,
    "headers": [
     {
      "name": "Content-Type",
@@ -4946,14 +4672,338 @@
    }
   },
   {
+   "_id": "req_206",
+   "_type": "request",
+   "parentId": "fld_companies",
+   "name": "GET admin/company-verifications",
+   "description": "[Administration] Demandes de verification en attente.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/admin/company-verifications/",
+   "metaSortKey": 1790000000206,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_207",
+   "_type": "request",
+   "parentId": "fld_companies",
+   "name": "POST admin/company-verifications/<uuid:verification_id>/review",
+   "description": "[Administration] Approuver ou rejeter une verification.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/admin/company-verifications/{{ _.verification_id }}/review/",
+   "metaSortKey": 1790000000207,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"approve\": true\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_208",
+   "_type": "request",
+   "parentId": "fld_portfolio",
+   "name": "GET me/portfolio",
+   "description": "Mon portfolio complet.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/me/portfolio/",
+   "metaSortKey": 1790000000208,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_209",
+   "_type": "request",
+   "parentId": "fld_portfolio",
+   "name": "PATCH me/portfolio",
+   "description": "Modifier mon portfolio (titre, resume, visibilite).",
+   "method": "PATCH",
+   "url": "{{ _.base_url }}/api/v1/me/portfolio/",
+   "metaSortKey": 1790000000209,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_210",
+   "_type": "request",
+   "parentId": "fld_portfolio",
+   "name": "GET users/<str:username>/portfolio",
+   "description": "Portfolio d'un utilisateur (404 si prive pour moi).",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/users/{{ _.username }}/portfolio/",
+   "metaSortKey": 1790000000210,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_211",
+   "_type": "request",
+   "parentId": "fld_portfolio",
+   "name": "POST me/portfolio/projects",
+   "description": "Ajouter un projet. technologies : slugs de competences.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/me/portfolio/projects/",
+   "metaSortKey": 1790000000211,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"slug\": \"mon-exemple\",\n  \"title\": \"exemple\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_212",
+   "_type": "request",
+   "parentId": "fld_portfolio",
+   "name": "POST me/portfolio/projects/<uuid:project_id>/links",
+   "description": "Ajouter un lien a un de mes projets.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/me/portfolio/projects/{{ _.project_id }}/links/",
+   "metaSortKey": 1790000000212,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"url\": \"https://example.com\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_213",
+   "_type": "request",
+   "parentId": "fld_portfolio",
+   "name": "POST me/portfolio/projects/<uuid:project_id>/media",
+   "description": "Ajouter une image/video a un de mes projets (fichier envoye, usage 'portfolio_media').",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/me/portfolio/projects/{{ _.project_id }}/media/",
+   "metaSortKey": 1790000000213,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"file\": \"{{ _.file_id }}\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_214",
+   "_type": "request",
+   "parentId": "fld_portfolio",
+   "name": "POST me/portfolio/repositories",
+   "description": "Declarer un depot (saisie manuelle).",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/me/portfolio/repositories/",
+   "metaSortKey": 1790000000214,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"provider\": \"github\",\n  \"full_name\": \"exemple\",\n  \"url\": \"https://example.com\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_215",
+   "_type": "request",
+   "parentId": "fld_portfolio",
+   "name": "POST me/portfolio/repositories/from-url",
+   "description": "Ajouter un depot GitHub PAR SON LIEN : le serveur le verifie aupres de GitHub (public, existant) et en recupere description, langage et etoiles. `owner_verified` = vrai si vous etes bien son proprietaire (compte GitHub lie).",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/me/portfolio/repositories/from-url/",
+   "metaSortKey": 1790000000215,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"url\": \"exemple\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_216",
+   "_type": "request",
+   "parentId": "fld_portfolio",
+   "name": "POST me/portfolio/experiences",
+   "description": "Ajouter une experience.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/me/portfolio/experiences/",
+   "metaSortKey": 1790000000216,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"company_name\": \"exemple\",\n  \"title\": \"exemple\",\n  \"started_on\": \"2026-01-15\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
    "_id": "req_217",
+   "_type": "request",
+   "parentId": "fld_portfolio",
+   "name": "POST me/portfolio/educations",
+   "description": "Ajouter une formation.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/me/portfolio/educations/",
+   "metaSortKey": 1790000000217,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"institution\": \"exemple\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_218",
+   "_type": "request",
+   "parentId": "fld_portfolio",
+   "name": "POST me/portfolio/achievements",
+   "description": "Ajouter une realisation.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/me/portfolio/achievements/",
+   "metaSortKey": 1790000000218,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"title\": \"exemple\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_219",
    "_type": "request",
    "parentId": "fld_portfolio",
    "name": "POST me/portfolio/certificates",
    "description": "Afficher un de MES certificats LE BAOBAB (verifiable publiquement).",
    "method": "POST",
    "url": "{{ _.base_url }}/api/v1/me/portfolio/certificates/",
-   "metaSortKey": 1790000000217,
+   "metaSortKey": 1790000000219,
    "headers": [
     {
      "name": "Content-Type",
@@ -4973,14 +5023,14 @@
    }
   },
   {
-   "_id": "req_218",
+   "_id": "req_220",
    "_type": "request",
    "parentId": "fld_portfolio",
    "name": "DELETE me/portfolio/<slug:kind>/<uuid:entry_id>",
    "description": "Supprimer une entree de mon portfolio. kind : projects, experiences, educations, achievements, certificates, repositories.",
    "method": "DELETE",
    "url": "{{ _.base_url }}/api/v1/me/portfolio/{{ _.kind }}/{{ _.entry_id }}/",
-   "metaSortKey": 1790000000218,
+   "metaSortKey": 1790000000220,
    "headers": [],
    "parameters": [],
    "settingSendCookies": false,
@@ -4991,27 +5041,27 @@
    }
   },
   {
-   "_id": "req_219",
+   "_id": "req_221",
    "_type": "request",
    "parentId": "fld_jobs",
    "name": "GET jobs",
    "description": "Offres ouvertes (emplois et missions freelance).",
    "method": "GET",
    "url": "{{ _.base_url }}/api/v1/jobs/",
-   "metaSortKey": 1790000000219,
+   "metaSortKey": 1790000000221,
    "headers": [],
    "parameters": [],
    "settingSendCookies": false
   },
   {
-   "_id": "req_220",
+   "_id": "req_222",
    "_type": "request",
    "parentId": "fld_jobs",
    "name": "POST jobs",
    "description": "Creer une offre (brouillon). Un emploi exige une entreprise dont vous etes recruteur ; une mission freelance peut etre publiee a titre individuel.",
    "method": "POST",
    "url": "{{ _.base_url }}/api/v1/jobs/",
-   "metaSortKey": 1790000000220,
+   "metaSortKey": 1790000000222,
    "headers": [
     {
      "name": "Content-Type",
@@ -5031,67 +5081,17 @@
    }
   },
   {
-   "_id": "req_221",
+   "_id": "req_223",
    "_type": "request",
    "parentId": "fld_jobs",
    "name": "GET jobs/<uuid:job_id>",
    "description": "Detail d'une offre.",
    "method": "GET",
    "url": "{{ _.base_url }}/api/v1/jobs/{{ _.job_id }}/",
-   "metaSortKey": 1790000000221,
+   "metaSortKey": 1790000000223,
    "headers": [],
    "parameters": [],
    "settingSendCookies": false,
-   "authentication": {
-    "type": "bearer",
-    "token": "{{ _.access }}",
-    "prefix": ""
-   }
-  },
-  {
-   "_id": "req_222",
-   "_type": "request",
-   "parentId": "fld_jobs",
-   "name": "POST jobs/<uuid:job_id>/publish",
-   "description": "[Recruteur] Publier l'offre.",
-   "method": "POST",
-   "url": "{{ _.base_url }}/api/v1/jobs/{{ _.job_id }}/publish/",
-   "metaSortKey": 1790000000222,
-   "headers": [
-    {
-     "name": "Content-Type",
-     "value": "application/json"
-    }
-   ],
-   "parameters": [],
-   "settingSendCookies": false,
-   "authentication": {
-    "type": "bearer",
-    "token": "{{ _.access }}",
-    "prefix": ""
-   }
-  },
-  {
-   "_id": "req_223",
-   "_type": "request",
-   "parentId": "fld_jobs",
-   "name": "POST jobs/<uuid:job_id>/close",
-   "description": "[Recruteur] Fermer l'offre (filled=true : poste pourvu).",
-   "method": "POST",
-   "url": "{{ _.base_url }}/api/v1/jobs/{{ _.job_id }}/close/",
-   "metaSortKey": 1790000000223,
-   "headers": [
-    {
-     "name": "Content-Type",
-     "value": "application/json"
-    }
-   ],
-   "parameters": [],
-   "settingSendCookies": false,
-   "body": {
-    "mimeType": "application/json",
-    "text": "{}"
-   },
    "authentication": {
     "type": "bearer",
     "token": "{{ _.access }}",
@@ -5102,11 +5102,34 @@
    "_id": "req_224",
    "_type": "request",
    "parentId": "fld_jobs",
-   "name": "POST jobs/<uuid:job_id>/apply",
-   "description": "Postuler a une offre (une seule candidature par offre). cv_file : fichier envoye (usage 'cv').",
+   "name": "POST jobs/<uuid:job_id>/publish",
+   "description": "[Recruteur] Publier l'offre.",
    "method": "POST",
-   "url": "{{ _.base_url }}/api/v1/jobs/{{ _.job_id }}/apply/",
+   "url": "{{ _.base_url }}/api/v1/jobs/{{ _.job_id }}/publish/",
    "metaSortKey": 1790000000224,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_225",
+   "_type": "request",
+   "parentId": "fld_jobs",
+   "name": "POST jobs/<uuid:job_id>/close",
+   "description": "[Recruteur] Fermer l'offre (filled=true : poste pourvu).",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/jobs/{{ _.job_id }}/close/",
+   "metaSortKey": 1790000000225,
    "headers": [
     {
      "name": "Content-Type",
@@ -5126,35 +5149,26 @@
    }
   },
   {
-   "_id": "req_225",
-   "_type": "request",
-   "parentId": "fld_jobs",
-   "name": "GET jobs/<uuid:job_id>/applications",
-   "description": "[Recruteur] Candidatures recues pour une offre.",
-   "method": "GET",
-   "url": "{{ _.base_url }}/api/v1/jobs/{{ _.job_id }}/applications/",
-   "metaSortKey": 1790000000225,
-   "headers": [],
-   "parameters": [],
-   "settingSendCookies": false,
-   "authentication": {
-    "type": "bearer",
-    "token": "{{ _.access }}",
-    "prefix": ""
-   }
-  },
-  {
    "_id": "req_226",
    "_type": "request",
    "parentId": "fld_jobs",
-   "name": "GET jobs/<uuid:job_id>/slots",
-   "description": "Creneaux libres (recruteurs ; candidats pre-selectionnes de cette offre).",
-   "method": "GET",
-   "url": "{{ _.base_url }}/api/v1/jobs/{{ _.job_id }}/slots/",
+   "name": "POST jobs/<uuid:job_id>/apply",
+   "description": "Postuler a une offre (une seule candidature par offre). cv_file : fichier envoye (usage 'cv').",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/jobs/{{ _.job_id }}/apply/",
    "metaSortKey": 1790000000226,
-   "headers": [],
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
    "parameters": [],
    "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{}"
+   },
    "authentication": {
     "type": "bearer",
     "token": "{{ _.access }}",
@@ -5165,11 +5179,47 @@
    "_id": "req_227",
    "_type": "request",
    "parentId": "fld_jobs",
+   "name": "GET jobs/<uuid:job_id>/applications",
+   "description": "[Recruteur] Candidatures recues pour une offre.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/jobs/{{ _.job_id }}/applications/",
+   "metaSortKey": 1790000000227,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_228",
+   "_type": "request",
+   "parentId": "fld_jobs",
+   "name": "GET jobs/<uuid:job_id>/slots",
+   "description": "Creneaux libres (recruteurs ; candidats pre-selectionnes de cette offre).",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/jobs/{{ _.job_id }}/slots/",
+   "metaSortKey": 1790000000228,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_229",
+   "_type": "request",
+   "parentId": "fld_jobs",
    "name": "POST jobs/<uuid:job_id>/slots",
    "description": "[Recruteur] Proposer un creneau d'entretien (deux creneaux d'un meme recruteur ne peuvent pas se chevaucher).",
    "method": "POST",
    "url": "{{ _.base_url }}/api/v1/jobs/{{ _.job_id }}/slots/",
-   "metaSortKey": 1790000000227,
+   "metaSortKey": 1790000000229,
    "headers": [
     {
      "name": "Content-Type",
@@ -5189,14 +5239,14 @@
    }
   },
   {
-   "_id": "req_228",
+   "_id": "req_230",
    "_type": "request",
    "parentId": "fld_jobs",
    "name": "GET jobs/<uuid:job_id>/proposals",
    "description": "[Client] Propositions recues pour une mission.",
    "method": "GET",
    "url": "{{ _.base_url }}/api/v1/jobs/{{ _.job_id }}/proposals/",
-   "metaSortKey": 1790000000228,
+   "metaSortKey": 1790000000230,
    "headers": [],
    "parameters": [],
    "settingSendCookies": false,
@@ -5207,14 +5257,14 @@
    }
   },
   {
-   "_id": "req_229",
+   "_id": "req_231",
    "_type": "request",
    "parentId": "fld_jobs",
    "name": "POST jobs/<uuid:job_id>/proposals",
    "description": "Repondre a une mission freelance par une proposition (une par mission).",
    "method": "POST",
    "url": "{{ _.base_url }}/api/v1/jobs/{{ _.job_id }}/proposals/",
-   "metaSortKey": 1790000000229,
+   "metaSortKey": 1790000000231,
    "headers": [
     {
      "name": "Content-Type",
@@ -5234,14 +5284,14 @@
    }
   },
   {
-   "_id": "req_230",
+   "_id": "req_232",
    "_type": "request",
    "parentId": "fld_jobs",
    "name": "GET me/applications",
    "description": "Mes candidatures.",
    "method": "GET",
    "url": "{{ _.base_url }}/api/v1/me/applications/",
-   "metaSortKey": 1790000000230,
+   "metaSortKey": 1790000000232,
    "headers": [],
    "parameters": [],
    "settingSendCookies": false,
@@ -5252,14 +5302,14 @@
    }
   },
   {
-   "_id": "req_231",
+   "_id": "req_233",
    "_type": "request",
    "parentId": "fld_jobs",
    "name": "GET applications/<uuid:application_id>",
    "description": "Detail d'une candidature (le candidat ou les recruteurs de l'offre ; sinon 404).",
    "method": "GET",
    "url": "{{ _.base_url }}/api/v1/applications/{{ _.application_id }}/",
-   "metaSortKey": 1790000000231,
+   "metaSortKey": 1790000000233,
    "headers": [],
    "parameters": [],
    "settingSendCookies": false,
@@ -5270,14 +5320,14 @@
    }
   },
   {
-   "_id": "req_232",
+   "_id": "req_234",
    "_type": "request",
    "parentId": "fld_jobs",
    "name": "POST applications/<uuid:application_id>/transition",
    "description": "Changer le statut d'une candidature. Recruteur : reviewing, shortlisted, interview, offer, hired, rejected. Candidat : withdrawn. Seules les transitions valides sont acceptees.",
    "method": "POST",
    "url": "{{ _.base_url }}/api/v1/applications/{{ _.application_id }}/transition/",
-   "metaSortKey": 1790000000232,
+   "metaSortKey": 1790000000234,
    "headers": [
     {
      "name": "Content-Type",
@@ -5297,14 +5347,14 @@
    }
   },
   {
-   "_id": "req_233",
+   "_id": "req_235",
    "_type": "request",
    "parentId": "fld_jobs",
    "name": "POST applications/<uuid:application_id>/book",
    "description": "Reserver un creneau pour une candidature (candidat ou recruteur) : passe la candidature en 'interview'.",
    "method": "POST",
    "url": "{{ _.base_url }}/api/v1/applications/{{ _.application_id }}/book/",
-   "metaSortKey": 1790000000233,
+   "metaSortKey": 1790000000235,
    "headers": [
     {
      "name": "Content-Type",
@@ -5324,14 +5374,14 @@
    }
   },
   {
-   "_id": "req_234",
+   "_id": "req_236",
    "_type": "request",
    "parentId": "fld_jobs",
    "name": "POST applications/<uuid:application_id>/offer",
    "description": "[Recruteur] Envoyer une offre d'embauche (apres un entretien).",
    "method": "POST",
    "url": "{{ _.base_url }}/api/v1/applications/{{ _.application_id }}/offer/",
-   "metaSortKey": 1790000000234,
+   "metaSortKey": 1790000000236,
    "headers": [
     {
      "name": "Content-Type",
@@ -5351,14 +5401,14 @@
    }
   },
   {
-   "_id": "req_235",
+   "_id": "req_237",
    "_type": "request",
    "parentId": "fld_jobs",
    "name": "GET me/offers",
    "description": "Mes offres d'embauche recues.",
    "method": "GET",
    "url": "{{ _.base_url }}/api/v1/me/offers/",
-   "metaSortKey": 1790000000235,
+   "metaSortKey": 1790000000237,
    "headers": [],
    "parameters": [],
    "settingSendCookies": false,
@@ -5369,14 +5419,14 @@
    }
   },
   {
-   "_id": "req_236",
+   "_id": "req_238",
    "_type": "request",
    "parentId": "fld_jobs",
    "name": "POST offers/<uuid:offer_id>/respond",
    "description": "Accepter ou refuser une offre d'embauche (l'acceptation cree le contrat).",
    "method": "POST",
    "url": "{{ _.base_url }}/api/v1/offers/{{ _.offer_id }}/respond/",
-   "metaSortKey": 1790000000236,
+   "metaSortKey": 1790000000238,
    "headers": [
     {
      "name": "Content-Type",
@@ -5396,58 +5446,13 @@
    }
   },
   {
-   "_id": "req_237",
+   "_id": "req_239",
    "_type": "request",
    "parentId": "fld_jobs",
    "name": "GET me/freelancer-profile",
    "description": "Mon profil freelance.",
    "method": "GET",
    "url": "{{ _.base_url }}/api/v1/me/freelancer-profile/",
-   "metaSortKey": 1790000000237,
-   "headers": [],
-   "parameters": [],
-   "settingSendCookies": false,
-   "authentication": {
-    "type": "bearer",
-    "token": "{{ _.access }}",
-    "prefix": ""
-   }
-  },
-  {
-   "_id": "req_238",
-   "_type": "request",
-   "parentId": "fld_jobs",
-   "name": "PUT me/freelancer-profile",
-   "description": "Creer/mettre a jour mon profil freelance (un tarif exige une devise).",
-   "method": "PUT",
-   "url": "{{ _.base_url }}/api/v1/me/freelancer-profile/",
-   "metaSortKey": 1790000000238,
-   "headers": [
-    {
-     "name": "Content-Type",
-     "value": "application/json"
-    }
-   ],
-   "parameters": [],
-   "settingSendCookies": false,
-   "body": {
-    "mimeType": "application/json",
-    "text": "{}"
-   },
-   "authentication": {
-    "type": "bearer",
-    "token": "{{ _.access }}",
-    "prefix": ""
-   }
-  },
-  {
-   "_id": "req_239",
-   "_type": "request",
-   "parentId": "fld_jobs",
-   "name": "GET me/proposals",
-   "description": "Mes propositions.",
-   "method": "GET",
-   "url": "{{ _.base_url }}/api/v1/me/proposals/",
    "metaSortKey": 1790000000239,
    "headers": [],
    "parameters": [],
@@ -5462,10 +5467,10 @@
    "_id": "req_240",
    "_type": "request",
    "parentId": "fld_jobs",
-   "name": "POST proposals/<uuid:proposal_id>/accept",
-   "description": "[Client] Accepter une proposition : cree le contrat et ses jalons (leur somme doit egaler l'offre), refuse les autres propositions, marque la mission pourvue.",
-   "method": "POST",
-   "url": "{{ _.base_url }}/api/v1/proposals/{{ _.proposal_id }}/accept/",
+   "name": "PUT me/freelancer-profile",
+   "description": "Creer/mettre a jour mon profil freelance (un tarif exige une devise).",
+   "method": "PUT",
+   "url": "{{ _.base_url }}/api/v1/me/freelancer-profile/",
    "metaSortKey": 1790000000240,
    "headers": [
     {
@@ -5489,10 +5494,10 @@
    "_id": "req_241",
    "_type": "request",
    "parentId": "fld_jobs",
-   "name": "GET me/contracts",
-   "description": "Mes contrats (comme client ou prestataire).",
+   "name": "GET me/proposals",
+   "description": "Mes propositions.",
    "method": "GET",
-   "url": "{{ _.base_url }}/api/v1/me/contracts/",
+   "url": "{{ _.base_url }}/api/v1/me/proposals/",
    "metaSortKey": 1790000000241,
    "headers": [],
    "parameters": [],
@@ -5507,14 +5512,23 @@
    "_id": "req_242",
    "_type": "request",
    "parentId": "fld_jobs",
-   "name": "GET contracts/<uuid:contract_id>",
-   "description": "Detail d'un contrat (parties uniquement).",
-   "method": "GET",
-   "url": "{{ _.base_url }}/api/v1/contracts/{{ _.contract_id }}/",
+   "name": "POST proposals/<uuid:proposal_id>/accept",
+   "description": "[Client] Accepter une proposition : cree le contrat et ses jalons (leur somme doit egaler l'offre), refuse les autres propositions, marque la mission pourvue.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/proposals/{{ _.proposal_id }}/accept/",
    "metaSortKey": 1790000000242,
-   "headers": [],
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
    "parameters": [],
    "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{}"
+   },
    "authentication": {
     "type": "bearer",
     "token": "{{ _.access }}",
@@ -5525,11 +5539,47 @@
    "_id": "req_243",
    "_type": "request",
    "parentId": "fld_jobs",
+   "name": "GET me/contracts",
+   "description": "Mes contrats (comme client ou prestataire).",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/me/contracts/",
+   "metaSortKey": 1790000000243,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_244",
+   "_type": "request",
+   "parentId": "fld_jobs",
+   "name": "GET contracts/<uuid:contract_id>",
+   "description": "Detail d'un contrat (parties uniquement).",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/contracts/{{ _.contract_id }}/",
+   "metaSortKey": 1790000000244,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_245",
+   "_type": "request",
+   "parentId": "fld_jobs",
    "name": "POST contracts/<uuid:contract_id>/terminate",
    "description": "Resilier un contrat (l'une des parties).",
    "method": "POST",
    "url": "{{ _.base_url }}/api/v1/contracts/{{ _.contract_id }}/terminate/",
-   "metaSortKey": 1790000000243,
+   "metaSortKey": 1790000000245,
    "headers": [
     {
      "name": "Content-Type",
@@ -5545,14 +5595,14 @@
    }
   },
   {
-   "_id": "req_244",
+   "_id": "req_246",
    "_type": "request",
    "parentId": "fld_jobs",
    "name": "POST milestones/<uuid:milestone_id>/advance",
    "description": "Faire avancer un jalon : start et submit par le prestataire, approve par le client. Le contrat se termine quand tous les jalons sont valides.",
    "method": "POST",
    "url": "{{ _.base_url }}/api/v1/milestones/{{ _.milestone_id }}/advance/",
-   "metaSortKey": 1790000000244,
+   "metaSortKey": 1790000000246,
    "headers": [
     {
      "name": "Content-Type",
@@ -5572,14 +5622,14 @@
    }
   },
   {
-   "_id": "req_245",
+   "_id": "req_247",
    "_type": "request",
    "parentId": "fld_advertising",
    "name": "POST ads/accounts",
    "description": "Creer mon compte annonceur et son portefeuille prepaye.",
    "method": "POST",
    "url": "{{ _.base_url }}/api/v1/ads/accounts/",
-   "metaSortKey": 1790000000245,
+   "metaSortKey": 1790000000247,
    "headers": [
     {
      "name": "Content-Type",
@@ -5599,14 +5649,14 @@
    }
   },
   {
-   "_id": "req_246",
+   "_id": "req_248",
    "_type": "request",
    "parentId": "fld_advertising",
    "name": "GET me/ads/accounts",
    "description": "Mes comptes annonceur.",
    "method": "GET",
    "url": "{{ _.base_url }}/api/v1/me/ads/accounts/",
-   "metaSortKey": 1790000000246,
+   "metaSortKey": 1790000000248,
    "headers": [],
    "parameters": [],
    "settingSendCookies": false,
@@ -5617,14 +5667,14 @@
    }
   },
   {
-   "_id": "req_247",
+   "_id": "req_249",
    "_type": "request",
    "parentId": "fld_advertising",
    "name": "POST admin/ads/accounts/<uuid:account_id>/topup",
    "description": "[Administration] Crediter un portefeuille (virement verifie). reference unique : un rejeu ne credite pas deux fois.",
    "method": "POST",
    "url": "{{ _.base_url }}/api/v1/admin/ads/accounts/{{ _.account_id }}/topup/",
-   "metaSortKey": 1790000000247,
+   "metaSortKey": 1790000000249,
    "headers": [
     {
      "name": "Content-Type",
@@ -5644,14 +5694,14 @@
    }
   },
   {
-   "_id": "req_248",
+   "_id": "req_250",
    "_type": "request",
    "parentId": "fld_advertising",
    "name": "GET ads/campaigns",
    "description": "Mes campagnes.",
    "method": "GET",
    "url": "{{ _.base_url }}/api/v1/ads/campaigns/",
-   "metaSortKey": 1790000000248,
+   "metaSortKey": 1790000000250,
    "headers": [],
    "parameters": [],
    "settingSendCookies": false,
@@ -5662,14 +5712,14 @@
    }
   },
   {
-   "_id": "req_249",
+   "_id": "req_251",
    "_type": "request",
    "parentId": "fld_advertising",
    "name": "POST ads/campaigns",
    "description": "Creer une campagne (brouillon).",
    "method": "POST",
    "url": "{{ _.base_url }}/api/v1/ads/campaigns/",
-   "metaSortKey": 1790000000249,
+   "metaSortKey": 1790000000251,
    "headers": [
     {
      "name": "Content-Type",
@@ -5689,14 +5739,14 @@
    }
   },
   {
-   "_id": "req_250",
+   "_id": "req_252",
    "_type": "request",
    "parentId": "fld_advertising",
    "name": "POST ads/campaigns/<uuid:campaign_id>/ad-sets",
    "description": "Creer un groupe d'annonces. Ciblage = regles ET entre elles (in = OU, all = ET, not_in = NON) ; criteres limites a une liste blanche, AUCUNE donnee sensible. frequency_cap_per_day : impressions max par utilisateur et par jour.",
    "method": "POST",
    "url": "{{ _.base_url }}/api/v1/ads/campaigns/{{ _.campaign_id }}/ad-sets/",
-   "metaSortKey": 1790000000250,
+   "metaSortKey": 1790000000252,
    "headers": [
     {
      "name": "Content-Type",
@@ -5716,61 +5766,20 @@
    }
   },
   {
-   "_id": "req_251",
+   "_id": "req_253",
    "_type": "request",
    "parentId": "fld_advertising",
    "name": "POST ads/campaigns/<uuid:campaign_id>/activate",
    "description": "Activer la campagne (portefeuille non vide et au moins une annonce validee).",
    "method": "POST",
    "url": "{{ _.base_url }}/api/v1/ads/campaigns/{{ _.campaign_id }}/activate/",
-   "metaSortKey": 1790000000251,
-   "headers": [
-    {
-     "name": "Content-Type",
-     "value": "application/json"
-    }
-   ],
-   "parameters": [],
-   "settingSendCookies": false,
-   "authentication": {
-    "type": "bearer",
-    "token": "{{ _.access }}",
-    "prefix": ""
-   }
-  },
-  {
-   "_id": "req_252",
-   "_type": "request",
-   "parentId": "fld_advertising",
-   "name": "POST ads/campaigns/<uuid:campaign_id>/pause",
-   "description": "Mettre la campagne en pause.",
-   "method": "POST",
-   "url": "{{ _.base_url }}/api/v1/ads/campaigns/{{ _.campaign_id }}/pause/",
-   "metaSortKey": 1790000000252,
-   "headers": [
-    {
-     "name": "Content-Type",
-     "value": "application/json"
-    }
-   ],
-   "parameters": [],
-   "settingSendCookies": false,
-   "authentication": {
-    "type": "bearer",
-    "token": "{{ _.access }}",
-    "prefix": ""
-   }
-  },
-  {
-   "_id": "req_253",
-   "_type": "request",
-   "parentId": "fld_advertising",
-   "name": "GET ads/campaigns/<uuid:campaign_id>/stats",
-   "description": "Statistiques d'une campagne (depense reglee, impressions, clics, CTR, budget restant) et solde du portefeuille.",
-   "method": "GET",
-   "url": "{{ _.base_url }}/api/v1/ads/campaigns/{{ _.campaign_id }}/stats/",
    "metaSortKey": 1790000000253,
-   "headers": [],
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
    "parameters": [],
    "settingSendCookies": false,
    "authentication": {
@@ -5783,11 +5792,52 @@
    "_id": "req_254",
    "_type": "request",
    "parentId": "fld_advertising",
+   "name": "POST ads/campaigns/<uuid:campaign_id>/pause",
+   "description": "Mettre la campagne en pause.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/ads/campaigns/{{ _.campaign_id }}/pause/",
+   "metaSortKey": 1790000000254,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_255",
+   "_type": "request",
+   "parentId": "fld_advertising",
+   "name": "GET ads/campaigns/<uuid:campaign_id>/stats",
+   "description": "Statistiques d'une campagne (depense reglee, impressions, clics, CTR, budget restant) et solde du portefeuille.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/ads/campaigns/{{ _.campaign_id }}/stats/",
+   "metaSortKey": 1790000000255,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_256",
+   "_type": "request",
+   "parentId": "fld_advertising",
    "name": "POST ads/creatives",
    "description": "Creer une creation publicitaire (https obligatoire ; image/video : fichier envoye, usage 'ad_creative').",
    "method": "POST",
    "url": "{{ _.base_url }}/api/v1/ads/creatives/",
-   "metaSortKey": 1790000000254,
+   "metaSortKey": 1790000000256,
    "headers": [
     {
      "name": "Content-Type",
@@ -5807,14 +5857,14 @@
    }
   },
   {
-   "_id": "req_255",
+   "_id": "req_257",
    "_type": "request",
    "parentId": "fld_advertising",
    "name": "POST ads/ad-sets/<uuid:ad_set_id>/ads",
    "description": "Creer une annonce (creation + groupe d'annonces).",
    "method": "POST",
    "url": "{{ _.base_url }}/api/v1/ads/ad-sets/{{ _.ad_set_id }}/ads/",
-   "metaSortKey": 1790000000255,
+   "metaSortKey": 1790000000257,
    "headers": [
     {
      "name": "Content-Type",
@@ -5834,14 +5884,14 @@
    }
   },
   {
-   "_id": "req_256",
+   "_id": "req_258",
    "_type": "request",
    "parentId": "fld_advertising",
    "name": "POST ads/ads/<uuid:ad_id>/submit",
    "description": "Soumettre l'annonce a la moderation (aucune annonce ne diffuse sans validation humaine).",
    "method": "POST",
    "url": "{{ _.base_url }}/api/v1/ads/ads/{{ _.ad_id }}/submit/",
-   "metaSortKey": 1790000000256,
+   "metaSortKey": 1790000000258,
    "headers": [
     {
      "name": "Content-Type",
@@ -5857,14 +5907,14 @@
    }
   },
   {
-   "_id": "req_257",
+   "_id": "req_259",
    "_type": "request",
    "parentId": "fld_advertising",
    "name": "GET admin/ads/review-queue",
    "description": "[Moderation] File des annonces a valider.",
    "method": "GET",
    "url": "{{ _.base_url }}/api/v1/admin/ads/review-queue/",
-   "metaSortKey": 1790000000257,
+   "metaSortKey": 1790000000259,
    "headers": [],
    "parameters": [],
    "settingSendCookies": false,
@@ -5875,14 +5925,14 @@
    }
   },
   {
-   "_id": "req_258",
+   "_id": "req_260",
    "_type": "request",
    "parentId": "fld_advertising",
    "name": "POST admin/ads/<uuid:ad_id>/review",
    "description": "[Moderation] Valider ou refuser une annonce.",
    "method": "POST",
    "url": "{{ _.base_url }}/api/v1/admin/ads/{{ _.ad_id }}/review/",
-   "metaSortKey": 1790000000258,
+   "metaSortKey": 1790000000260,
    "headers": [
     {
      "name": "Content-Type",
@@ -5902,14 +5952,14 @@
    }
   },
   {
-   "_id": "req_259",
+   "_id": "req_261",
    "_type": "request",
    "parentId": "fld_advertising",
    "name": "POST ads/audiences",
    "description": "Creer une audience personnalisee.",
    "method": "POST",
    "url": "{{ _.base_url }}/api/v1/ads/audiences/",
-   "metaSortKey": 1790000000259,
+   "metaSortKey": 1790000000261,
    "headers": [
     {
      "name": "Content-Type",
@@ -5929,14 +5979,14 @@
    }
   },
   {
-   "_id": "req_260",
+   "_id": "req_262",
    "_type": "request",
    "parentId": "fld_advertising",
    "name": "POST ads/audiences/<uuid:audience_id>/members",
    "description": "Ajouter des utilisateurs (pseudos) a une de mes audiences.",
    "method": "POST",
    "url": "{{ _.base_url }}/api/v1/ads/audiences/{{ _.audience_id }}/members/",
-   "metaSortKey": 1790000000260,
+   "metaSortKey": 1790000000262,
    "headers": [
     {
      "name": "Content-Type",
@@ -5956,14 +6006,14 @@
    }
   },
   {
-   "_id": "req_261",
+   "_id": "req_263",
    "_type": "request",
    "parentId": "fld_advertising",
    "name": "GET ads/serve",
    "description": "Annonces a afficher a cet emplacement (classees par valeur, respect du ciblage, du plafond de frequence et des budgets). Chaque annonce porte un impression_id a rapporter via /ads/impressions/.",
    "method": "GET",
    "url": "{{ _.base_url }}/api/v1/ads/serve/?placement=feed",
-   "metaSortKey": 1790000000261,
+   "metaSortKey": 1790000000263,
    "headers": [],
    "parameters": [],
    "settingSendCookies": false,
@@ -5974,14 +6024,14 @@
    }
   },
   {
-   "_id": "req_262",
+   "_id": "req_264",
    "_type": "request",
    "parentId": "fld_advertising",
    "name": "POST ads/impressions",
    "description": "Rapporter qu'une annonce a ete AFFICHEE (compte une seule fois par impression_id ; plafond de frequence et budget appliques).",
    "method": "POST",
    "url": "{{ _.base_url }}/api/v1/ads/impressions/",
-   "metaSortKey": 1790000000262,
+   "metaSortKey": 1790000000264,
    "headers": [
     {
      "name": "Content-Type",
@@ -6001,71 +6051,26 @@
    }
   },
   {
-   "_id": "req_263",
+   "_id": "req_265",
    "_type": "request",
    "parentId": "fld_advertising",
    "name": "POST ads/clicks",
    "description": "Rapporter un CLIC (une impression connue, du meme utilisateur, de moins de 24 h ; un clic par impression). Renvoie l'URL de destination.",
    "method": "POST",
    "url": "{{ _.base_url }}/api/v1/ads/clicks/",
-   "metaSortKey": 1790000000263,
-   "headers": [
-    {
-     "name": "Content-Type",
-     "value": "application/json"
-    }
-   ],
-   "parameters": [],
-   "settingSendCookies": false,
-   "body": {
-    "mimeType": "application/json",
-    "text": "{\n  \"impression_id\": \"exemple\"\n}"
-   },
-   "authentication": {
-    "type": "bearer",
-    "token": "{{ _.access }}",
-    "prefix": ""
-   }
-  },
-  {
-   "_id": "req_264",
-   "_type": "request",
-   "parentId": "fld_advertising",
-   "name": "POST ads/conversions",
-   "description": "Rapporter une CONVERSION attribuee a un clic (fenetre de 7 jours, une par clic).",
-   "method": "POST",
-   "url": "{{ _.base_url }}/api/v1/ads/conversions/",
-   "metaSortKey": 1790000000264,
-   "headers": [
-    {
-     "name": "Content-Type",
-     "value": "application/json"
-    }
-   ],
-   "parameters": [],
-   "settingSendCookies": false,
-   "body": {
-    "mimeType": "application/json",
-    "text": "{\n  \"impression_id\": \"exemple\"\n}"
-   },
-   "authentication": {
-    "type": "bearer",
-    "token": "{{ _.access }}",
-    "prefix": ""
-   }
-  },
-  {
-   "_id": "req_265",
-   "_type": "request",
-   "parentId": "fld_advertising",
-   "name": "GET me/ad-preferences",
-   "description": "Mes preferences publicitaires.",
-   "method": "GET",
-   "url": "{{ _.base_url }}/api/v1/me/ad-preferences/",
    "metaSortKey": 1790000000265,
-   "headers": [],
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
    "parameters": [],
    "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"impression_id\": \"exemple\"\n}"
+   },
    "authentication": {
     "type": "bearer",
     "token": "{{ _.access }}",
@@ -6076,11 +6081,56 @@
    "_id": "req_266",
    "_type": "request",
    "parentId": "fld_advertising",
+   "name": "POST ads/conversions",
+   "description": "Rapporter une CONVERSION attribuee a un clic (fenetre de 7 jours, une par clic).",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/ads/conversions/",
+   "metaSortKey": 1790000000266,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"impression_id\": \"exemple\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_267",
+   "_type": "request",
+   "parentId": "fld_advertising",
+   "name": "GET me/ad-preferences",
+   "description": "Mes preferences publicitaires.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/me/ad-preferences/",
+   "metaSortKey": 1790000000267,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_268",
+   "_type": "request",
+   "parentId": "fld_advertising",
    "name": "PUT me/ad-preferences",
    "description": "Accepter ou refuser la publicite personnalisee (refus : seules des annonces SANS ciblage personnel vous sont montrees).",
    "method": "PUT",
    "url": "{{ _.base_url }}/api/v1/me/ad-preferences/",
-   "metaSortKey": 1790000000266,
+   "metaSortKey": 1790000000268,
    "headers": [
     {
      "name": "Content-Type",
@@ -6100,44 +6150,13 @@
    }
   },
   {
-   "_id": "req_267",
+   "_id": "req_269",
    "_type": "request",
    "parentId": "fld_analytics",
    "name": "GET admin/metrics/platform-daily",
    "description": "[Administration] Indicateurs quotidiens de la plateforme (vue materialisee).",
    "method": "GET",
    "url": "{{ _.base_url }}/api/v1/admin/metrics/platform-daily/",
-   "metaSortKey": 1790000000267,
-   "headers": [],
-   "parameters": [],
-   "settingSendCookies": false,
-   "authentication": {
-    "type": "bearer",
-    "token": "{{ _.access }}",
-    "prefix": ""
-   }
-  },
-  {
-   "_id": "req_268",
-   "_type": "request",
-   "parentId": "fld_integrations",
-   "name": "GET integrations/providers",
-   "description": "Fournisseurs externes pris en charge (la connexion n'est pas encore disponible).",
-   "method": "GET",
-   "url": "{{ _.base_url }}/api/v1/integrations/providers/",
-   "metaSortKey": 1790000000268,
-   "headers": [],
-   "parameters": [],
-   "settingSendCookies": false
-  },
-  {
-   "_id": "req_269",
-   "_type": "request",
-   "parentId": "fld_integrations",
-   "name": "GET me/integrations",
-   "description": "Mes comptes externes connectes (jamais les jetons).",
-   "method": "GET",
-   "url": "{{ _.base_url }}/api/v1/me/integrations/",
    "metaSortKey": 1790000000269,
    "headers": [],
    "parameters": [],
@@ -6152,11 +6171,24 @@
    "_id": "req_270",
    "_type": "request",
    "parentId": "fld_integrations",
-   "name": "DELETE me/integrations/<uuid:account_id>",
-   "description": "Deconnecter un de mes comptes externes.",
-   "method": "DELETE",
-   "url": "{{ _.base_url }}/api/v1/me/integrations/{{ _.account_id }}/",
+   "name": "GET integrations/providers",
+   "description": "Fournisseurs externes pris en charge. `available` : la connexion OAuth est-elle configuree sur ce serveur ?",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/integrations/providers/",
    "metaSortKey": 1790000000270,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false
+  },
+  {
+   "_id": "req_271",
+   "_type": "request",
+   "parentId": "fld_integrations",
+   "name": "GET me/integrations",
+   "description": "Mes comptes externes connectes (jamais les jetons).",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/me/integrations/",
+   "metaSortKey": 1790000000271,
    "headers": [],
    "parameters": [],
    "settingSendCookies": false,
@@ -6167,14 +6199,130 @@
    }
   },
   {
-   "_id": "req_271",
+   "_id": "req_272",
+   "_type": "request",
+   "parentId": "fld_integrations",
+   "name": "DELETE me/integrations/<uuid:account_id>",
+   "description": "Deconnecter un de mes comptes externes. Refuse si c'est votre seul moyen de connexion (compte cree via GitHub, sans mot de passe).",
+   "method": "DELETE",
+   "url": "{{ _.base_url }}/api/v1/me/integrations/{{ _.account_id }}/",
+   "metaSortKey": 1790000000272,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_273",
+   "_type": "request",
+   "parentId": "fld_integrations",
+   "name": "POST me/integrations/github/connect",
+   "description": "Lier GitHub a MON compte (connecte), etape 1 : meme principe que la connexion, mais le compte lie sera le mien.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/me/integrations/github/connect/",
+   "metaSortKey": 1790000000273,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_274",
+   "_type": "request",
+   "parentId": "fld_integrations",
+   "name": "GET auth/github/start",
+   "description": "Connexion avec GitHub, etape 1 : renvoie l'adresse GitHub vers laquelle envoyer le navigateur de l'utilisateur.",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/auth/github/start/",
+   "metaSortKey": 1790000000274,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false
+  },
+  {
+   "_id": "req_275",
+   "_type": "request",
+   "parentId": "fld_integrations",
+   "name": "GET auth/github/callback",
+   "description": "Retour de GitHub (adresse declaree dans l'OAuth App). Sans frontend configure : reponse JSON avec un billet a echanger. Avec frontend : redirection vers lui (?ticket=... ou ?error=...).",
+   "method": "GET",
+   "url": "{{ _.base_url }}/api/v1/auth/github/callback/",
+   "metaSortKey": 1790000000275,
+   "headers": [],
+   "parameters": [],
+   "settingSendCookies": false
+  },
+  {
+   "_id": "req_276",
+   "_type": "request",
+   "parentId": "fld_integrations",
+   "name": "POST auth/github/exchange",
+   "description": "Connexion avec GitHub, etape finale : echange le billet (usage unique, 90 s) contre les jetons de connexion.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/auth/github/exchange/",
+   "metaSortKey": 1790000000276,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"ticket\": \"exemple\"\n}"
+   }
+  },
+  {
+   "_id": "req_277",
+   "_type": "request",
+   "parentId": "fld_integrations",
+   "name": "POST media/resolve",
+   "description": "Analyser un lien YouTube, LinkedIn ou GitHub : renvoie le fournisseur, l'adresse propre, et pour YouTube l'adresse du lecteur integre (la video se lit dans l'application). Un depot GitHub est verifie via l'API officielle.",
+   "method": "POST",
+   "url": "{{ _.base_url }}/api/v1/media/resolve/",
+   "metaSortKey": 1790000000277,
+   "headers": [
+    {
+     "name": "Content-Type",
+     "value": "application/json"
+    }
+   ],
+   "parameters": [],
+   "settingSendCookies": false,
+   "body": {
+    "mimeType": "application/json",
+    "text": "{\n  \"url\": \"exemple\"\n}"
+   },
+   "authentication": {
+    "type": "bearer",
+    "token": "{{ _.access }}",
+    "prefix": ""
+   }
+  },
+  {
+   "_id": "req_278",
    "_type": "request",
    "parentId": "fld_core",
    "name": "GET admin/system/status",
    "description": "[Administration] Etat du systeme : interrupteurs de TEST encore actifs (a couper avant la production), quota d'e-mails OTP, SMTP et stockage.",
    "method": "GET",
    "url": "{{ _.base_url }}/api/v1/admin/system/status/",
-   "metaSortKey": 1790000000271,
+   "metaSortKey": 1790000000278,
    "headers": [],
    "parameters": [],
    "settingSendCookies": false,
