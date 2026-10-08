@@ -10,9 +10,10 @@ class DomainError(Exception):
     code = "domain_error"
     status_code = 422
 
-    def __init__(self, message: str, code: str | None = None):
+    def __init__(self, message: str, code: str | None = None, hint: dict | None = None):
         super().__init__(message)
         self.message = message
+        self.hint = hint  # suggestion lisible par le frontend (ex. « ajoutez plutot ce lien »), renvoyee dans error.hint
         if code:
             self.code = code
 
@@ -55,7 +56,10 @@ def api_exception_handler(exc, context):
     from rest_framework import exceptions as drf
 
     if isinstance(exc, DomainError):
-        return Response({"error": {"code": exc.code, "message": exc.message}}, status=exc.status_code)
+        body = {"code": exc.code, "message": exc.message}
+        if getattr(exc, "hint", None):
+            body["hint"] = exc.hint
+        return Response({"error": body}, status=exc.status_code)
     if isinstance(exc, (ObjectDoesNotExist, Http404)):
         return Response({"error": {"code": "not_found", "message": "Ressource introuvable."}}, status=404)
     response = exception_handler(exc, context)

@@ -200,6 +200,33 @@ class LinkEndpointsTests(BaobabTestCase):
                         r = self.block(kind="video", url=f"https://youtu.be/{'abcdefghi' + str(status)[:2]}")
             self.assertEqual(r.json()["error"]["code"], code)
 
+    def test_blocked_embedding_proposes_link_alternative_that_works(self):
+        with mock.patch("apps.integrations.services.requests.get", return_value=Resp(401, {})):
+            r = self.block(kind="video", url="https://youtu.be/abcdefghijk")
+        err = r.json()["error"]
+        self.assertEqual((r.status_code, err["code"], err["hint"]["suggestion"]), (422, "video_not_embeddable", "add_as_link"))
+        alt = err["hint"]["alternative"]
+        self.assertEqual(alt, {"kind": "link", "url": "https://www.youtube.com/watch?v=abcdefghijk"})
+        ok = self.block(**alt)  # le frontend rejoue la proposition telle quelle
+        self.assertEqual(ok.status_code, 201, ok.content)
+        self.assertEqual(self.k.c1.blocks.latest("position").url, alt["url"])
+
+    def test_not_found_has_no_alternative(self):
+        with mock.patch("apps.integrations.services.requests.get", return_value=Resp(404, {})):
+            err = self.block(kind="video", url="https://youtu.be/abcdefghijl").json()["error"]
+        self.assertNotIn("hint", err)
+
+    def test_own_hosted_video_file_works_without_youtube(self):
+        from apps.core.api_testing import upload_file
+
+        fid = upload_file(self.tc, purpose="course_content", content_type="video/mp4", size=5000, filename="cours.mp4")
+        r = self.block(kind="video", title="Mon cours", file=fid)
+        self.assertEqual(r.status_code, 201, r.content)
+        content = self.tc.get(f"/api/v1/chapters/{self.k.c1.pk}/content/").json()
+        vid = [b for b in content["blocks"] if b["kind"] == "video"][-1]
+        self.assertTrue(vid["file_url"])
+        self.assertIsNone(vid["url"] or None)
+
     def test_non_youtube_video_refused(self):
         r = self.block(kind="video", url="https://vimeo.com/123")
         self.assertEqual(r.status_code, 422)

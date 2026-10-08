@@ -95,7 +95,13 @@ POST /api/v1/media/resolve/                            [user]  200
   Erreurs (422 sauf mention) :
     invalid_link, invalid_youtube_link, invalid_linkedin_link, invalid_github_link, unsupported_link
     video_not_found          video supprimee ou privee
-    video_not_embeddable     le proprietaire interdit la lecture hors de YouTube
+    video_not_embeddable     le proprietaire interdit la lecture hors de YouTube. La reponse contient une PROPOSITION :
+                               {"error":{"code":"video_not_embeddable","message":"...",
+                                 "hint":{"suggestion":"add_as_link",
+                                         "message":"Cette video ne peut pas etre lue ici. L'ajouter comme lien vers YouTube ?",
+                                         "alternative":{"kind":"link","url":"https://www.youtube.com/watch?v=..."}}}}
+                               Frontend : afficher hint.message avec un bouton ; au clic, rejouer
+                               POST /chapters/{id}/blocks/ avec le corps  {...le titre, **hint.alternative}  (bloc "link" : l'eleve clique et YouTube s'ouvre).
     repository_not_found     depot inexistant (ou prive)
     repository_private       depot prive
     github_rate_limited (503) limite d'appels GitHub : reessayer plus tard
@@ -184,6 +190,11 @@ POST /api/v1/chapters/{chapter_id}/blocks/             [enseignant]  201
     {"kind":"repository","title":"Code du cours","url":"https://github.com/ada/proj"}
   Lecture : GET /chapters/{id}/content/ renvoie les blocs avec ce payload ; le frontend affiche un <iframe src=payload.embed_url> pour la video
   et une carte (nom, langage, etoiles, lien) pour le depot.
+  VIDEO HEBERGEE PAR VOUS (aucune restriction YouTube) : 1) POST /files/uploads/ {purpose:"course_content", filename:"cours.mp4",
+     content_type:"video/mp4", size_bytes:...} (mp4 ou webm, 500 Mo max) ; 2) PUT direct vers l'URL signee ; 3) POST /files/{id}/complete/ ;
+     4) POST /chapters/{id}/blocks/ {"kind":"video","title":"...","file":"<file_id>"}. GET /chapters/{id}/content/ renvoie alors
+     "file_url" (adresse signee et temporaire) a mettre dans <video controls src=file_url>. Cout : stockage du bucket (Cloudflare R2 : 10 Go gratuits).
+     A reserver a vos propres videos de cours ; pour le reste, preferer YouTube.
   Le payload fourni par le client pour ces types est IGNORE : il est reconstruit par le serveur.
 
 

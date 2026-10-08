@@ -143,7 +143,9 @@ def _youtube_enrich(desc: dict) -> dict:
     if resp.status_code == 404:
         raise DomainError("Video introuvable (supprimee ou privee).", code="video_not_found")
     if resp.status_code in (401, 403):
-        raise DomainError("Le proprietaire de cette video interdit son affichage hors de YouTube.", code="video_not_embeddable")
+        raise DomainError("Le proprietaire de cette video interdit son affichage hors de YouTube.", code="video_not_embeddable",
+                          hint={"suggestion": "add_as_link", "alternative": {"kind": "link", "url": desc["canonical_url"]},
+                                "message": "Cette video ne peut pas etre lue ici. L'ajouter comme lien vers YouTube ?"})
     if resp.status_code != 200:
         return {**desc, "verified": False}
     try:
