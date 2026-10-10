@@ -61,6 +61,8 @@ export function IntroDemo() {
     <main onClick={() => introRef.current?.replay()} style={{ cursor: "default" }}>
       <BaobabIntro
         ref={introRef}
+        // Page de présentation ouverte volontairement : on montre toujours la version complète.
+        respectReducedMotion={false}
         onComplete={() => {
           // Dans l'application réelle : afficher l'écran d'accueil ou de connexion ici.
           console.info("[LE BAOBAB] cinématique terminée");

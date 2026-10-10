@@ -68,10 +68,8 @@
   }
 }
 
+/* La cinématique est toujours jouée en entier (choix produit) : seul le bouton apparaît sans délai. */
 @media (prefers-reduced-motion: reduce) {
-  .overlay[data-phase="leaving"] {
-    transition-duration: 1ms;
-  }
   .skip {
     animation: none;
     opacity: 1;

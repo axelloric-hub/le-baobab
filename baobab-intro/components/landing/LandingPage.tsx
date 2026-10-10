@@ -5,6 +5,7 @@ import { SiteHeader } from "./SiteHeader";
 import { ChannelsSection } from "./sections/ChannelsSection";
 import { CopilotSection } from "./sections/CopilotSection";
 import { CtaBanner } from "./sections/CtaBanner";
+import { ExploreSection } from "./sections/ExploreSection";
 import { FaqSection } from "./sections/FaqSection";
 import { IntegrationsSection } from "./sections/IntegrationsSection";
 import { ProblemSection } from "./sections/ProblemSection";
@@ -34,6 +35,7 @@ export function LandingPage() {
           <IntegrationsSection />
           <SecuritySection />
           <FaqSection />
+          <ExploreSection />
           <CtaBanner />
         </main>
         <SiteFooter />

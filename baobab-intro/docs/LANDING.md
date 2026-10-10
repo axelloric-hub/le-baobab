@@ -43,47 +43,47 @@ Ce document explique la nouvelle page d'accueil, ce qui reste à raccorder et co
   - une seule cascade d'apparition (≈ 0,9 s) ;
   - survols discrets ;
   - aucune animation en boucle ;
-  - tout est désactivé si l'utilisateur a demandé moins d'animations.
+  - les animations de la page (pas la cinématique) sont désactivées si l'utilisateur a demandé moins d'animations.
 - **Serveur d'abord** : seuls l'en-tête (menu mobile), les onglets, les boutons « Voir l'intro » et la cinématique sont des composants clients. Le reste est rendu côté serveur, sans JavaScript.
 
 ## 2. La cinématique est conservée
 
 - Les composants de `components/baobab/` (éclair, tronc, branches, feuilles, ondes, texte, chronologie de 7 s) **n'ont pas été modifiés**. Seul `BaobabMark.tsx` a été ajouté à côté.
-- **Sur `/`** : elle est jouée **une fois par session d'onglet**, puis s'efface en fondu et la landing apparaît.
+- **Sur `/`** : elle est jouée **à chaque ouverture de la page**, en version complète, puis s'efface en fondu et la landing apparaît. C'est un choix produit.
   - Un petit script dans `<head>` (`intro-gate-script.ts`) décide avant le premier affichage. Il n'y a donc pas de clignotement de la landing.
   - Pendant la lecture : « Passer l'intro » ou **Échap** pour la sauter. La page derrière est inerte.
-  - Si le système demande moins d'animations, la landing s'affiche directement.
+  - La version complète est jouée même si Windows ou le navigateur demandent moins d'animations. Le visiteur peut toujours la passer.
 - **Sur `/intro`** : la page de présentation d'hier, inchangée, pour filmer l'écran.
   - R, Espace, Entrée ou un clic relancent l'animation.
   - `?t=4000` fige l'image à 4 s.
 - **Paramètres d'URL de `/`** :
-  - `?intro=1` force la cinématique (pratique pour une démo) ;
   - `?intro=0` la désactive.
 
 ## 3. Boutons et liens : ce qui fonctionne, ce qui attend
 
-Aucune page, route ou parcours n'a été inventé. Il n'existe dans le projet ni page d'inscription, ni pages Plateforme, Communauté, Ressources, Docs ou Blog.
+Aucune page, route ou parcours n'a été inventé. Les pages **Communauté**, **Blog** et **Docs** existent désormais (voir §7) ; il n'existe toujours ni page d'inscription, ni page de connexion.
 
 | Élément | Comportement actuel | À raccorder |
 |---|---|---|
 | **Accueil** | lien réel vers `/` | — |
-| **Plateforme**, **Ressources** | ancres réelles vers les sections « Une place pour chaque bâtisseur » et « Chaque chapitre, le bon support » | — |
-| Communauté, Docs, Blog | visibles, non cliquables (`aria-disabled`, infobulle « Bientôt disponible », étiquette « Bientôt » dans le menu mobile) | ajouter `href` dans `NAV_ITEMS` quand la page existe |
+| **Plateforme**, **Ressources** | sections de l'accueil (`/#plateforme`, `/#integrations`) : défilement direct depuis l'accueil, retour à l'accueil depuis les autres pages | — |
+| **Communauté**, **Docs**, **Blog** | **liens réels** vers `/communaute`, `/docs`, `/blog` (soulignés quand la page est ouverte) | — |
 | **Rejoindre** | **visuel uniquement** : aucune route, aucune action | phase suivante (inscription) |
 | **Créer mon profil** (hero et bandeau) | visuel uniquement : aucun parcours d'inscription n'existe | le relier au futur parcours d'inscription |
 | **Voir l'intro** / **Revoir l'intro** | **rejouent la cinématique** | — |
 | Cartes de fonctionnalités | informatives, pas de lien | pages dédiées |
 | « Rejoindre », « Enseigner », « Proposer », « Recruter », « Publier » (cartes Pour qui) | libellés sans lien, étiquette « Bientôt » | pages dédiées |
 | « Rejoindre un groupe », « Découvrir les cours », « Créer mon portfolio », « Voir les offres », « Explorer les cours » | visuels uniquement | parcours correspondants |
-| Liens du pied de page + Confidentialité, Conditions, Mentions légales | texte simple, non cliquable | ajouter `href` dans `FOOTER` (`sections-content.ts`) |
+| Pied de page : Communauté, Documentation, Créer son compte, Blog | **liens réels** | — |
+| Autres liens du pied de page + Confidentialité, Conditions, Mentions légales | texte simple, non cliquable | ajouter `href` dans `FOOTER` (`sections-content.ts`) |
 | Icône GitHub du pied de page | **lien réel** vers le dépôt public `axelloric-hub/le-baobab` (nouvel onglet) | — |
 
 La page ne contient aucun lien `href="#"` (vérifié automatiquement).
 
-Pour rendre un lien de navigation actif, il suffit de compléter `landing-content.ts` :
+Pour rendre un lien actif, il suffit de compléter son `href` dans `landing-content.ts` (navigation) ou `sections-content.ts` (pied de page) :
 
 ```ts
-{ label: "Docs", href: "/docs" },
+{ label: "Learn", href: "/learn" },
 ```
 
 ## 4. Ligne éditoriale (réécriture du contenu)
@@ -128,6 +128,7 @@ Leur structure vient du `code.html` de l'équipe ; leurs textes ont été entiè
 | Ressources : supports de cours | `sections/IntegrationsSection.tsx` | cible du lien « Ressources » de la navigation |
 | Confidentialité | `sections/SecuritySection.tsx` | uniquement des mesures présentes dans le code |
 | FAQ | `sections/FaqSection.tsx` | accordéon natif `<details>` : une seule réponse ouverte, fonctionne sans JavaScript |
+| Explorer : Communauté, Blog, Docs | `sections/ExploreSection.tsx` | trois cartes entièrement cliquables vers les nouvelles pages |
 | Bandeau d'appel à l'action | `sections/CtaBanner.tsx` | « Revoir l'intro » rejoue la cinématique |
 | Pied de page complet | `sections/SiteFooter.tsx` | 5 colonnes, mentions légales, version, lien GitHub |
 
@@ -215,6 +216,35 @@ npm run build
 | `npm ERR! enoent … package.json` | mauvais dossier : il faut être dans `baobab-intro\baobab-intro` |
 | `Port 3000 is in use` | un autre serveur tourne déjà : le fermer (Ctrl + C), ou lancer `npm run dev -- -p 3001` et ouvrir http://localhost:3001 |
 | `You are using Node.js 18…` | installer Node.js LTS (≥ 20.9) depuis nodejs.org, puis rouvrir le terminal |
-| La cinématique ne se rejoue pas en actualisant | c'est voulu (une fois par session) : utiliser `?intro=1`, « Voir l'intro », ou fermer et rouvrir l'onglet |
-| La landing apparaît sans cinématique ni animation | Windows a « Effets d'animation » désactivé (Paramètres → Accessibilité → Effets visuels) : c'est le mode animations réduites, voulu |
+| Je veux voir la page sans la cinématique (pour travailler dessus) | ouvrir http://localhost:3000/?intro=0 |
+| Les sections apparaissent sans effet au défilement | Windows a « Effets d'animation » désactivé (Paramètres → Accessibilité → Effets visuels). La cinématique, elle, est toujours jouée en entier |
 | Page blanche après une mise à jour | arrêter le serveur, supprimer le dossier `.next`, relancer `npm run dev` |
+
+## 7. Pages Communauté, Blog et Docs
+
+Elles viennent des trois maquettes exportées de Google Stitch. Comme pour l'accueil, **la structure et l'esprit visuel sont repris, pas le code** (ni Tailwind, ni Material Symbols, ni polices Google) : mêmes jetons `--bb-…`, mêmes polices auto-hébergées, même en-tête et même pied de page. La cinématique reste réservée à l'accueil.
+
+| Adresse | Fichiers | Contenu |
+|---|---|---|
+| `/communaute` | `components/pages/community/` | héros + publication d'exemple, 4 outils, entraide (fil de discussion), confidentialité (**choix de visibilité cliquable** : les 7 visibilités réelles du backend), bandeau final |
+| `/blog` | `components/pages/blog/` | héros, **filtres par thème qui filtrent réellement la grille**, article à la une, 6 dossiers annoncés, encart « En coulisses », bandeau final |
+| `/blog/idempotence-webhooks` | `blog/ArticlePage.tsx`, `blog/article-idempotence.ts` | article modèle : barre de progression de lecture, sommaire collant qui suit la lecture, bloc de code coloré avec bouton **Copier**, **Copier le lien**, partage X / LinkedIn / e-mail réels |
+| `/docs` | `components/pages/docs/` | documentation en 3 colonnes : index, contenu, « Sur cette page » ; **recherche réelle** dans les guides (Ctrl + K) ; cycle du développeur ; 7 piliers |
+| `/docs/creer-son-compte` | `docs/DocsAccount.tsx` | guide pas à pas de l'inscription, **fidèle au code** : code à 6 chiffres valable 10 min, 5 essais, 60 s entre deux envois, nom d'utilisateur de 3 à 30 caractères, mot de passe de 10 caractères minimum |
+
+Tous les textes sont dans un fichier par page (`community-content.ts`, `blog-content.ts`, `article-idempotence.ts`, `docs-content.ts`).
+
+**Ce qui a été corrigé par rapport aux maquettes** (règle éditoriale du §4) :
+- aucun chiffre inventé : compteurs de réactions (142, 28 réponses…), « 38 en ligne », « 99,98 % », « des milliers de développeurs » supprimés ;
+- aucune personne présentée comme réelle : les auteurs inventés des articles recommandés sont retirés ; les noms restants figurent uniquement dans des aperçus marqués « Aperçu illustratif » ;
+- pas de dates ni de numéros de version inventés (la version affichée est celle de `package.json`) ;
+- « Synchronisation GitHub », « notifications des groupes par e-mail », « tracking », « chiffrement & clés » retirés : ces fonctions n'existent pas (voir `RESTE_A_FAIRE.md`) ;
+- l'inscription décrite par Stitch (lien valable 15 min, mot de passe de 12 caractères…) a été remplacée par le parcours réel du backend ;
+- l'exemple de code de l'article a été corrigé (application FastAPI déclarée, client Redis asynchrone, clé conservée 24 h, verrou libéré en cas d'échec) et la « signature asymétrique » HMAC (qui est symétrique) rectifiée.
+
+**Boutons sans destination** (inscription, notifications, discussion, réactions, vote d'utilité…) : ils sont affichés comme dans la maquette mais signalés « Bientôt disponible » (`aria-disabled`), exactement comme « Rejoindre ». Les guides de documentation pas encore écrits sont listés avec l'étiquette « Bientôt ».
+
+**Ajouter un guide** : créer `app/docs/<slug>/page.tsx`, puis renseigner `href: "/docs/<slug>"` dans `docs-content.ts` ; il devient cliquable partout (menu, cartes, recherche).
+
+**Publier un article** : ajouter son contenu (sur le modèle de `article-idempotence.ts`), créer `app/blog/<slug>/page.tsx`, puis renseigner `slug` dans `BLOG_POSTS`.
+

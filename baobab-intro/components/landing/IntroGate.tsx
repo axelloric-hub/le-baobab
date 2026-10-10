@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { BaobabIntro } from "@/components/baobab/BaobabIntro";
-import { INTRO_SEEN_STORAGE_KEY, LANDING_ROOT_ID, PLAY_INTRO_EVENT } from "./intro-gate-script";
+import { LANDING_ROOT_ID, PLAY_INTRO_EVENT } from "./intro-gate-script";
 import styles from "./IntroGate.module.css";
 
 /** Temps pendant lequel le logo final reste affiché avant de dévoiler la page. */
@@ -46,11 +46,6 @@ export function IntroGate() {
     window.clearTimeout(holdTimerRef.current);
     document.documentElement.dataset.intro = "done";
     setLandingInert(false);
-    try {
-      sessionStorage.setItem(INTRO_SEEN_STORAGE_KEY, "1");
-    } catch {
-      // stockage indisponible (navigation privée stricte) : la cinématique rejouera, sans gravité
-    }
     setPhase((current) => (current === "playing" ? "leaving" : current));
   }, []);
 
@@ -98,7 +93,8 @@ export function IntroGate() {
     >
       {phase !== "idle" && (
         <>
-          <BaobabIntro key={runId} onComplete={handleComplete} />
+          {/* Choix produit : toujours la cinématique complète, à chaque ouverture du site. */}
+          <BaobabIntro key={runId} onComplete={handleComplete} respectReducedMotion={false} />
           <button type="button" className={styles.skip} onClick={leave}>
             Passer l&apos;intro
           </button>

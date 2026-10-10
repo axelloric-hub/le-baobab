@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
 import { BaobabMark } from "@/components/baobab/BaobabMark";
 import { CloseIcon, MenuIcon } from "./icons";
@@ -10,19 +11,32 @@ import styles from "./SiteHeader.module.css";
 /** Largeur à partir de laquelle la navigation complète est affichée (doit suivre le CSS). */
 const DESKTOP_NAV_QUERY = "(min-width: 1100px)";
 
+/** Lien actif : « / » uniquement sur l'accueil, « /blog » aussi sur « /blog/… ». */
+function isCurrentPage(href: string, pathname: string) {
+  if (href.includes("#")) return false;
+  if (href === "/") return pathname === "/";
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
 function NavEntry({ item, className, onNavigate }: { item: NavItem; className: string; onNavigate?: () => void }) {
-  if (item.href?.startsWith("#")) {
-    // Ancre dans la page : lien HTML natif (défilement du navigateur, sans passer par le routeur).
+  const pathname = usePathname() ?? "/";
+  if (item.href?.startsWith("/#") && pathname === "/") {
+    // Section de la page d'accueil, déjà affichée : ancre HTML native (défilement du navigateur,
+    // sans passer par le routeur ni rejouer la cinématique).
     return (
-      <a href={item.href} className={className} onClick={onNavigate}>
+      <a href={item.href.slice(1)} className={className} onClick={onNavigate}>
         {item.label}
       </a>
     );
   }
   if (item.href) {
-    const isCurrent = item.href === "/";
     return (
-      <Link href={item.href} className={className} aria-current={isCurrent ? "page" : undefined} onClick={onNavigate}>
+      <Link
+        href={item.href}
+        className={className}
+        aria-current={isCurrentPage(item.href, pathname) ? "page" : undefined}
+        onClick={onNavigate}
+      >
         {item.label}
       </Link>
     );

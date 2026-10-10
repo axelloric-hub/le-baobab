@@ -18,17 +18,18 @@ export interface NavItem {
   /**
    * Destination réelle. Laisser `undefined` tant que la page n'existe pas :
    * l'élément reste visible mais n'est pas cliquable (aucun faux lien).
+   * « /#section » = section de la page d'accueil (défilement direct quand on y est déjà).
    */
   href?: string;
 }
 
 export const NAV_ITEMS: NavItem[] = [
   { label: "Accueil", href: "/" },
-  { label: "Plateforme", href: "#plateforme" }, // ancre vers une section de la page
-  { label: "Communauté" }, // à raccorder
-  { label: "Ressources", href: "#integrations" }, // ancre vers une section de la page
-  { label: "Docs" }, // à raccorder
-  { label: "Blog" }, // à raccorder
+  { label: "Plateforme", href: "/#plateforme" }, // section de la page d'accueil
+  { label: "Communauté", href: "/communaute" },
+  { label: "Ressources", href: "/#integrations" }, // section de la page d'accueil
+  { label: "Docs", href: "/docs" },
+  { label: "Blog", href: "/blog" },
 ];
 
 /** Libellé affiché au survol des éléments pas encore raccordés. */

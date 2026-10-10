@@ -26,6 +26,7 @@ export const SECTION_IDS = {
   integrations: "integrations", // cible du lien « Ressources » de la navigation
   security: "securite",
   faq: "faq",
+  explore: "explorer",
   cta: "rejoindre",
 } as const;
 
@@ -381,6 +382,41 @@ export const FAQ = {
 };
 
 /* ------------------------------------------------------------------ */
+/* 8 bis. Explorer : les pages Communauté, Blog et Docs                 */
+/* ------------------------------------------------------------------ */
+
+export type ExploreIcon = "community" | "blog" | "docs";
+
+export const EXPLORE = {
+  eyebrow: "Explorer",
+  title: "Entrez dans le réseau",
+  lead: "Découvrez l'espace d'entraide, le blog et la documentation de LE\u00a0BAOBAB.",
+  cards: [
+    {
+      icon: "community" as ExploreIcon,
+      title: "Communauté",
+      text: "Groupes, canaux, messagerie en temps réel et publications de code\u00a0: l'entraide entre développeurs.",
+      href: "/communaute",
+      action: "Découvrir la communauté",
+    },
+    {
+      icon: "blog" as ExploreIcon,
+      title: "Blog",
+      text: "Tutoriels, parcours de développeurs et idées pour construire en Afrique. Premiers articles en préparation.",
+      href: "/blog",
+      action: "Lire le blog",
+    },
+    {
+      icon: "docs" as ExploreIcon,
+      title: "Docs",
+      text: "Les guides de prise en main, domaine par domaine, à commencer par la création de votre compte.",
+      href: "/docs",
+      action: "Ouvrir la documentation",
+    },
+  ],
+};
+
+/* ------------------------------------------------------------------ */
 /* 9. Bandeau d'appel à l'action                                       */
 /* ------------------------------------------------------------------ */
 
@@ -405,7 +441,7 @@ export const FOOTER = {
   columns: [
     {
       title: "Plateforme",
-      links: [{ label: "Communauté" }, { label: "Learn" }, { label: "Showcase" }, { label: "Opportunités" }, { label: "Boutiques" }] as FooterLink[],
+      links: [{ label: "Communauté", href: "/communaute" }, { label: "Learn" }, { label: "Showcase" }, { label: "Opportunités" }, { label: "Boutiques" }] as FooterLink[],
     },
     {
       title: "Pour qui",
@@ -413,7 +449,7 @@ export const FOOTER = {
     },
     {
       title: "Ressources",
-      links: [{ label: "Guide de démarrage" }, { label: "Vérifier un certificat" }, { label: "Centre d'aide" }, { label: "Nouveautés" }] as FooterLink[],
+      links: [{ label: "Documentation", href: "/docs" }, { label: "Créer son compte", href: "/docs/creer-son-compte" }, { label: "Blog", href: "/blog" }, { label: "Vérifier un certificat" }] as FooterLink[],
     },
     {
       title: "Communauté",

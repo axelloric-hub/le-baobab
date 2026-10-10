@@ -1,6 +1,6 @@
 # Guide de la cinématique LE BAOBAB
 
-> **Depuis la refonte de la landing** : la page de présentation de la cinématique est passée de `/` à **`/intro`** (fichiers `app/intro/`). La page d'accueil `/` affiche désormais la landing, précédée de la cinématique à la première visite. Les composants de la cinématique n'ont pas été modifiés. Détails : `docs/LANDING.md`.
+> **Depuis la refonte de la landing** : la page de présentation de la cinématique est passée de `/` à **`/intro`** (fichiers `app/intro/`). La page d'accueil `/` affiche désormais la landing, précédée de la cinématique à chaque ouverture. Les composants de la cinématique n'ont pas été modifiés. Détails : `docs/LANDING.md`.
 
 Ce guide s'adresse à quelqu'un qui sait coder mais n'a jamais animé de SVG. Il couvre le fonctionnement, les réglages, l'intégration dans le frontend et la présentation vidéo.
 
