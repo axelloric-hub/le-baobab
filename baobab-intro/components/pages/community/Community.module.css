@@ -1,0 +1,442 @@
+/* Page Communauté — styles propres (les primitives sont dans ../shared/Pages.module.css). */
+
+/* ---------- Héros : publication d'exemple ---------- */
+
+.feed {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 600px;
+  width: 100%;
+  margin-inline: auto;
+}
+
+.postHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--bb-line);
+}
+
+.postAuthorBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-width: 0;
+}
+
+.postAuthor {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--bb-brown-950);
+}
+
+.dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(111, 44, 14, 0.3);
+}
+
+.postWhen {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--bb-ink-muted);
+}
+
+.postText {
+  margin: 0;
+  font-size: 14.5px;
+  line-height: 1.65;
+  color: var(--bb-brown-950);
+}
+
+.postActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  margin: 0;
+  padding: 14px 0 0;
+  border-top: 1px solid var(--bb-line);
+  list-style: none;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--bb-ink-soft);
+}
+
+.postActions li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.postActions svg {
+  width: 17px;
+  height: 17px;
+  color: var(--bb-blue-600);
+}
+
+.reply {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px;
+  border-radius: var(--bb-radius-md);
+  background: rgba(246, 240, 231, 0.7);
+}
+
+.reply p {
+  margin: 3px 0 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--bb-brown-950);
+}
+
+.reply strong {
+  color: var(--bb-brown-800);
+}
+
+.feed .illustrative,
+.feed figcaption {
+  margin-top: -4px;
+}
+
+/* ---------- Outils & échanges ---------- */
+
+.toolGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: clamp(16px, 2vw, 28px);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.toolCard {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: clamp(24px, 2.6vw, 32px);
+  border: 1px solid var(--bb-line);
+  border-radius: var(--bb-radius-lg);
+  background: var(--bb-surface);
+  box-shadow: var(--bb-shadow-sm);
+  transition:
+    box-shadow 220ms ease,
+    border-color 220ms ease;
+}
+
+.toolCard:hover {
+  border-color: var(--bb-line-strong);
+  box-shadow: var(--bb-shadow-md);
+}
+
+.toolIcon {
+  display: inline-grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  margin-bottom: 20px;
+  border-radius: 50%;
+  background: var(--bb-blue-600);
+  color: #fff;
+  box-shadow: 0 8px 18px -10px rgba(37, 99, 235, 0.8);
+}
+
+.toolIcon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.toolTitle {
+  margin: 0 0 8px;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  color: var(--bb-brown-800);
+}
+
+.toolText {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--bb-ink-soft);
+}
+
+/* ---------- Entraide : fil de discussion ---------- */
+
+.thread {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.threadHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 12px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--bb-line);
+}
+
+.threadHeader > div {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.threadIcon {
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: var(--bb-brown-800);
+  color: #fff;
+}
+
+.threadIcon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.threadLabel {
+  font-size: 11.5px;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--bb-ink-muted);
+}
+
+.threadChannel {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--bb-brown-800);
+}
+
+.threadStatus {
+  margin-left: auto;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--bb-blue-100);
+  color: var(--bb-blue-700);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.question,
+.answer {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  border-radius: 16px;
+}
+
+.question {
+  border: 1px solid var(--bb-line);
+  background: var(--bb-canvas);
+}
+
+.answer {
+  margin-left: clamp(0px, 3vw, 18px);
+  border: 1px solid #d0e0fd;
+  border-radius: 14px;
+  background: var(--bb-blue-50);
+}
+
+.messageMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 12px;
+  color: var(--bb-ink-muted);
+}
+
+.messageMeta strong {
+  color: var(--bb-brown-950);
+}
+
+.answerBadge {
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: var(--bb-surface);
+  color: var(--bb-blue-700);
+  font-family: ui-monospace, "Cascadia Code", "SF Mono", Menlo, Consolas, monospace;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.messageTime {
+  margin-left: auto;
+}
+
+.messageText {
+  margin: 0;
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: var(--bb-brown-950);
+}
+
+/* ---------- Confidentialité : choix de visibilité ---------- */
+
+.visibility {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.visibilityLegend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin-bottom: 14px;
+  padding: 0 0 12px;
+  border-bottom: 1px solid var(--bb-line);
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--bb-brown-800);
+}
+
+.visibilityLegend svg {
+  width: 20px;
+  height: 20px;
+}
+
+.visibilityList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.visibilityOption {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 46px;
+  padding: 8px 12px;
+  border: 1px solid var(--bb-line);
+  border-radius: var(--bb-radius-md);
+  background: var(--bb-surface);
+  cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease;
+}
+
+.visibilityOption:hover {
+  background: var(--bb-canvas);
+}
+
+.visibilityOption[data-checked] {
+  border-color: var(--bb-blue-600);
+  background: var(--bb-blue-50);
+}
+
+.visibilityOption:has(:focus-visible) {
+  box-shadow: var(--bb-focus-ring);
+}
+
+.visibilityInput {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.visibilityIcon {
+  flex: none;
+  width: 19px;
+  height: 19px;
+  color: var(--bb-ink-muted);
+}
+
+.visibilityLabel {
+  flex: 1;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--bb-brown-950);
+}
+
+.visibilityOption[data-checked] .visibilityIcon,
+.visibilityOption[data-checked] .visibilityLabel {
+  color: var(--bb-blue-700);
+}
+
+.visibilityRadio {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid rgba(111, 44, 14, 0.3);
+  border-radius: 50%;
+  color: #fff;
+}
+
+.visibilityOption[data-checked] .visibilityRadio {
+  border-color: var(--bb-blue-600);
+  background: var(--bb-blue-600);
+}
+
+.visibilityRadio svg {
+  width: 12px;
+  height: 12px;
+  stroke-width: 2.6;
+}
+
+.visibilityFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--bb-line);
+}
+
+.visibilityFooter > span {
+  margin-top: 0;
+}
+
+.smallBrownButton {
+  min-height: 38px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--bb-brown-700);
+  color: #fff;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: default;
+}
+
+.smallBrownButton:hover {
+  background: var(--bb-brown-500);
+}
+
+.smallBrownButton:focus-visible {
+  outline: none;
+  box-shadow: var(--bb-focus-ring);
+}
+
+@media (min-width: 768px) {
+  .toolGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
