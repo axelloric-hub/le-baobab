@@ -1,0 +1,79 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: none;
+  /* Même bleu nuit que le début de la cinématique : aucune différence visible avant son démarrage. */
+  background: #050b18;
+  opacity: 1;
+}
+
+/* Avant l'hydratation, le script de <head> a déjà décidé : le voile est affiché sans attendre React. */
+:global(html[data-intro="play"]) .overlay,
+.overlay[data-phase="playing"],
+.overlay[data-phase="leaving"] {
+  display: block;
+}
+
+.overlay[data-phase="playing"][data-entry="replay"] {
+  animation: overlayIn 220ms ease-out;
+}
+
+.overlay[data-phase="leaving"] {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 650ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.skip {
+  position: absolute;
+  right: clamp(16px, 3vw, 32px);
+  bottom: clamp(16px, 3vw, 28px);
+  z-index: 2;
+  padding: 9px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 999px;
+  background: rgba(8, 18, 38, 0.42);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: rgba(255, 255, 255, 0.92);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  opacity: 0;
+  animation: skipIn 300ms ease-out 600ms forwards;
+  transition: background-color 160ms ease;
+}
+
+.skip:hover {
+  background: rgba(8, 18, 38, 0.62);
+}
+
+.skip:focus-visible {
+  outline: 2px solid #7fb2ff;
+  outline-offset: 3px;
+}
+
+@keyframes overlayIn {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes skipIn {
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .overlay[data-phase="leaving"] {
+    transition-duration: 1ms;
+  }
+  .skip {
+    animation: none;
+    opacity: 1;
+  }
+}
