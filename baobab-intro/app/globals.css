@@ -1,0 +1,106 @@
+/*
+ * LE BAOBAB — jetons de design globaux.
+ * Palette dérivée du logo officiel (brun #8A3A12, bleu #3479EE) et du DESIGN.md.
+ * Toutes les couleurs de la landing passent par ces variables.
+ */
+:root {
+  /* Surfaces chaudes */
+  --bb-canvas: #fbf8f3; /* fond ivoire */
+  --bb-canvas-deep: #f6f0e7;
+  --bb-surface: #ffffff;
+  --bb-surface-warm: #fffdf9;
+  --bb-sand: #f3ede4; /* bandeau inférieur, survols */
+  --bb-bone: #e9e1d5;
+
+  /* Brun du baobab */
+  --bb-brown-950: #2a140a; /* texte principal (brun presque noir) */
+  --bb-brown-800: #5a2410; /* titre */
+  --bb-brown-700: #6f2c0e; /* bouton principal */
+  --bb-brown-600: #8a3a12; /* brun du logo */
+  --bb-brown-500: #9a4a1f; /* survol bouton principal */
+  --bb-ink-soft: #4a3b33; /* texte secondaire */
+  --bb-ink-muted: #6e5f56; /* texte tertiaire (contraste AA sur ivoire) */
+
+  /* Bleu technologique */
+  --bb-blue-700: #1f56d6;
+  --bb-blue-600: #2563eb;
+  --bb-blue-500: #3479ee; /* bleu du logo */
+  --bb-blue-200: #c9dafc;
+  --bb-blue-100: #e3ecfe;
+  --bb-blue-50: #f0f5ff;
+  --bb-network: #8fb2f2; /* motif de fond */
+
+  /* Lignes, ombres, rayons */
+  --bb-line: rgba(111, 44, 14, 0.1);
+  --bb-line-strong: rgba(111, 44, 14, 0.16);
+  --bb-shadow-sm: 0 1px 2px rgba(42, 20, 10, 0.05), 0 2px 8px -2px rgba(42, 20, 10, 0.05);
+  --bb-shadow-md: 0 2px 4px rgba(42, 20, 10, 0.04), 0 14px 32px -12px rgba(42, 20, 10, 0.14);
+  --bb-shadow-lg: 0 4px 10px rgba(42, 20, 10, 0.05), 0 24px 48px -18px rgba(42, 20, 10, 0.2);
+  --bb-shadow-button: 0 1px 0 rgba(255, 255, 255, 0.16) inset, 0 8px 20px -8px rgba(111, 44, 14, 0.55);
+  --bb-radius-sm: 8px;
+  --bb-radius-md: 12px;
+  --bb-radius-lg: 18px;
+
+  --bb-focus-ring: 0 0 0 3px var(--bb-canvas), 0 0 0 5px var(--bb-blue-600);
+  --bb-ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
+
+  color-scheme: light;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+body {
+  min-height: 100dvh;
+  background: var(--bb-canvas);
+  color: var(--bb-brown-950);
+  font-family: var(--font-inter), system-ui, "Segoe UI", Roboto, Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Pendant la cinématique d'ouverture, la page ne défile pas. */
+html[data-intro="play"] body {
+  overflow: hidden;
+}
+
+::selection {
+  background: var(--bb-brown-700);
+  color: #fff;
+}
+
+/* Texte réservé aux lecteurs d'écran. */
+.bb-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}

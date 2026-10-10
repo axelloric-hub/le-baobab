@@ -1,0 +1,209 @@
+LE BAOBAB - NOUVEAUX ENDPOINTS (connexion GitHub, liens YouTube / LinkedIn / GitHub, devoirs corriges par Gemini)
+==============================================================================
+7 nouveaux endpoints + des champs ajoutes a des endpoints existants.
+Base : https://baobab-router.pages.dev  (jamais l'adresse onrender.com). Toutes les routes commencent par /api/v1/.
+Erreurs : toujours {"error":{"code","message","fields"}}. Se baser sur error.code.
+La liste complete et a jour de TOUS les endpoints reste docs/ENDPOINTS_POUR_DEV_BACKEND.txt (278 endpoints).
+
+
+==============================================================================
+A. SE CONNECTER AVEC GITHUB
+==============================================================================
+Parcours (le frontend ne manipule JAMAIS le secret GitHub, et les jetons JWT ne passent jamais par une URL) :
+
+  1. Frontend  -> GET  /auth/github/start/                      -> {authorize_url}
+  2. Frontend  -> redirige le navigateur vers authorize_url (page GitHub : "Autoriser LE BAOBAB")
+  3. GitHub    -> renvoie le navigateur sur /auth/github/callback/?code=...&state=...
+  4. Callback  -> (si GITHUB_LOGIN_FRONTEND_URL est configure) redirige vers  <frontend>?ticket=XXXX
+                  (en cas d'echec : <frontend>?error=<code>)
+                  (sinon, pour tester avec Insomnia : repond en JSON {ticket, account_created})
+  5. Frontend  -> POST /auth/github/exchange/ {ticket}           -> {user, access, refresh}   (comme /auth/login/)
+
+------------------------------------------------------------------------------
+GET /api/v1/auth/github/start/                         [public]  200
+  Renvoie l'adresse GitHub a ouvrir. Limite : 30 demandes / 10 min / IP.
+  Reponse : {"authorize_url": "https://github.com/login/oauth/authorize?client_id=...&state=...", "expires_in_seconds": 600}
+  Erreurs : 503 github_not_configured (variables GITHUB_* absentes sur Render) ; 429.
+
+GET /api/v1/auth/github/callback/?code=&state=         [public]  200 ou 302
+  Adresse DECLAREE dans l'OAuth App GitHub (c'est GitHub qui l'appelle, pas le frontend).
+  JSON : {"ticket": "...", "account_created": true|false, "next": "..."}
+  Le "state" est a usage unique et expire en 10 min (protection anti-CSRF).
+  Erreurs (en JSON, ou ?error= dans la redirection) :
+    github_state_invalid        demande expiree ou deja utilisee : recommencer
+    github_code_invalid         code GitHub expire ou deja utilise
+    github_access_denied        l'utilisateur a refuse sur GitHub
+    github_email_unverified     aucun e-mail VERIFIE sur le compte GitHub
+    email_taken_connect_instead un compte LE BAOBAB existe deja avec cet e-mail (409) : pas de fusion automatique ;
+                                l'utilisateur se connecte avec son mot de passe puis lie GitHub (section B)
+    account_suspended / account_gone
+
+POST /api/v1/auth/github/exchange/                     [public]  200
+  Corps : {"ticket": "<ticket du callback>"}
+  Reponse : {"user": {...}, "access": "...", "refresh": "..."}
+  Le ticket vaut 90 s et ne sert qu'UNE fois. Erreur : 422 ticket_invalid.
+
+Notes :
+  - Premiere connexion : le compte est CREE automatiquement (e-mail verifie par GitHub => compte directement actif, sans OTP).
+    Le nom d'utilisateur vient du login GitHub (suffixe numerique en cas de doublon). Pas de mot de passe (compte "sans mot de passe").
+  - Permissions demandees a GitHub : read:user user:email uniquement (aucun acces aux depots).
+
+
+==============================================================================
+B. LIER / DELIER GITHUB SUR UN COMPTE EXISTANT
+==============================================================================
+POST /api/v1/me/integrations/github/connect/           [user]  200
+  Meme parcours que ci-dessus, mais pour MON compte. Reponse : {"authorize_url": "...", "expires_in_seconds": 600}
+  Au retour sur le callback : JSON {"connected": true, "github_login": "..."} (ou ?linked=github dans la redirection).
+  Erreurs : 409 github_already_linked (ce GitHub appartient a un autre compte) ;
+            409 github_already_connected (un autre GitHub est deja lie : le delier d'abord).
+  Interet : le depot ajoute au portfolio est marque "owner_verified" s'il appartient bien a ce GitHub.
+
+Deja existants (inchanges) :
+  GET    /api/v1/me/integrations/            -> mes comptes lies (jamais les jetons)
+  DELETE /api/v1/me/integrations/{id}/       -> delier. 409 set_password_first si le compte n'a pas de mot de passe
+                                                (cree via GitHub) : utiliser d'abord "mot de passe oublie" pour en definir un.
+  GET    /api/v1/integrations/providers/     -> "available": true pour github quand le serveur est configure
+
+
+==============================================================================
+C. ANALYSER UN LIEN (YouTube / LinkedIn / GitHub)
+==============================================================================
+POST /api/v1/media/resolve/                            [user]  200
+  Corps : {"url": "https://youtu.be/dQw4w9WgXcQ?t=90"}
+  Utile pour afficher un APERCU avant d'enregistrer. Limite : 60 / heure / utilisateur.
+  Le SERVEUR reconstruit toutes les adresses : une adresse fournie par le client n'est jamais affichee telle quelle.
+
+  YouTube (video) -> {
+     "provider":"youtube","kind":"video","video_id":"dQw4w9WgXcQ","start_seconds":90,
+     "canonical_url":"https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+     "embed_url":"https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?rel=0&start=90",     <-- a mettre dans un <iframe>
+     "thumbnail_url":"https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
+     "title":"...","author":"...","verified":true }
+  Formats acceptes : youtube.com/watch?v=, youtu.be/, /shorts/, /embed/, /live/, playlist (youtube.com/playlist?list=).
+  Lecture dans l'application : <iframe src="{embed_url}" allow="accelerometer; encrypted-media; picture-in-picture" allowfullscreen>
+  La video n'est jamais telechargee ni hebergee par LE BAOBAB : c'est le lecteur officiel YouTube integre.
+
+  LinkedIn -> {"provider":"linkedin","kind":"profile|company|school","handle":"ada-dev","canonical_url":"https://www.linkedin.com/in/ada-dev/","verified":false}
+     (LinkedIn n'offre aucun lecteur integre ni API publique : le lien est reconnu et normalise, pas "verifie".)
+
+  GitHub (depot) -> {"provider":"github","kind":"repository","owner":"ada","repo":"proj","canonical_url":"https://github.com/ada/proj",
+     "verified":true,"repository":{"full_name":"ada/proj","description":"...","language":"Python","stars":3,"owner_login":"ada"}}
+     Verifie par l'API officielle GitHub : le depot doit exister ET etre PUBLIC.
+  GitHub (profil) -> {"provider":"github","kind":"profile","handle":"ada",...,"verified":false}
+
+  Erreurs (422 sauf mention) :
+    invalid_link, invalid_youtube_link, invalid_linkedin_link, invalid_github_link, unsupported_link
+    video_not_found          video supprimee ou privee
+    video_not_embeddable     le proprietaire interdit la lecture hors de YouTube
+    repository_not_found     depot inexistant (ou prive)
+    repository_private       depot prive
+    github_rate_limited (503) limite d'appels GitHub : reessayer plus tard
+
+
+==============================================================================
+D. DEPOT GITHUB DANS LE PORTFOLIO
+==============================================================================
+POST /api/v1/me/portfolio/repositories/from-url/       [user]  201
+  Corps : {"url": "https://github.com/ada/proj"}
+  Valide le depot via GitHub puis l'ajoute au portfolio. Re-poster la meme adresse ne cree pas de doublon.
+  Reponse : {"id","full_name","url","description","language","stars","verified":true,"owner_verified":true|false}
+  owner_verified = true seulement si MON compte GitHub lie (section B) est le proprietaire du depot.
+  Le listing du portfolio affiche aussi "verified" / "owner_verified".
+
+
+==============================================================================
+E. DEVOIRS CORRIGES AUTOMATIQUEMENT PAR GEMINI
+==============================================================================
+Principe : l'enseignant fournit la REPONSE ATTENDUE. Quand un etudiant rend le devoir, Gemini compare la reponse attendue
+et la reponse fournie, puis attribue une note et un commentaire. Tout est automatique (quelques secondes apres le rendu),
+l'enseignant peut relancer ou noter a la main, et sa note PRIME toujours.
+
+------------------------------------------------------------------------------
+POST /api/v1/courses/{course_id}/assignments/          [enseignant]  201   (endpoint existant, 3 champs ajoutes)
+  Nouveaux champs du corps :
+    auto_grade        booleen, defaut false. true => correction automatique
+    reference_answer  texte (max 20 000 car.), OBLIGATOIRE si auto_grade=true (sinon 422 reference_answer_required)
+    grading_notes     texte (max 5 000 car.), facultatif : consignes de correction ("accepter aussi une lambda", "ne pas penaliser l'orthographe"...)
+  Exemple :
+    {"title":"Fonction somme","instructions":"Ecris somme(a,b)","max_points":10,
+     "auto_grade":true,"reference_answer":"def somme(a,b):\n    return a+b","grading_notes":"Pas de print : la fonction doit renvoyer le resultat."}
+  Si une grille (criteria) est fournie, Gemini note chaque critere et la note finale = somme des criteres.
+  La reponse (et GET /assignments/{id}/, GET /courses/{id}/assignments/) contient "auto_grade". Les champs
+  "reference_answer" et "grading_notes" ne sont renvoyes QU'AUX ENSEIGNANTS : un etudiant ne les voit jamais.
+
+------------------------------------------------------------------------------
+POST /api/v1/assignments/{assignment_id}/submissions/  (endpoint existant, inchange pour l'etudiant)
+  Le rendu declenche la correction automatique en arriere-plan. Seul le TEXTE du rendu est lu par l'IA
+  (les fichiers joints ne le sont pas) : pour un devoir automatique, demander la reponse dans le champ "text".
+
+------------------------------------------------------------------------------
+GET /api/v1/submissions/{id}/  et  GET /assignments/{id}/submissions/   (champs ajoutes dans chaque rendu)
+    "ai_status": "none" | "pending" | "done" | "failed"
+    "grade": {"points": 7.5, "feedback": "...", "graded_at": "...",
+              "source": "ai" | "teacher",            <-- qui a note
+              "ai_confidence": 0.9 | null}           <-- confiance du correcteur IA (0 a 1), null si note par un enseignant
+  Affichage conseille : badge "Correction automatique" quand source="ai", et mise en avant d'une relecture quand ai_confidence < 0.6.
+  Si ai_status="failed" : la note n'existe pas encore ; l'enseignant relance (ci-dessous) ou note a la main.
+  La notification "assignment_graded" est envoyee a l'etudiant des que la note est posee.
+
+------------------------------------------------------------------------------
+POST /api/v1/submissions/{submission_id}/auto-grade/   [enseignant du cours]  200      NOUVEAU
+  Lance ou relance la correction automatique d'un rendu (synchrone : compter 2 a 10 s). Sans corps.
+  Remplace une note IA existante ; ne remplace JAMAIS une note d'enseignant.
+  Reponse : {"points": 7.5, "feedback": "...", "source": "ai", "ai_confidence": 0.9, "model": "gemini-2.5-flash"}
+  Erreurs :
+    404                          rendu inexistant OU utilisateur non enseignant du cours (indiscernable)
+    403 already_graded_by_teacher  note d'enseignant deja posee : pour la changer, utiliser POST /submissions/{id}/grade/
+    422 auto_grade_disabled      le devoir n'est pas en correction automatique
+    422 nothing_to_grade         rendu sans texte
+    409 ai_grading_in_progress   une correction est deja en cours
+    429 ai_grading_daily_limit   plafond quotidien global atteint (protege le quota gratuit de Gemini)
+    503 gemini_not_configured / gemini_quota / gemini_unreachable / gemini_rejected / gemini_bad_output
+
+------------------------------------------------------------------------------
+POST /api/v1/submissions/{id}/grade/                   (existant) : la notation manuelle remplace la note IA et passe source="teacher".
+
+
+==============================================================================
+F. BLOCS DE COURS : VIDEO YOUTUBE, DEPOT GITHUB, LIENS   (endpoint existant, comportement enrichi)
+==============================================================================
+POST /api/v1/chapters/{chapter_id}/blocks/             [enseignant]  201
+  Types de bloc concernes (champ "kind") et ce que fait le serveur avec "url" :
+
+  kind="video" + url YouTube      -> la video se lit DANS l'application. Le bloc contient payload.embed_url (a mettre dans un <iframe>),
+                                     payload.title, payload.author, payload.thumbnail_url. Autre site que YouTube => 422 unsupported_video_link.
+                                     (Un fichier video envoye via "file" fonctionne comme avant.)
+  kind="embed" + url YouTube      -> idem.
+  kind="repository" + url GitHub  -> depot verifie (public) ; payload.repository = {full_name, description, language, stars, owner_login}.
+                                     Adresse autre qu'un depot => 422 repository_link_required.
+  kind="link" + url               -> LinkedIn / GitHub / YouTube sont normalises (payload.provider, canonical_url...) ; tout autre site est garde tel quel.
+
+  Exemples :
+    {"kind":"video","title":"Introduction","url":"https://youtu.be/dQw4w9WgXcQ"}
+    {"kind":"repository","title":"Code du cours","url":"https://github.com/ada/proj"}
+  Lecture : GET /chapters/{id}/content/ renvoie les blocs avec ce payload ; le frontend affiche un <iframe src=payload.embed_url> pour la video
+  et une carte (nom, langage, etoiles, lien) pour le depot.
+  Le payload fourni par le client pour ces types est IGNORE : il est reconstruit par le serveur.
+
+
+==============================================================================
+G. LIENS DU PROFIL                                       (endpoint existant, comportement enrichi)
+==============================================================================
+POST /api/v1/me/links/  {"provider":"linkedin"|"github"|..., "url":"..."}
+  Pour provider="linkedin" ou "github", l'adresse doit etre un vrai lien de ce fournisseur (sinon 422 link_provider_mismatch)
+  et elle est enregistree sous sa forme canonique (ex. https://www.linkedin.com/in/ada-dev/).
+
+
+==============================================================================
+H. VARIABLES D'ENVIRONNEMENT A AJOUTER SUR RENDER (aucune dans render.yaml avec une valeur : saisies a la main uniquement)
+==============================================================================
+  GITHUB_CLIENT_ID          identifiant de l'OAuth App
+  GITHUB_CLIENT_SECRET      secret de l'OAuth App (ne le partager avec PERSONNE, pas meme le frontend)
+  GITHUB_REDIRECT_URI       https://baobab-router.pages.dev/api/v1/auth/github/callback/     (identique, au caractere pres, a l'OAuth App)
+  GITHUB_LOGIN_FRONTEND_URL page du frontend qui recoit ?ticket=...   (laisser vide tant que le frontend n'existe pas : l'API repond en JSON)
+  GITHUB_API_TOKEN          facultatif (jeton GitHub sans aucun droit) : 5000 lectures de depots/h au lieu de 60/h
+  GEMINI_API_KEY            cle gratuite de https://aistudio.google.com/apikey
+  GEMINI_MODEL              facultatif, defaut gemini-2.5-flash
+  FIELD_ENCRYPTION_KEY      DOIT deja exister (chiffre les jetons GitHub en base)
+Migrations a appliquer (education 0002, portfolio 0002, assessments 0003) : elles s'executent au deploiement.
