@@ -923,12 +923,20 @@
   transform: translateY(-2px);
 }
 
+<<<<<<< HEAD
+=======
+.exploreCard:has(:focus-visible) {
+  box-shadow: var(--bb-focus-ring);
+}
+
+>>>>>>> 066290c7fadeff60e3873964e049f10a544e8eb8
 .exploreLink {
   color: inherit;
   text-decoration: none;
   outline: none;
 }
 
+<<<<<<< HEAD
 .exploreLink {
   border-radius: 4px;
 }
@@ -944,6 +952,14 @@
   outline: none;
   box-shadow: var(--bb-focus-ring);
   border-radius: 6px;
+=======
+/* Toute la carte est cliquable */
+.exploreLink::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+>>>>>>> 066290c7fadeff60e3873964e049f10a544e8eb8
 }
 
 .exploreAction {

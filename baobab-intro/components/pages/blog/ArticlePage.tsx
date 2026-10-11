@@ -1,4 +1,7 @@
+<<<<<<< HEAD
 import { MemberLink } from "@/components/auth/MemberLink";
+=======
+>>>>>>> 066290c7fadeff60e3873964e049f10a544e8eb8
 import Link from "next/link";
 import {
   ArrowRightIcon,
@@ -12,6 +15,10 @@ import {
   SparklesIcon,
   TerminalIcon,
 } from "@/components/landing/icons";
+<<<<<<< HEAD
+=======
+import { PendingButton } from "@/components/landing/sections/SectionHeading";
+>>>>>>> 066290c7fadeff60e3873964e049f10a544e8eb8
 import sections from "@/components/landing/sections/Sections.module.css";
 import { CodeBlock } from "../shared/CodeBlock";
 import { CopyButton } from "../shared/CopyButton";
@@ -136,10 +143,17 @@ export function ArticlePage() {
             </p>
             <div className={styles.metaActions}>
               <CopyButton label={ARTICLE.share.copy} className={styles.metaButton} />
+<<<<<<< HEAD
               <MemberLink className={styles.metaButton}>
                 <BookmarkIcon aria-hidden="true" />
                 {ARTICLE.reactions.save}
               </MemberLink>
+=======
+              <PendingButton className={styles.metaButton}>
+                <BookmarkIcon aria-hidden="true" />
+                {ARTICLE.reactions.save}
+              </PendingButton>
+>>>>>>> 066290c7fadeff60e3873964e049f10a544e8eb8
             </div>
           </div>
 
@@ -178,6 +192,7 @@ export function ArticlePage() {
               </p>
               <div className={styles.reactions}>
                 <div className={styles.reactionButtons}>
+<<<<<<< HEAD
                   {/* Réagir et répondre : réservé aux membres. */}
                   <MemberLink className={styles.reactionButton}>
                     <HeartIcon aria-hidden="true" />
@@ -187,6 +202,17 @@ export function ArticlePage() {
                     <CommentIcon aria-hidden="true" />
                     {ARTICLE.reactions.reply}
                   </MemberLink>
+=======
+                  {/* Réactions et réponses : actives quand le blog sera relié au compte. */}
+                  <PendingButton className={styles.reactionButton}>
+                    <HeartIcon aria-hidden="true" />
+                    {ARTICLE.reactions.like}
+                  </PendingButton>
+                  <PendingButton className={styles.reactionButton}>
+                    <CommentIcon aria-hidden="true" />
+                    {ARTICLE.reactions.reply}
+                  </PendingButton>
+>>>>>>> 066290c7fadeff60e3873964e049f10a544e8eb8
                 </div>
                 <ShareLinks title={ARTICLE.title} label={ARTICLE.share.label} />
               </div>
@@ -204,10 +230,17 @@ export function ArticlePage() {
                   {ARTICLE.discussion.title}
                 </p>
                 <p className={styles.discussionText}>{ARTICLE.discussion.text}</p>
+<<<<<<< HEAD
                 <MemberLink className={styles.discussionAction}>
                   {ARTICLE.discussion.action}
                   <ArrowRightIcon aria-hidden="true" />
                 </MemberLink>
+=======
+                <PendingButton className={styles.discussionAction}>
+                  {ARTICLE.discussion.action}
+                  <ArrowRightIcon aria-hidden="true" />
+                </PendingButton>
+>>>>>>> 066290c7fadeff60e3873964e049f10a544e8eb8
               </div>
             </div>
           </aside>
@@ -268,8 +301,13 @@ export function ArticlePage() {
               <p className={styles.calloutText}>{ARTICLE.callout.text}</p>
             </div>
             <div className={styles.calloutActions}>
+<<<<<<< HEAD
               <MemberLink className={sections.ctaPrimary}>{ARTICLE.callout.primary}</MemberLink>
               <MemberLink className={`${sections.ctaSecondary} ${styles.calloutSecondary}`}>{ARTICLE.callout.secondary}</MemberLink>
+=======
+              <PendingButton className={sections.ctaPrimary}>{ARTICLE.callout.primary}</PendingButton>
+              <PendingButton className={`${sections.ctaSecondary} ${styles.calloutSecondary}`}>{ARTICLE.callout.secondary}</PendingButton>
+>>>>>>> 066290c7fadeff60e3873964e049f10a544e8eb8
             </div>
           </div>
         </div>

@@ -6,6 +6,9 @@ next-env.d.ts
 .DS_Store
 npm-debug.log*
 /captures/
+<<<<<<< HEAD
 
 # Variables d environnement locales (ne jamais les committer)
 .env*.local
+=======
+>>>>>>> 066290c7fadeff60e3873964e049f10a544e8eb8

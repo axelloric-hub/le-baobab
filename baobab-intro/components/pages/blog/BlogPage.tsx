@@ -1,4 +1,7 @@
+<<<<<<< HEAD
 import { MemberLink } from "@/components/auth/MemberLink";
+=======
+>>>>>>> 066290c7fadeff60e3873964e049f10a544e8eb8
 import { ArrowRightIcon, BellIcon, PenIcon, UsersIcon, CheckCircleIcon } from "@/components/landing/icons";
 import { PendingButton } from "@/components/landing/sections/SectionHeading";
 import { NodeCover } from "../shared/NodeCover";
@@ -93,6 +96,7 @@ function Notice() {
           </h2>
           <p className={styles.noticeText}>{BLOG_NOTICE.text}</p>
           <div className={styles.noticeActions}>
+<<<<<<< HEAD
             {/* Réservé aux membres : connexion ; s'inscrire : création de compte. */}
             <MemberLink className={styles.noticePrimary}>
               <BellIcon aria-hidden="true" />
@@ -102,6 +106,17 @@ function Notice() {
               <UsersIcon aria-hidden="true" />
               {BLOG_NOTICE.join}
             </MemberLink>
+=======
+            {/* Ni notifications e-mail ni inscription raccordées : boutons visuels. */}
+            <PendingButton className={styles.noticePrimary}>
+              <BellIcon aria-hidden="true" />
+              {BLOG_NOTICE.notify}
+            </PendingButton>
+            <PendingButton className={styles.noticeSecondary}>
+              <UsersIcon aria-hidden="true" />
+              {BLOG_NOTICE.join}
+            </PendingButton>
+>>>>>>> 066290c7fadeff60e3873964e049f10a544e8eb8
           </div>
         </div>
       </div>

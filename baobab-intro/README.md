@@ -4,7 +4,10 @@
 
 - **`/`** — landing page complète (navigation, hero, 9 sections, pied de page), précédée de la cinématique de 7 s à chaque ouverture.
 - **`/communaute`**, **`/blog`**, **`/docs`** — les pages Communauté, Blog et Documentation (maquettes Stitch), plus un article modèle (`/blog/idempotence-webhooks`) et un premier guide (`/docs/creer-son-compte`).
+<<<<<<< HEAD
 - **`/inscription`**, **`/connexion`**, **`/confirmation-email`**, **`/mot-de-passe-oublie`** — l'authentification, reliée à l'API (y compris « Continuer avec GitHub ») ; après connexion : **`/espace`** (page blanche pour l'instant). Voir [docs/AUTH.md](docs/AUTH.md).
+=======
+>>>>>>> 066290c7fadeff60e3873964e049f10a544e8eb8
 - **`/intro`** — la cinématique seule, en plein écran, pour la présenter ou la filmer.
 
 ## Prérequis
@@ -36,10 +39,13 @@ Puis ouvrir :
 
 Arrêter : **Ctrl + C**. Version optimisée : `npm run build` puis `npm run start`.
 
+<<<<<<< HEAD
 ## Variables d'environnement
 
 Copier `.env.example` en `.env.local` et renseigner `NEXT_PUBLIC_API_BASE_URL` (adresse de l'API). Sur Vercel, la même variable se règle dans *Settings → Environment Variables*. Détails : [docs/AUTH.md](docs/AUTH.md) §5.
 
+=======
+>>>>>>> 066290c7fadeff60e3873964e049f10a544e8eb8
 ## Vérifier
 
 ```bash
@@ -50,7 +56,10 @@ npm run build
 ## Documentation
 
 - **[docs/LANDING.md](docs/LANDING.md)** — la landing : architecture, contenu à modifier, éléments à raccorder, données de démonstration, lancement sous Windows, erreurs fréquentes.
+<<<<<<< HEAD
 - **[docs/AUTH.md](docs/AUTH.md)** — inscription, connexion, GitHub, membres qui reviennent, variables d'environnement.
+=======
+>>>>>>> 066290c7fadeff60e3873964e049f10a544e8eb8
 - **[docs/GUIDE.md](docs/GUIDE.md)** — la cinématique : chronologie, réglages, intégration, capture vidéo.
 
 ## Structure

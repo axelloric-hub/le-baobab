@@ -1,4 +1,7 @@
+<<<<<<< HEAD
 import { MemberLink } from "@/components/auth/MemberLink";
+=======
+>>>>>>> 066290c7fadeff60e3873964e049f10a544e8eb8
 import {
   ArrowRightIcon,
   BlockIcon,
@@ -14,6 +17,10 @@ import {
   TrashIcon,
   UsersIcon,
 } from "@/components/landing/icons";
+<<<<<<< HEAD
+=======
+import { PendingButton } from "@/components/landing/sections/SectionHeading";
+>>>>>>> 066290c7fadeff60e3873964e049f10a544e8eb8
 import sections from "@/components/landing/sections/Sections.module.css";
 import { CodeBlock } from "../shared/CodeBlock";
 import { PageCta } from "../shared/PageCta";
@@ -142,10 +149,18 @@ export function CommunityPage() {
             </h1>
             <p className={shared.heroSubtitle}>{COMMUNITY_HERO.subtitle}</p>
             <p className={shared.heroLead}>{COMMUNITY_HERO.lead}</p>
+<<<<<<< HEAD
             <MemberLink to="register" className={shared.primaryButton}>
               {COMMUNITY_HERO.cta}
               <ArrowRightIcon aria-hidden="true" />
             </MemberLink>
+=======
+            {/* Inscription pas encore raccordée : bouton visuel, sans action. */}
+            <PendingButton className={shared.primaryButton}>
+              {COMMUNITY_HERO.cta}
+              <ArrowRightIcon aria-hidden="true" />
+            </PendingButton>
+>>>>>>> 066290c7fadeff60e3873964e049f10a544e8eb8
           </div>
           <FeedPreview />
         </div>

@@ -146,8 +146,12 @@ a.navLink:hover {
   font-weight: 600;
   letter-spacing: -0.005em;
   box-shadow: var(--bb-shadow-button);
+<<<<<<< HEAD
   text-decoration: none;
   cursor: pointer;
+=======
+  cursor: default;
+>>>>>>> 066290c7fadeff60e3873964e049f10a544e8eb8
   transition: background-color 180ms ease;
 }
 
@@ -155,6 +159,7 @@ a.navLink:hover {
   background: var(--bb-brown-500);
 }
 
+<<<<<<< HEAD
 .joinButton:focus-visible,
 .loginLink:focus-visible,
 .mobileLogin:focus-visible {
@@ -181,6 +186,8 @@ a.navLink:hover {
   background: var(--bb-sand);
 }
 
+=======
+>>>>>>> 066290c7fadeff60e3873964e049f10a544e8eb8
 .menuToggle {
   display: inline-flex;
   align-items: center;
@@ -272,6 +279,7 @@ a.navLink:hover {
   letter-spacing: 0.02em;
 }
 
+<<<<<<< HEAD
 .mobileActions {
   display: flex;
   flex-direction: column;
@@ -296,6 +304,12 @@ a.navLink:hover {
   font-size: 16px;
   font-weight: 600;
   text-decoration: none;
+=======
+.mobileJoin {
+  display: flex;
+  width: 100%;
+  margin-top: 18px;
+>>>>>>> 066290c7fadeff60e3873964e049f10a544e8eb8
 }
 
 @keyframes panelIn {
@@ -343,12 +357,15 @@ a.navLink:hover {
   }
 }
 
+<<<<<<< HEAD
 @media (min-width: 1240px) {
   .actions > .loginLink {
     display: inline-flex;
   }
 }
 
+=======
+>>>>>>> 066290c7fadeff60e3873964e049f10a544e8eb8
 @media (min-width: 1100px) {
   .nav {
     display: block;

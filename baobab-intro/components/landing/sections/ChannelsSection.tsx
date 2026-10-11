@@ -1,4 +1,7 @@
+<<<<<<< HEAD
 import { MemberLink } from "@/components/auth/MemberLink";
+=======
+>>>>>>> 066290c7fadeff60e3873964e049f10a544e8eb8
 import { ArrowRightIcon, BriefcaseIcon, BuildingIcon, CodeBracesIcon, ForumIcon, SchoolIcon, ServerIcon, ShopIcon } from "../icons";
 import { CHANNELS, SECTION_IDS, type ChannelIcon } from "../sections-content";
 import { SectionHeading } from "./SectionHeading";
@@ -30,11 +33,20 @@ export function ChannelsSection() {
                 </span>
                 <h3 className={styles.channelTitle}>{channel.title}</h3>
                 <p className={styles.channelText}>{channel.text}</p>
+<<<<<<< HEAD
                 {/* Action réservée aux membres : conduit à la connexion. */}
                 <MemberLink className={styles.channelAction}>
                   {channel.action}
                   <ArrowRightIcon aria-hidden="true" />
                 </MemberLink>
+=======
+                {/* Pas encore de page dédiée : libellé d'action sans lien. */}
+                <span className={styles.channelAction} aria-disabled="true" title="Bientôt disponible">
+                  {channel.action}
+                  <ArrowRightIcon />
+                  <span className={styles.soonTag}>Bientôt</span>
+                </span>
+>>>>>>> 066290c7fadeff60e3873964e049f10a544e8eb8
               </li>
             );
           })}

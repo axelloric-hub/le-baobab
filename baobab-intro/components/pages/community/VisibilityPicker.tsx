@@ -1,6 +1,9 @@
 "use client";
 
+<<<<<<< HEAD
 import { MemberLink } from "@/components/auth/MemberLink";
+=======
+>>>>>>> 066290c7fadeff60e3873964e049f10a544e8eb8
 import { useId, useState } from "react";
 import {
   CheckIcon,
@@ -13,6 +16,10 @@ import {
   UserStarIcon,
   HubIcon,
 } from "@/components/landing/icons";
+<<<<<<< HEAD
+=======
+import { PendingButton } from "@/components/landing/sections/SectionHeading";
+>>>>>>> 066290c7fadeff60e3873964e049f10a544e8eb8
 import { COMMUNITY_PRIVACY, ILLUSTRATIVE, type VisibilityIcon } from "./community-content";
 import shared from "../shared/Pages.module.css";
 import styles from "./Community.module.css";
@@ -67,7 +74,11 @@ export function VisibilityPicker() {
         </div>
       </fieldset>
       <div className={styles.visibilityFooter}>
+<<<<<<< HEAD
         <MemberLink className={styles.smallBrownButton}>{COMMUNITY_PRIVACY.applyLabel}</MemberLink>
+=======
+        <PendingButton className={styles.smallBrownButton}>{COMMUNITY_PRIVACY.applyLabel}</PendingButton>
+>>>>>>> 066290c7fadeff60e3873964e049f10a544e8eb8
         <span className={shared.illustrative}>{ILLUSTRATIVE}</span>
       </div>
     </div>

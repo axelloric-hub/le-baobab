@@ -61,15 +61,24 @@ Ce document explique la nouvelle page d'accueil, ce qui reste à raccorder et co
 
 ## 3. Boutons et liens : ce qui fonctionne, ce qui attend
 
+<<<<<<< HEAD
 Aucune page, route ou parcours n'a été inventé. Les pages **Communauté**, **Blog** et **Docs** existent (voir §7), ainsi que l'inscription et la connexion (voir `docs/AUTH.md`, qui liste aussi où mène chaque bouton d'action).
+=======
+Aucune page, route ou parcours n'a été inventé. Les pages **Communauté**, **Blog** et **Docs** existent désormais (voir §7) ; il n'existe toujours ni page d'inscription, ni page de connexion.
+>>>>>>> 066290c7fadeff60e3873964e049f10a544e8eb8
 
 | Élément | Comportement actuel | À raccorder |
 |---|---|---|
 | **Accueil** | lien réel vers `/` | — |
 | **Plateforme**, **Ressources** | sections de l'accueil (`/#plateforme`, `/#integrations`) : défilement direct depuis l'accueil, retour à l'accueil depuis les autres pages | — |
 | **Communauté**, **Docs**, **Blog** | **liens réels** vers `/communaute`, `/docs`, `/blog` (soulignés quand la page est ouverte) | — |
+<<<<<<< HEAD
 | **Rejoindre**, **Créer mon profil** | mènent à `/inscription` ; « Se connecter » mène à `/connexion` | — |
 | Actions réservées aux membres (rejoindre un groupe, publier, réagir…) | mènent à `/connexion` (liste complète : `docs/AUTH.md` §3) | — |
+=======
+| **Rejoindre** | **visuel uniquement** : aucune route, aucune action | phase suivante (inscription) |
+| **Créer mon profil** (hero et bandeau) | visuel uniquement : aucun parcours d'inscription n'existe | le relier au futur parcours d'inscription |
+>>>>>>> 066290c7fadeff60e3873964e049f10a544e8eb8
 | **Voir l'intro** / **Revoir l'intro** | **rejouent la cinématique** | — |
 | Cartes de fonctionnalités | informatives, pas de lien | pages dédiées |
 | « Rejoindre », « Enseigner », « Proposer », « Recruter », « Publier » (cartes Pour qui) | libellés sans lien, étiquette « Bientôt » | pages dédiées |
