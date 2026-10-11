@@ -1,0 +1,247 @@
+.footer {
+  position: relative;
+  z-index: 1;
+  margin-top: clamp(24px, 4vw, 48px);
+  border-top: 1px solid var(--bb-line);
+  background: var(--bb-sand);
+}
+
+.inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: clamp(48px, 6vw, 72px) clamp(16px, 3.4vw, 56px) 0;
+}
+
+.top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 40px;
+  padding-bottom: clamp(40px, 5vw, 56px);
+}
+
+/* ---------- Marque ---------- */
+
+.brandBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 22rem;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  color: inherit;
+  text-decoration: none;
+  border-radius: 8px;
+}
+
+.brand:focus-visible {
+  outline: none;
+  box-shadow: var(--bb-focus-ring);
+}
+
+.brandMark {
+  display: block;
+  width: auto;
+  height: 48px;
+  aspect-ratio: 1070 / 870;
+}
+
+.brandText {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-family: var(--font-outfit), var(--font-inter), sans-serif;
+}
+
+.brandName {
+  font-size: 25px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--bb-brown-600);
+}
+
+.brandTagline {
+  font-size: 8px;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  color: var(--bb-blue-500);
+  white-space: nowrap;
+}
+
+.brandPitch {
+  margin: 0;
+  font-size: 14.5px;
+  line-height: 1.65;
+  color: var(--bb-ink-soft);
+}
+
+/* ---------- Colonnes ---------- */
+
+.columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 32px 24px;
+}
+
+.columnTitle {
+  margin: 0 0 14px;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--bb-brown-700);
+}
+
+.column ul,
+.legal {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.column li + li {
+  margin-top: 10px;
+}
+
+.columnLink,
+.legalLink {
+  font-size: 14.5px;
+  line-height: 1.45;
+  color: var(--bb-ink-soft);
+  text-decoration: none;
+}
+
+a.columnLink:hover,
+a.legalLink:hover {
+  color: var(--bb-brown-950);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Éléments pas encore raccordés : texte simple. */
+.columnLink[aria-disabled="true"],
+.legalLink[aria-disabled="true"] {
+  cursor: default;
+}
+
+/* ---------- Barre du bas ---------- */
+
+.bottom {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 22px 0 26px;
+  border-top: 1px solid var(--bb-line-strong);
+}
+
+.bottomLeft,
+.bottomRight {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 20px;
+}
+
+.copyright {
+  font-size: 13.5px;
+  color: var(--bb-ink-muted);
+}
+
+.legal {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+}
+
+.legalLink {
+  font-size: 13.5px;
+  color: var(--bb-ink-muted);
+}
+
+.band {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--bb-ink-soft);
+}
+
+.bandSeparator {
+  color: var(--bb-brown-600);
+  opacity: 0.55;
+}
+
+.social {
+  display: inline-grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--bb-line-strong);
+  border-radius: 50%;
+  background: var(--bb-surface);
+  color: var(--bb-brown-950);
+  transition:
+    background-color 160ms ease,
+    color 160ms ease;
+}
+
+.social:hover {
+  background: var(--bb-brown-950);
+  color: #fff;
+}
+
+.social:focus-visible {
+  outline: none;
+  box-shadow: var(--bb-focus-ring);
+}
+
+.social svg {
+  width: 19px;
+  height: 19px;
+}
+
+@media (min-width: 640px) {
+  .columns {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1000px) {
+  .top {
+    grid-template-columns: minmax(220px, 0.8fr) minmax(0, 3.2fr);
+    gap: 48px;
+  }
+  .columns {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+  .bottom {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+  }
+}
+
+@media (min-width: 1100px) {
+  .bottom {
+    flex-wrap: wrap;
+  }
+  .bottomLeft,
+  .legal {
+    flex-wrap: nowrap;
+    white-space: nowrap;
+  }
+}
+
+@media (min-width: 1280px) {
+  .bottomRight,
+  .band {
+    flex-wrap: nowrap;
+    white-space: nowrap;
+  }
+}

@@ -1,0 +1,629 @@
+/*
+ * Hero LE BAOBAB.
+ * Grand écran : trois zones (message | symbole | cartes).
+ * Tablette : message + symbole, cartes en ligne dessous.
+ * Mobile : une colonne, dans l'ordre de lecture.
+ */
+
+.hero {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: center;
+  overflow: clip;
+  padding: clamp(28px, 5vh, 64px) 0 clamp(36px, 6vh, 72px);
+}
+
+.grid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    "copy"
+    "visual"
+    "features";
+  row-gap: clamp(36px, 7vw, 56px);
+  width: 100%;
+  max-width: 1520px;
+  margin: 0 auto;
+  padding: 0 clamp(16px, 3.4vw, 56px);
+}
+
+/* ====================================================================== */
+/* Arrière-plan                                                            */
+/* ====================================================================== */
+
+.backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.network {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  color: var(--bb-network);
+  opacity: 0.32;
+  /* Le motif s'efface derrière le texte et reste présent à droite. */
+  -webkit-mask-image: linear-gradient(100deg, transparent 18%, rgba(0, 0, 0, 0.55) 46%, #000 72%);
+  mask-image: linear-gradient(100deg, transparent 18%, rgba(0, 0, 0, 0.55) 46%, #000 72%);
+}
+
+.backdropGlowBlue,
+.backdropGlowWarm {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(10px);
+}
+
+.backdropGlowBlue {
+  width: min(70vw, 900px);
+  aspect-ratio: 1.3;
+  left: 50%;
+  top: 50%;
+  transform: translate(-42%, -54%);
+  background: radial-gradient(closest-side, rgba(52, 121, 238, 0.12), rgba(52, 121, 238, 0.04) 55%, transparent 100%);
+}
+
+.backdropGlowWarm {
+  width: min(60vw, 720px);
+  aspect-ratio: 1.4;
+  left: -10%;
+  bottom: -30%;
+  background: radial-gradient(closest-side, rgba(229, 196, 160, 0.32), transparent 100%);
+}
+
+/* ====================================================================== */
+/* Colonne message                                                         */
+/* ====================================================================== */
+
+.copy {
+  grid-area: copy;
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 clamp(20px, 3vh, 28px);
+  padding: 9px 16px 9px 12px;
+  border: 1px solid var(--bb-blue-200);
+  border-radius: 10px;
+  background: var(--bb-blue-100);
+  color: var(--bb-blue-700);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: 0.06em;
+}
+
+.badgeIcon {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  color: var(--bb-blue-600);
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(2rem, 11.4cqi, 4.75rem); /* la ligne la plus longue (« Grandis ensemble. ») tient même à 320 px */
+  font-weight: 760;
+  line-height: 1.04;
+  letter-spacing: -0.038em;
+  color: var(--bb-brown-800);
+  text-wrap: balance;
+}
+
+.titleLine {
+  display: block;
+}
+
+/* Un groupe « Mot. » ne se coupe jamais : pas de mot isolé en fin de ligne. */
+.titlePhrase {
+  white-space: nowrap;
+}
+
+.lead {
+  max-width: 33rem;
+  margin: clamp(18px, 2.6vh, 26px) 0 0;
+  font-size: clamp(1.0625rem, 0.95rem + 0.35vw, 1.25rem);
+  line-height: 1.6;
+  color: var(--bb-ink-soft);
+  text-wrap: pretty;
+}
+
+/* ---------- Boutons ---------- */
+
+.ctas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 16px;
+  margin-top: clamp(24px, 3.6vh, 36px);
+}
+
+.primaryButton,
+.secondaryButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 58px;
+  padding: 0 28px;
+  border-radius: 12px;
+  font: inherit;
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms var(--bb-ease-out);
+}
+
+.primaryButton {
+  border: 0;
+  background: var(--bb-brown-700);
+  color: #fff;
+  box-shadow: var(--bb-shadow-button);
+  /* Pas encore raccordé : aucune action, pas de curseur « lien ». */
+  cursor: default;
+}
+
+.primaryButton:hover {
+  background: var(--bb-brown-500);
+}
+
+.buttonArrow {
+  width: 20px;
+  height: 20px;
+  transition: transform 180ms var(--bb-ease-out);
+}
+
+.primaryButton:hover .buttonArrow {
+  transform: translateX(3px);
+}
+
+.secondaryButton {
+  border: 1.5px solid var(--bb-blue-500);
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--bb-blue-700);
+  cursor: pointer;
+}
+
+.secondaryButton:hover {
+  background: var(--bb-blue-50);
+  border-color: var(--bb-blue-600);
+  transform: translateY(-1px);
+}
+
+.secondaryButton:active {
+  transform: translateY(0);
+}
+
+.buttonPlay {
+  width: 18px;
+  height: 18px;
+  color: var(--bb-blue-600);
+}
+
+.primaryButton:focus-visible,
+.secondaryButton:focus-visible {
+  outline: none;
+  box-shadow: var(--bb-focus-ring);
+}
+
+/* ---------- Preuve sociale ---------- */
+
+.social {
+  width: 100%;
+  max-width: 33rem;
+  margin-top: clamp(28px, 4.2vh, 44px);
+}
+
+.socialRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.socialRule {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--bb-line-strong) 30%, var(--bb-line-strong) 70%, transparent);
+}
+
+.motto {
+  flex: none;
+  font-family: var(--font-outfit), var(--font-inter), sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--bb-blue-700);
+  white-space: nowrap;
+}
+
+.socialText {
+  margin: 12px 0 0;
+  font-size: 14.5px;
+  line-height: 1.5;
+  text-align: center;
+  color: var(--bb-ink-soft);
+  text-wrap: balance;
+}
+
+/* ====================================================================== */
+/* Symbole central                                                         */
+/* ====================================================================== */
+
+.visual {
+  grid-area: visual;
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-width: 0;
+}
+
+.mark {
+  position: relative;
+  display: block;
+  width: min(100%, 420px);
+  height: auto;
+  aspect-ratio: 1070 / 870;
+  overflow: visible;
+}
+
+.markHalo {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  width: 92%;
+  max-width: 600px;
+  aspect-ratio: 1.15;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.6) 45%, rgba(255, 255, 255, 0) 100%);
+}
+
+/* ====================================================================== */
+/* Cartes de fonctionnalités                                               */
+/* ====================================================================== */
+
+.features {
+  grid-area: features;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.card {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 20px 22px;
+  border: 1px solid var(--bb-line);
+  border-radius: var(--bb-radius-lg);
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: var(--bb-shadow-md);
+  transition:
+    transform 220ms var(--bb-ease-out),
+    box-shadow 220ms ease,
+    border-color 220ms ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(52, 121, 238, 0.28);
+  box-shadow: var(--bb-shadow-lg);
+}
+
+.cardIcon {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: linear-gradient(150deg, #4a8af5, var(--bb-blue-600));
+  color: #fff;
+  box-shadow: 0 6px 14px -6px rgba(37, 99, 235, 0.65);
+}
+
+.cardIcon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.cardBody {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  padding-top: 1px;
+}
+
+.cardTitle {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 650;
+  line-height: 1.25;
+  letter-spacing: -0.015em;
+  color: var(--bb-brown-800);
+}
+
+.cardText {
+  margin: 0;
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: var(--bb-ink-soft);
+}
+
+/* ====================================================================== */
+/* Apparition (une fois)                                                   */
+/* ====================================================================== */
+
+.reveal,
+.revealMark,
+.revealCard {
+  animation-duration: 640ms;
+  animation-timing-function: var(--bb-ease-out);
+  animation-fill-mode: both;
+  animation-delay: var(--reveal-delay, 0ms);
+}
+
+.reveal {
+  animation-name: riseIn;
+}
+
+.revealMark {
+  animation-name: markIn;
+  animation-duration: 900ms;
+}
+
+.revealCard {
+  animation-name: slideIn;
+}
+
+/* Tant que la cinématique joue, la cascade attend : elle démarre à sa fin. */
+:global(html[data-intro="play"]) .reveal,
+:global(html[data-intro="play"]) .revealMark,
+:global(html[data-intro="play"]) .revealCard {
+  animation-play-state: paused;
+}
+
+@keyframes riseIn {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+
+@keyframes markIn {
+  from {
+    opacity: 0;
+    transform: scale(0.965);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(18px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal,
+  .revealMark,
+  .revealCard {
+    animation: none;
+  }
+  .card,
+  .secondaryButton,
+  .buttonArrow {
+    transition: none;
+  }
+  .card:hover,
+  .secondaryButton:hover {
+    transform: none;
+  }
+}
+
+/* ====================================================================== */
+/* Points de rupture                                                       */
+/* ====================================================================== */
+
+/* Mobile étroit : boutons pleine largeur */
+@media (max-width: 519px) {
+  .ctas {
+    width: 100%;
+    flex-direction: column;
+  }
+  .primaryButton,
+  .secondaryButton {
+    width: 100%;
+    height: 54px;
+    padding: 0 20px;
+    font-size: 16px;
+  }
+  .badge {
+    font-size: 11.5px;
+    letter-spacing: 0.05em;
+  }
+  .motto {
+    font-size: 11.5px;
+    letter-spacing: 0.08em;
+  }
+  .mark {
+    width: min(100%, 340px);
+  }
+}
+
+/* Cartes sur 3 colonnes dès qu'il y a la place */
+@media (min-width: 680px) and (max-width: 1199px) {
+  .features {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+  }
+  .card {
+    flex-direction: column;
+    gap: 14px;
+  }
+}
+
+/* Tablette : message à gauche, symbole à droite */
+@media (min-width: 900px) and (max-width: 1199px) {
+  .grid {
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+    grid-template-areas:
+      "copy visual"
+      "features features";
+    column-gap: clamp(24px, 4vw, 48px);
+    row-gap: 48px;
+    align-items: center;
+  }
+  .title {
+    font-size: clamp(2.5rem, 11.2cqi, 4.25rem);
+  }
+  .mark {
+    width: min(100%, 440px);
+  }
+}
+
+/* Grand écran : les trois zones de la référence */
+@media (min-width: 1200px) {
+  .hero {
+    /* Le hero occupe tout le premier écran sous la navigation. */
+    min-height: calc(100svh - 88px);
+  }
+  .grid {
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr) minmax(272px, 0.6fr);
+    grid-template-areas: "copy visual features";
+    column-gap: clamp(20px, 2.2vw, 40px);
+    align-items: center;
+  }
+  .title {
+    font-size: clamp(3rem, 11.3cqi, 5.4rem);
+  }
+  .mark {
+    width: min(118%, 700px);
+    /* Le symbole déborde légèrement de sa colonne, comme dans la référence, sans toucher au texte. */
+    max-width: none;
+  }
+  .features {
+    gap: clamp(16px, 3.4vh, 36px);
+    align-self: center;
+  }
+  .card {
+    padding: 22px 22px 24px;
+  }
+  .cardBody {
+    padding-top: 8px;
+  }
+  .network {
+    opacity: 0.38;
+  }
+}
+
+/* Ordinateur portable (1200–1439) : cartes plus étroites, icône au-dessus du titre */
+@media (min-width: 1200px) and (max-width: 1439px) {
+  .card {
+    flex-direction: column;
+    gap: 12px;
+    padding: 18px 20px 20px;
+  }
+  .cardBody {
+    padding-top: 0;
+  }
+  .cardIcon {
+    width: 42px;
+    height: 42px;
+  }
+  .cardTitle {
+    font-size: 18px;
+  }
+}
+
+@media (min-width: 1440px) {
+  .grid {
+    grid-template-columns: minmax(0, 1.12fr) minmax(0, 0.9fr) minmax(300px, 0.64fr);
+  }
+}
+
+@media (min-width: 1600px) {
+  .lead {
+    max-width: 36rem;
+    font-size: 1.3125rem;
+  }
+  .social {
+    max-width: 36rem;
+  }
+  .primaryButton,
+  .secondaryButton {
+    height: 62px;
+    padding: 0 32px;
+    font-size: 18px;
+  }
+  .cardTitle {
+    font-size: 20px;
+  }
+  .cardText {
+    font-size: 15.5px;
+  }
+}
+
+/* Écrans d'ordinateur peu hauts (1366×768, 1280×800…) : tout tient au-dessus de la ligne de flottaison. */
+@media (min-width: 1200px) and (max-height: 860px) {
+  .hero {
+    padding: 22px 0 28px;
+  }
+  .badge {
+    margin-bottom: 18px;
+  }
+  .lead {
+    margin-top: 16px;
+  }
+  .ctas {
+    margin-top: 22px;
+  }
+  .social {
+    margin-top: 24px;
+  }
+  .features {
+    gap: 12px;
+  }
+  .card {
+    flex-direction: row;
+    gap: 14px;
+    padding: 16px 18px;
+  }
+  .cardIcon {
+    width: 40px;
+    height: 40px;
+  }
+  .cardIcon svg {
+    width: 21px;
+    height: 21px;
+  }
+  .cardTitle {
+    font-size: 17px;
+  }
+  .cardText {
+    font-size: 14px;
+  }
+}

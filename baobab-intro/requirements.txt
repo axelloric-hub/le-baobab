@@ -1,0 +1,10 @@
+# LE BAOBAB — Cinématique d'ouverture
+#
+# Aucun paquet Python n'est requis pour exécuter la cinématique.
+#
+# Ce projet est une application Next.js (Node.js). Ses dépendances sont déclarées
+# dans package.json et s'installent avec :   npm install
+#
+# Prérequis système : Node.js 20.9 ou plus récent (LTS 22 recommandée) et npm.
+#
+# (Les dépendances npm ne doivent pas être ajoutées ici.)

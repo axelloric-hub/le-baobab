@@ -1,0 +1,398 @@
+/*
+ * LE BAOBAB — styles de la cinématique.
+ *
+ * Principe : l'état « au repos » de chaque élément est son état FINAL (logo composé).
+ * Les animations ne sont attachées que sous .playing, avec animation-fill-mode: both,
+ * et leurs keyframes décrivent l'état de départ. Ainsi :
+ *   - sans animation (mode réduit), on voit directement le logo final ;
+ *   - un simple re-rendu React ne relance rien (seul un remontage relance).
+ * Les délais et durées viennent d'animation-config.ts (styles en ligne).
+ */
+
+.root {
+  --logo-h: min(38cqh, 23cqw);
+  --tree-ratio: 1.2299; /* 1070 / 870 */
+  --gap-ratio: 0.07;
+  --wordmark-ratio: 0.42;
+  --wordmark-em: 5.553;
+  --wordmark-travel-ratio: 2.6;
+  --lockup-x: 0px;
+  --lockup-y: 0px;
+
+  --tree-w: calc(var(--logo-h) * var(--tree-ratio));
+  --gap: calc(var(--logo-h) * var(--gap-ratio));
+  --wordmark-size: calc(var(--logo-h) * var(--wordmark-ratio));
+  --wordmark-travel: calc(var(--logo-h) * var(--wordmark-travel-ratio));
+  /* Décalage initial de l'arbre pour qu'il soit seul au centre de l'écran.
+     Valeur de secours exacte pour Outfit ; remplacée par une mesure réelle en JS. */
+  --tree-shift: calc((var(--wordmark-size) * var(--wordmark-em) + var(--gap)) / 2);
+
+  position: relative;
+  width: 100%;
+  height: 100dvh;
+  overflow: hidden;
+  container-type: size;
+  isolation: isolate;
+  background: var(--bg-day);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- Fonds ---------- */
+
+.layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.backgroundDay {
+  background:
+    radial-gradient(ellipse 60% 55% at 50% 48%, var(--bg-day-glow) 0%, transparent 70%),
+    var(--bg-day);
+}
+
+.backgroundNight {
+  background:
+    radial-gradient(ellipse 50% 45% at 50% 62%, var(--bg-night-glow) 0%, transparent 70%),
+    var(--bg-night);
+  opacity: 0;
+}
+
+.screenFlash {
+  background: radial-gradient(circle at 50% 62%, #ffffff 0%, var(--bg-flash) 45%, var(--bg-flash) 100%);
+  opacity: 0;
+}
+
+.idle .backgroundNight {
+  opacity: 1;
+}
+.idle .lockup {
+  visibility: hidden;
+}
+
+/* ---------- Composition (arbre + nom) ---------- */
+
+.lockup {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  display: flex;
+  align-items: center;
+  gap: var(--gap);
+  transform: translate(-50%, -50%) translate(var(--lockup-x), var(--lockup-y));
+  z-index: 1;
+}
+
+.treeSlot {
+  flex: none;
+  width: var(--tree-w);
+  height: var(--logo-h);
+  will-change: transform;
+}
+
+.treeSvg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.wordmark {
+  flex: none;
+  margin: 0;
+  font-size: var(--wordmark-size);
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: 0.005em;
+  white-space: nowrap;
+  color: var(--wordmark-color);
+  /* compense l'espace réservé aux descendantes pour centrer les capitales sur l'arbre */
+  padding-top: 0.12em;
+  will-change: transform, opacity;
+  user-select: none;
+}
+
+/* ---------- Primitives SVG ---------- */
+
+.drawStroke {
+  stroke-dasharray: 1 2;
+  stroke-dashoffset: 0;
+}
+
+.fillBox {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.viewBoxOrigin {
+  transform-box: view-box;
+}
+
+.lightning,
+.impactGlow,
+.shockwave,
+.spark,
+.sprout,
+.growthTip,
+.nodeHalo {
+  opacity: 0;
+}
+
+/* ====================================================================== */
+/* Animations — uniquement en lecture                                       */
+/* ====================================================================== */
+
+.playing .animated {
+  animation-fill-mode: both;
+  animation-iteration-count: 1;
+}
+
+/* Fonds */
+.playing .backgroundNight {
+  animation-name: fadeOut;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.6, 1);
+}
+.playing .screenFlash {
+  animation-name: screenFlash;
+  animation-timing-function: linear;
+}
+
+/* Phase 1 — éclair */
+.playing .boltStroke {
+  animation-name: drawStroke;
+  animation-timing-function: cubic-bezier(0.25, 0.7, 0.55, 1);
+}
+.playing .lightning {
+  animation-name: boltLife;
+  animation-timing-function: linear;
+}
+.playing .impactGlow {
+  animation-name: impactGlow;
+  animation-timing-function: cubic-bezier(0.1, 0.6, 0.3, 1);
+}
+.playing .shockwave {
+  animation-name: shockwave;
+  animation-timing-function: cubic-bezier(0.15, 0.7, 0.3, 1);
+}
+.playing .spark {
+  animation-name: spark;
+  animation-timing-function: cubic-bezier(0.1, 0.7, 0.4, 1);
+}
+.playing .impactGlow,
+.playing .shockwave,
+.playing .spark {
+  /* avant leur délai, ces éléments gardent leur état au repos : invisibles */
+  animation-fill-mode: forwards;
+}
+
+/* Phase 2 — tronc */
+.playing .sprout {
+  animation-name: sprout;
+  animation-timing-function: ease-out;
+}
+.playing .growthTip {
+  animation-name: growthTip;
+  animation-timing-function: cubic-bezier(0.45, 0, 0.2, 1);
+}
+.playing .groundShadow {
+  animation-name: fadeIn;
+  animation-timing-function: ease-out;
+}
+
+/* Phases 2 et 3 — traits qui poussent (accélération puis décélération) */
+.playing .growStroke {
+  animation-name: drawStroke;
+  animation-timing-function: cubic-bezier(0.45, 0, 0.2, 1);
+}
+
+/* Phase 4 — feuilles */
+.playing .leafGroup {
+  animation-name: leafGroupIn;
+  animation-timing-function: cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+.playing .leafStem {
+  animation-name: drawStroke;
+  animation-timing-function: cubic-bezier(0.3, 0, 0.2, 1);
+}
+.playing .leafNode {
+  animation-name: nodePop;
+  animation-timing-function: cubic-bezier(0.3, 0.6, 0.35, 1);
+}
+.playing .braceStroke {
+  animation-name: drawStroke;
+  animation-timing-function: cubic-bezier(0.45, 0, 0.2, 1);
+}
+
+/* Phase 5 — ondes */
+.playing .wave {
+  animation-name: waveEmit;
+  animation-timing-function: cubic-bezier(0.2, 0.6, 0.35, 1);
+  animation-iteration-count: infinite;
+  animation-fill-mode: backwards;
+}
+.playing .nodeHalo {
+  animation-name: nodeHalo;
+  animation-timing-function: ease-out;
+}
+
+/* Phase 6 — l'arbre rayonne */
+.playing .crownSway {
+  animation-name: crownSway;
+  animation-timing-function: ease-in-out;
+}
+.playing .mote {
+  animation-name: moteFloat;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  animation-fill-mode: backwards;
+}
+
+/* Phase 7 — le nom pousse l'arbre */
+.playing .treeSlot {
+  /* keyframes générées depuis push-curve.ts (l'arbre recule au contact du texte) */
+  animation-name: var(--tree-push-name);
+  animation-timing-function: linear;
+}
+.playing .wordmark {
+  /* la courbe est fixée en ligne depuis push-curve.ts (WORDMARK_EASING) */
+  animation-name: wordmarkArrive;
+}
+.playing .wavesLayer {
+  animation-name: wavesSettle;
+  animation-timing-function: ease-in-out;
+}
+
+/* Ondes et particules : états au repos (mode réduit / fin) */
+.wave {
+  opacity: 0;
+}
+.mote {
+  opacity: 0;
+}
+.wavesLayer {
+  opacity: var(--waves-final-opacity);
+}
+.reduced .wave {
+  opacity: var(--wave-peak);
+}
+
+/* ---------- Mode animations réduites ---------- */
+.reduced .lockup {
+  animation: reducedFade var(--reduced-fade) ease-out both;
+}
+
+/* ====================================================================== */
+/* Keyframes                                                                */
+/* ====================================================================== */
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+}
+
+@keyframes screenFlash {
+  0% { opacity: 0; }
+  12% { opacity: var(--flash-opacity); }
+  42% { opacity: calc(var(--flash-opacity) * 0.85); }
+  100% { opacity: 0; }
+}
+
+@keyframes drawStroke {
+  0% { stroke-dashoffset: 1.02; opacity: 0; }
+  2% { opacity: 1; }
+  100% { stroke-dashoffset: 0; opacity: 1; }
+}
+
+@keyframes boltLife {
+  0% { opacity: 1; }
+  34% { opacity: 1; }
+  42% { opacity: 0.25; }
+  50% { opacity: 1; }
+  62% { opacity: 0.5; }
+  72% { opacity: 0.9; }
+  100% { opacity: 0; }
+}
+
+@keyframes impactGlow {
+  0% { transform: scale(0.1); opacity: 1; }
+  100% { transform: scale(1.7); opacity: 0; }
+}
+
+@keyframes shockwave {
+  0% { transform: scale(0.04); opacity: 0.95; }
+  100% { transform: scale(1); opacity: 0; }
+}
+
+@keyframes spark {
+  0% { transform: translate(0, 0) scale(1); opacity: 1; }
+  100% { transform: translate(var(--dx), var(--dy)) scale(0.2); opacity: 0; }
+}
+
+@keyframes sprout {
+  0% { transform: scale(0); opacity: 0; }
+  35% { transform: scale(1.25); opacity: 1; }
+  70% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(0.6); opacity: 0; }
+}
+
+@keyframes growthTip {
+  0% { transform: translateY(0); opacity: 0; }
+  8% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { transform: translateY(-380px); opacity: 0; }
+}
+
+@keyframes leafGroupIn {
+  0% { transform: rotate(var(--leaf-rotation)) scale(0.82); }
+  100% { transform: rotate(0deg) scale(1); }
+}
+
+@keyframes nodePop {
+  0% { transform: scale(0) rotate(-30deg); opacity: 0; }
+  55% { transform: scale(1.22) rotate(0deg); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes nodeHalo {
+  0% { transform: scale(0.6); opacity: 0; }
+  30% { opacity: 0.5; }
+  100% { transform: scale(2.4); opacity: 0; }
+}
+
+@keyframes waveEmit {
+  0% { transform: scale(0.55); opacity: 0; }
+  18% { opacity: var(--wave-peak); }
+  100% { transform: scale(1.3); opacity: 0; }
+}
+
+@keyframes crownSway {
+  0% { transform: rotate(0deg); }
+  25% { transform: rotate(var(--sway)); }
+  75% { transform: rotate(calc(var(--sway) * -1)); }
+  100% { transform: rotate(0deg); }
+}
+
+@keyframes moteFloat {
+  0% { transform: translateY(0); opacity: 0; }
+  35% { opacity: 0.55; }
+  100% { transform: translateY(calc(var(--drift) * -1)); opacity: 0; }
+}
+
+@keyframes wordmarkArrive {
+  0% { transform: translateX(var(--wordmark-travel)); opacity: 0; filter: blur(6px); }
+  14% { opacity: 1; filter: blur(0); }
+  100% { transform: translateX(0); opacity: 1; filter: blur(0); }
+}
+
+@keyframes wavesSettle {
+  0% { opacity: 1; }
+  100% { opacity: var(--waves-final-opacity); }
+}
+
+@keyframes reducedFade {
+  from { opacity: 0; }
+}
