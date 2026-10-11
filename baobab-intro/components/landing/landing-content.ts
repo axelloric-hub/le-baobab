@@ -40,21 +40,12 @@ export const BRAND = {
   tagline: "LE RÉSEAU RACINE DES DEVS AFRICAINS",
 };
 
-<<<<<<< HEAD
 /** « Rejoindre » mène à la création de compte (/inscription). */
 export const JOIN_BUTTON_LABEL = "Rejoindre";
 
 /** Lien discret vers la connexion, à côté de « Rejoindre ». */
 export const LOGIN_LINK_LABEL = "Se connecter";
 
-=======
-/**
- * Bouton « Rejoindre » : visuel uniquement pour cette phase.
- * Volontairement sans destination ni action (raccordement ultérieur).
- */
-export const JOIN_BUTTON_LABEL = "Rejoindre";
-
->>>>>>> 066290c7fadeff60e3873964e049f10a544e8eb8
 /* ------------------------------------------------------------------ */
 /* Hero                                                                */
 /* ------------------------------------------------------------------ */
@@ -66,11 +57,7 @@ export const HERO = {
   titleLines: [["Code ensemble."], ["Grandis ensemble."]],
   lead:
     "LE BAOBAB réunit les développeurs africains autour de leurs échanges, de leurs apprentissages et de leurs projets, et les relie aux opportunités.",
-<<<<<<< HEAD
   /** Mène à la création de compte (/inscription). */
-=======
-  /** Pas encore de parcours d'inscription : bouton visuel, sans action. */
->>>>>>> 066290c7fadeff60e3873964e049f10a544e8eb8
   primaryCta: "Créer mon profil",
   /** Rejoue la cinématique d'ouverture (comportement inchangé). */
   secondaryCta: "Voir l'intro",

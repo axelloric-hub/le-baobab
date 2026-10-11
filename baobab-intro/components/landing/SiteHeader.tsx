@@ -5,12 +5,8 @@ import { usePathname } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
 import { BaobabMark } from "@/components/baobab/BaobabMark";
 import { CloseIcon, MenuIcon } from "./icons";
-<<<<<<< HEAD
 import { ROUTES } from "@/lib/routes";
 import { BRAND, JOIN_BUTTON_LABEL, LOGIN_LINK_LABEL, NAV_ITEMS, PENDING_LABEL, type NavItem } from "./landing-content";
-=======
-import { BRAND, JOIN_BUTTON_LABEL, NAV_ITEMS, PENDING_LABEL, type NavItem } from "./landing-content";
->>>>>>> 066290c7fadeff60e3873964e049f10a544e8eb8
 import styles from "./SiteHeader.module.css";
 
 /** Largeur à partir de laquelle la navigation complète est affichée (doit suivre le CSS). */
@@ -54,7 +50,6 @@ function NavEntry({ item, className, onNavigate }: { item: NavItem; className: s
   );
 }
 
-<<<<<<< HEAD
 /** « Rejoindre » : création de compte. */
 function JoinButton({ className, onNavigate }: { className: string; onNavigate?: () => void }) {
   return (
@@ -70,14 +65,6 @@ function LoginLink({ className, onNavigate }: { className: string; onNavigate?: 
     <Link href={ROUTES.login} className={className} onClick={onNavigate}>
       {LOGIN_LINK_LABEL}
     </Link>
-=======
-/** Bouton « Rejoindre » — strictement visuel dans cette phase : aucune route, aucune action. */
-function JoinButton({ className }: { className: string }) {
-  return (
-    <button type="button" className={className} aria-disabled="true" title={PENDING_LABEL} data-pending="rejoindre">
-      {JOIN_BUTTON_LABEL}
-    </button>
->>>>>>> 066290c7fadeff60e3873964e049f10a544e8eb8
   );
 }
 
@@ -127,10 +114,7 @@ export function SiteHeader() {
         </nav>
 
         <div className={styles.actions}>
-<<<<<<< HEAD
           <LoginLink className={styles.loginLink} />
-=======
->>>>>>> 066290c7fadeff60e3873964e049f10a544e8eb8
           <JoinButton className={styles.joinButton} />
           <button
             ref={toggleRef}
@@ -157,14 +141,10 @@ export function SiteHeader() {
             ))}
           </ul>
         </nav>
-<<<<<<< HEAD
         <div className={styles.mobileActions}>
           <JoinButton className={`${styles.joinButton} ${styles.mobileJoin}`} onNavigate={() => setMenuOpen(false)} />
           <LoginLink className={styles.mobileLogin} onNavigate={() => setMenuOpen(false)} />
         </div>
-=======
-        <JoinButton className={`${styles.joinButton} ${styles.mobileJoin}`} />
->>>>>>> 066290c7fadeff60e3873964e049f10a544e8eb8
       </div>
     </header>
   );

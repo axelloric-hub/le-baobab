@@ -591,7 +591,6 @@ export function ExternalIcon(props: IconProps) {
     </svg>
   );
 }
-<<<<<<< HEAD
 
 /* ---------- Authentification ---------- */
 
@@ -658,5 +657,3 @@ export function SpinnerIcon(props: IconProps) {
     </svg>
   );
 }
-=======
->>>>>>> 066290c7fadeff60e3873964e049f10a544e8eb8

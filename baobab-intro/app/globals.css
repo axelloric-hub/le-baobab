@@ -104,7 +104,6 @@ html[data-intro="play"] body {
   white-space: nowrap;
   border: 0;
 }
-<<<<<<< HEAD
 
 /* Actions réservées aux membres (components/auth/MemberLink.tsx) : de vrais liens,
    avec l'apparence du bouton d'origine. */
@@ -112,5 +111,3 @@ a[data-auth-link] {
   cursor: pointer;
   text-decoration: none;
 }
-=======
->>>>>>> 066290c7fadeff60e3873964e049f10a544e8eb8

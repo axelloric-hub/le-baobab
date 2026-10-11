@@ -1,14 +1,7 @@
-<<<<<<< HEAD
 import { MemberLink } from "@/components/auth/MemberLink";
 import { DemoButton } from "../DemoButton";
 import { ArrowRightIcon, PlayIcon } from "../icons";
 import { CTA_BANNER, SECTION_IDS } from "../sections-content";
-=======
-import { DemoButton } from "../DemoButton";
-import { ArrowRightIcon, PlayIcon } from "../icons";
-import { CTA_BANNER, SECTION_IDS } from "../sections-content";
-import { PendingButton } from "./SectionHeading";
->>>>>>> 066290c7fadeff60e3873964e049f10a544e8eb8
 import styles from "./Sections.module.css";
 
 export function CtaBanner() {
@@ -27,18 +20,10 @@ export function CtaBanner() {
           </h2>
           <p className={styles.ctaText}>{CTA_BANNER.text}</p>
           <div className={styles.ctaActions}>
-<<<<<<< HEAD
             <MemberLink to="register" className={styles.ctaPrimary}>
               {CTA_BANNER.primary}
               <ArrowRightIcon aria-hidden="true" />
             </MemberLink>
-=======
-            {/* Aucun parcours d'inscription n'existe encore : bouton visuel, sans action. */}
-            <PendingButton className={styles.ctaPrimary}>
-              {CTA_BANNER.primary}
-              <ArrowRightIcon aria-hidden="true" />
-            </PendingButton>
->>>>>>> 066290c7fadeff60e3873964e049f10a544e8eb8
             <DemoButton className={styles.ctaSecondary}>
               <PlayIcon aria-hidden="true" />
               {CTA_BANNER.secondary}

@@ -1,7 +1,4 @@
-<<<<<<< HEAD
 import { MemberLink } from "@/components/auth/MemberLink";
-=======
->>>>>>> 066290c7fadeff60e3873964e049f10a544e8eb8
 import Link from "next/link";
 import {
   ArrowLeftIcon,
@@ -17,13 +14,7 @@ import {
   ShieldIcon,
   ThumbDownIcon,
   ThumbUpIcon,
-<<<<<<< HEAD
 } from "@/components/landing/icons";
-=======
-  ExternalIcon,
-} from "@/components/landing/icons";
-import { PendingButton } from "@/components/landing/sections/SectionHeading";
->>>>>>> 066290c7fadeff60e3873964e049f10a544e8eb8
 import shared from "../shared/Pages.module.css";
 import { RichText } from "../shared/RichText";
 import { DocsSearch } from "./DocsClient";
@@ -105,17 +96,10 @@ function AsideCards() {
           {GUIDE.aside.questionTitle}
         </p>
         <p className={styles.railCardText}>{GUIDE.aside.questionText}</p>
-<<<<<<< HEAD
         <MemberLink className={styles.railCardAction}>
           {GUIDE.aside.questionAction}
           <ArrowRightIcon aria-hidden="true" />
         </MemberLink>
-=======
-        <PendingButton className={styles.railCardAction}>
-          {GUIDE.aside.questionAction}
-          <ExternalIcon aria-hidden="true" />
-        </PendingButton>
->>>>>>> 066290c7fadeff60e3873964e049f10a544e8eb8
       </div>
       <p className={styles.railNote}>
         {DOCS_UI.sourceNote}{" "}
@@ -262,7 +246,6 @@ export function DocsAccount() {
             <p className={styles.feedbackText}>{GUIDE.feedback.text}</p>
           </div>
           <div className={styles.feedbackButtons}>
-<<<<<<< HEAD
             <MemberLink className={styles.feedbackButton}>
               <ThumbUpIcon aria-hidden="true" />
               {GUIDE.feedback.yes}
@@ -271,32 +254,15 @@ export function DocsAccount() {
               <ThumbDownIcon aria-hidden="true" />
               {GUIDE.feedback.no}
             </MemberLink>
-=======
-            <PendingButton className={styles.feedbackButton}>
-              <ThumbUpIcon aria-hidden="true" />
-              {GUIDE.feedback.yes}
-            </PendingButton>
-            <PendingButton className={styles.feedbackButton}>
-              <ThumbDownIcon aria-hidden="true" />
-              {GUIDE.feedback.no}
-            </PendingButton>
->>>>>>> 066290c7fadeff60e3873964e049f10a544e8eb8
           </div>
         </div>
 
         <p className={styles.moreHelp}>
           <span>{GUIDE.help.title}</span>
-<<<<<<< HEAD
           <MemberLink className={styles.moreHelpAction}>
             {GUIDE.help.action}
             <ArrowRightIcon aria-hidden="true" />
           </MemberLink>
-=======
-          <PendingButton className={styles.moreHelpAction}>
-            {GUIDE.help.action}
-            <ExternalIcon aria-hidden="true" />
-          </PendingButton>
->>>>>>> 066290c7fadeff60e3873964e049f10a544e8eb8
         </p>
       </article>
     </DocsLayout>

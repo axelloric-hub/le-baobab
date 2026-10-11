@@ -261,11 +261,7 @@ export const DOCS_ACCOUNT = {
   },
   feedback: {
     question: "Cet article vous a-t-il été utile ?",
-<<<<<<< HEAD
     text: "Connectez-vous pour donner votre avis.",
-=======
-    text: "Le vote sera disponible avec l'application.",
->>>>>>> 066290c7fadeff60e3873964e049f10a544e8eb8
     yes: "Oui",
     no: "Non",
   },

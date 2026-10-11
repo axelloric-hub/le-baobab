@@ -1,17 +1,10 @@
 import type { CSSProperties } from "react";
-<<<<<<< HEAD
 import { MemberLink } from "@/components/auth/MemberLink";
-=======
->>>>>>> 066290c7fadeff60e3873964e049f10a544e8eb8
 import { BaobabMark } from "@/components/baobab/BaobabMark";
 import { DemoButton } from "./DemoButton";
 import { FeatureCards } from "./FeatureCards";
 import { ArrowRightIcon, NetworkIcon, PlayIcon } from "./icons";
-<<<<<<< HEAD
 import { HERO } from "./landing-content";
-=======
-import { HERO, PENDING_LABEL } from "./landing-content";
->>>>>>> 066290c7fadeff60e3873964e049f10a544e8eb8
 import { NetworkBackdrop } from "./NetworkBackdrop";
 import styles from "./Hero.module.css";
 
@@ -62,24 +55,10 @@ export function HeroSection() {
           </p>
 
           <div className={`${styles.ctas} ${styles.reveal}`} style={reveal(240)}>
-<<<<<<< HEAD
             <MemberLink to="register" className={styles.primaryButton}>
               {HERO.primaryCta}
               <ArrowRightIcon className={styles.buttonArrow} />
             </MemberLink>
-=======
-            {/* Aucun parcours d'inscription n'existe encore : bouton visuel, sans action. */}
-            <button
-              type="button"
-              className={styles.primaryButton}
-              aria-disabled="true"
-              title={PENDING_LABEL}
-              data-pending="inscription"
-            >
-              {HERO.primaryCta}
-              <ArrowRightIcon className={styles.buttonArrow} />
-            </button>
->>>>>>> 066290c7fadeff60e3873964e049f10a544e8eb8
             <DemoButton className={styles.secondaryButton}>
               <PlayIcon className={styles.buttonPlay} />
               {HERO.secondaryCta}

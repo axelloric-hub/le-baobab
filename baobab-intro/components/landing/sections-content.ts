@@ -17,11 +17,8 @@
 /* Ancres internes (utilisées par la navigation)                       */
 /* ------------------------------------------------------------------ */
 
-<<<<<<< HEAD
 import { ROUTES } from "@/lib/routes";
 
-=======
->>>>>>> 066290c7fadeff60e3873964e049f10a544e8eb8
 export const SECTION_IDS = {
   problem: "probleme",
   platform: "plateforme",
@@ -428,11 +425,7 @@ export const EXPLORE = {
 export const CTA_BANNER = {
   title: "Prêt à prendre racine ?",
   text: "Créez votre profil, rejoignez vos premiers groupes et faites grandir vos projets avec la communauté.",
-<<<<<<< HEAD
   primary: "Créer mon profil", // mène à /inscription
-=======
-  primary: "Créer mon profil", // pas encore de parcours d'inscription : visuel uniquement
->>>>>>> 066290c7fadeff60e3873964e049f10a544e8eb8
   secondary: "Revoir l'intro", // rejoue la cinématique (comportement inchangé)
 };
 
@@ -450,11 +443,7 @@ export const FOOTER = {
   columns: [
     {
       title: "Plateforme",
-<<<<<<< HEAD
       links: [{ label: "Communauté", href: "/communaute" }, { label: "Learn", href: ROUTES.login }, { label: "Showcase", href: ROUTES.login }, { label: "Opportunités", href: ROUTES.login }, { label: "Boutiques", href: ROUTES.login }] as FooterLink[],
-=======
-      links: [{ label: "Communauté", href: "/communaute" }, { label: "Learn" }, { label: "Showcase" }, { label: "Opportunités" }, { label: "Boutiques" }] as FooterLink[],
->>>>>>> 066290c7fadeff60e3873964e049f10a544e8eb8
     },
     {
       title: "Pour qui",
@@ -466,11 +455,7 @@ export const FOOTER = {
     },
     {
       title: "Communauté",
-<<<<<<< HEAD
       links: [{ label: "Charte de la communauté" }, { label: "Groupes", href: ROUTES.login }, { label: "Événements", href: ROUTES.login }] as FooterLink[],
-=======
-      links: [{ label: "Charte de la communauté" }, { label: "Groupes" }, { label: "Événements" }] as FooterLink[],
->>>>>>> 066290c7fadeff60e3873964e049f10a544e8eb8
     },
     {
       title: "À propos",

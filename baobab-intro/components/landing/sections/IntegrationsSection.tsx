@@ -1,7 +1,4 @@
-<<<<<<< HEAD
 import { MemberLink } from "@/components/auth/MemberLink";
-=======
->>>>>>> 066290c7fadeff60e3873964e049f10a544e8eb8
 import {
   AudioIcon,
   CheckCircleIcon,
@@ -21,11 +18,7 @@ import {
   CodeBracesIcon,
 } from "../icons";
 import { INTEGRATIONS, SECTION_IDS, type IntegrationIcon } from "../sections-content";
-<<<<<<< HEAD
 import { SectionHeading } from "./SectionHeading";
-=======
-import { PendingButton, SectionHeading } from "./SectionHeading";
->>>>>>> 066290c7fadeff60e3873964e049f10a544e8eb8
 import styles from "./Sections.module.css";
 
 const ICONS: Record<IntegrationIcon, typeof CloudIcon> = {
@@ -65,11 +58,7 @@ export function IntegrationsSection() {
           })}
         </ul>
         <div className={styles.centerAction}>
-<<<<<<< HEAD
           <MemberLink className={styles.darkButton}>{INTEGRATIONS.ctaLabel}</MemberLink>
-=======
-          <PendingButton className={styles.darkButton}>{INTEGRATIONS.ctaLabel}</PendingButton>
->>>>>>> 066290c7fadeff60e3873964e049f10a544e8eb8
         </div>
       </div>
     </section>

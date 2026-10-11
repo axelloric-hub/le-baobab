@@ -1,7 +1,4 @@
-<<<<<<< HEAD
 import { MemberLink } from "@/components/auth/MemberLink";
-=======
->>>>>>> 066290c7fadeff60e3873964e049f10a544e8eb8
 import Link from "next/link";
 import { ArrowRightIcon, DocumentIcon, ForumIcon, PenIcon } from "../icons";
 import { EXPLORE, SECTION_IDS, type ExploreIcon } from "../sections-content";
@@ -14,14 +11,10 @@ const ICONS: Record<ExploreIcon, typeof ForumIcon> = {
   docs: DocumentIcon,
 };
 
-<<<<<<< HEAD
 /**
  * Accès aux pages Communauté, Blog et Docs depuis l'accueil.
  * Le titre de chaque carte ouvre la page de présentation ; le bouton d'action conduit à la connexion.
  */
-=======
-/** Accès aux pages Communauté, Blog et Docs depuis l'accueil. */
->>>>>>> 066290c7fadeff60e3873964e049f10a544e8eb8
 export function ExploreSection() {
   const headingId = `${SECTION_IDS.explore}-titre`;
   return (
@@ -42,18 +35,11 @@ export function ExploreSection() {
                   </Link>
                 </h3>
                 <p className={styles.channelText}>{card.text}</p>
-<<<<<<< HEAD
                 {/* Bouton d'action : réservé aux membres, conduit à la connexion. */}
                 <MemberLink className={`${styles.channelAction} ${styles.exploreAction}`}>
                   {card.action}
                   <ArrowRightIcon aria-hidden="true" />
                 </MemberLink>
-=======
-                <span className={`${styles.channelAction} ${styles.exploreAction}`} aria-hidden="true">
-                  {card.action}
-                  <ArrowRightIcon />
-                </span>
->>>>>>> 066290c7fadeff60e3873964e049f10a544e8eb8
               </li>
             );
           })}

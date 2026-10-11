@@ -1,13 +1,7 @@
-<<<<<<< HEAD
 import { MemberLink } from "@/components/auth/MemberLink";
 import { CheckCircleIcon, ForumIcon, BriefcaseIcon, LockIcon, SchoolIcon } from "../icons";
 import { SECTION_IDS, WORKSPACE, type WorkspacePreview, type WorkspaceTab } from "../sections-content";
 import { SectionHeading } from "./SectionHeading";
-=======
-import { CheckCircleIcon, ForumIcon, BriefcaseIcon, LockIcon, SchoolIcon } from "../icons";
-import { SECTION_IDS, WORKSPACE, type WorkspacePreview, type WorkspaceTab } from "../sections-content";
-import { PendingButton, SectionHeading } from "./SectionHeading";
->>>>>>> 066290c7fadeff60e3873964e049f10a544e8eb8
 import { WorkspaceTabs } from "./WorkspaceTabs";
 import common from "./Sections.module.css";
 import styles from "./Workspace.module.css";
@@ -97,11 +91,7 @@ function Panel({ tab }: { tab: WorkspaceTab }) {
             </li>
           ))}
         </ul>
-<<<<<<< HEAD
         <MemberLink className={common.darkButton}>{tab.ctaLabel}</MemberLink>
-=======
-        <PendingButton className={common.darkButton}>{tab.ctaLabel}</PendingButton>
->>>>>>> 066290c7fadeff60e3873964e049f10a544e8eb8
       </div>
       <div className={styles.panelPreview}>
         <Preview preview={tab.preview} />

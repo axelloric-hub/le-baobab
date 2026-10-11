@@ -1,12 +1,6 @@
-<<<<<<< HEAD
 import { MemberLink } from "@/components/auth/MemberLink";
 import Link from "next/link";
 import { ArrowRightIcon, CommentIcon, HubIcon } from "@/components/landing/icons";
-=======
-import Link from "next/link";
-import { ArrowRightIcon, CommentIcon, ExternalIcon, HubIcon } from "@/components/landing/icons";
-import { PendingButton } from "@/components/landing/sections/SectionHeading";
->>>>>>> 066290c7fadeff60e3873964e049f10a544e8eb8
 import shared from "../shared/Pages.module.css";
 import { RichText } from "../shared/RichText";
 import { DocsSearch } from "./DocsClient";
@@ -23,17 +17,10 @@ function QuickHelp() {
           {DOCS_HOME.quick.title}
         </p>
         <p className={styles.railCardText}>{DOCS_HOME.quick.text}</p>
-<<<<<<< HEAD
         <MemberLink className={styles.railCardAction}>
           {DOCS_HOME.quick.action}
           <ArrowRightIcon aria-hidden="true" />
         </MemberLink>
-=======
-        <PendingButton className={styles.railCardAction}>
-          {DOCS_HOME.quick.action}
-          <ExternalIcon aria-hidden="true" />
-        </PendingButton>
->>>>>>> 066290c7fadeff60e3873964e049f10a544e8eb8
       </div>
       <p className={styles.railNote}>
         {DOCS_UI.sourceNote}{" "}
