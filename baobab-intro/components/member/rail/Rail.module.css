@@ -1,0 +1,212 @@
+/* Colonne latérale du fil : invitations, tendances, groupes à découvrir. */
+
+.card {
+  padding: 18px;
+  border: 1px solid var(--bb-line);
+  border-radius: var(--bb-radius-lg);
+  background: var(--bb-surface);
+  box-shadow: var(--bb-shadow-sm);
+  animation: railIn var(--bb-dur-enter) var(--bb-ease-enter) both;
+}
+
+@keyframes railIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 12px;
+  font-weight: 750;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--bb-ink-soft);
+}
+
+.title svg {
+  width: 17px;
+  height: 17px;
+  color: var(--bb-blue-600);
+}
+
+.count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--bb-brown-700);
+  color: #fff;
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.invite {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+  border-radius: var(--bb-radius-md);
+  background: var(--bb-surface-warm);
+  border: 1px solid var(--bb-line);
+}
+
+.inviteHead {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.inviteText {
+  min-width: 0;
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: var(--bb-ink-soft);
+}
+
+.inviteText strong {
+  color: var(--bb-brown-950);
+}
+
+.inviteKind {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--bb-ink-muted);
+}
+
+.inviteActions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.trend {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 -8px;
+  padding: 8px;
+  border-radius: var(--bb-radius-sm);
+  color: inherit;
+  text-decoration: none;
+  transition: background-color var(--bb-dur-fast) var(--bb-ease-standard);
+}
+
+.trend:hover {
+  background: var(--bb-sand);
+}
+
+.trend:focus-visible {
+  outline: none;
+  box-shadow: var(--bb-focus-ring);
+}
+
+.rank {
+  flex: none;
+  width: 18px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--bb-ink-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.trendText {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.trendTag {
+  overflow: hidden;
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--bb-brown-950);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.trendMeta {
+  font-size: 12.5px;
+  color: var(--bb-ink-muted);
+}
+
+.trend > svg {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  color: var(--bb-ink-muted);
+  transition: transform var(--bb-dur-base) var(--bb-ease-standard);
+}
+
+.trend:hover > svg {
+  transform: translateX(3px);
+}
+
+.group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.groupText {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.groupName {
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 650;
+  color: var(--bb-brown-950);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.groupMeta {
+  font-size: 12.5px;
+  color: var(--bb-ink-muted);
+}
+
+.footer {
+  margin: 4px 4px 0;
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--bb-ink-muted);
+}
+
+.footer a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.footer a:hover {
+  color: var(--bb-brown-800);
+  text-decoration: underline;
+}

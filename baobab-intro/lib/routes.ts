@@ -6,8 +6,12 @@ export const ROUTES = {
   verifyEmail: "/confirmation-email",
   forgotPassword: "/mot-de-passe-oublie",
   githubCallback: "/connexion/github",
-  /** Arrivée après connexion (page blanche en attendant le design de l'espace membre). */
-  memberSpace: "/espace",
+  /** Arrivée après connexion : le fil d'actualité. */
+  memberSpace: "/accueil",
+  feed: "/accueil",
+  saved: "/enregistres",
+  post: (id: string) => `/publications/${id}`,
+  hashtag: (tag: string) => `/hashtags/${encodeURIComponent(tag.replace(/^#/, "").toLowerCase())}`,
   /** Accueil forcé pour un membre déjà inscrit qui veut revoir la présentation. */
   discover: "/?decouvrir=1",
 } as const;

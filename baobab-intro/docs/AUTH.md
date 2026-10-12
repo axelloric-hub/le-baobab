@@ -9,9 +9,9 @@
 | `/connexion` | se connecter (+ « Continuer avec GitHub ») | `POST /auth/login/`, `POST /auth/resend-otp/` (compte non confirmé) |
 | `/mot-de-passe-oublie` | 2 étapes : e-mail, puis code + nouveau mot de passe | `POST /auth/password/forgot/`, `POST /auth/password/reset/` |
 | `/connexion/github` | retour de GitHub (automatique) | `POST /auth/github/exchange/` |
-| `/espace` | **page blanche** (arrivée après connexion), protégée | `POST /auth/token/refresh/` si besoin |
+| `/accueil` | fil d'actualité (arrivée après connexion), protégé — voir [ESPACE_MEMBRE.md](ESPACE_MEMBRE.md). L'ancienne adresse `/espace` y redirige. | `POST /auth/token/refresh/` si besoin |
 
-Après une connexion réussie (mot de passe, code e-mail ou GitHub), on arrive sur `/espace`. Sans session valide, `/espace` renvoie vers `/connexion`.
+Après une connexion réussie (mot de passe, code e-mail ou GitHub), on arrive sur `/accueil`. Sans session valide, l'espace membre renvoie vers `/connexion`.
 
 Design : maquettes Stitch (version téléphone) ; sur ordinateur, panneau de marque brun à gauche et formulaire à droite. Retirés des maquettes car faux : « TLS 1.3 · Baobab Core v4.2 », « Environnement chiffré & open standard », « valide 15 min » (c'est 10), « validation asynchrone sans pistage », l'adresse d'expédition inventée, le « relais communautaire ».
 
@@ -48,7 +48,7 @@ Composant : `components/auth/MemberLink.tsx` (garde l'apparence du bouton d'orig
 
 ## 4. Membres qui reviennent : pourquoi un cookie et pas l'adresse IP
 
-Après une inscription ou une connexion, le navigateur reçoit le cookie `baobab_membre=1` (1 an, aucune donnée personnelle). À la visite suivante de l'accueil, `proxy.ts` le voit et envoie directement vers `/connexion` — qui envoie elle-même vers `/espace` si la session est encore valide.
+Après une inscription ou une connexion, le navigateur reçoit le cookie `baobab_membre=1` (1 an, aucune donnée personnelle). À la visite suivante de l'accueil, `proxy.ts` le voit et envoie directement vers `/connexion` — qui envoie elle-même vers `/accueil` si la session est encore valide.
 
 L'adresse IP n'est **pas** utilisée, volontairement :
 - **IP partagées** : en Afrique, la plupart des opérateurs mobiles mettent des milliers d'abonnés derrière la même IP (CGNAT) ; même chose pour les cybercafés, universités, entreprises. Reconnaître une IP enverrait à la connexion de parfaits inconnus qui découvrent le site.
@@ -95,8 +95,8 @@ Tant que GitHub n'est pas configuré, le bouton affiche « La connexion avec Git
 
 ### Vérifier
 
-1. Ouvrir le site Vercel → « Rejoindre » → créer un compte → le code s'affiche (mode test) → « Remplir » → « Confirmer » → page blanche `/espace`.
-2. Fermer l'onglet, rouvrir l'adresse du site → on arrive directement sur `/connexion` puis `/espace`.
+1. Ouvrir le site Vercel → « Rejoindre » → créer un compte → le code s'affiche (mode test) → « Remplir » → « Confirmer » → fil d'actualité `/accueil`.
+2. Fermer l'onglet, rouvrir l'adresse du site → on arrive directement sur `/connexion` puis `/accueil`.
 3. Si « Impossible de joindre le serveur » : vérifier `NEXT_PUBLIC_API_BASE_URL` (puis redéployer) et `CORS_ALLOWED_ORIGINS` sur Render. Au premier appel, le serveur gratuit peut mettre jusqu'à une minute à se réveiller.
 
 Avant la vraie mise en production : `OTP_DEBUG_ECHO=false` et un vrai SMTP (voir `A_NE_PAS_OUBLIER.md` à la racine du dépôt).

@@ -60,6 +60,11 @@ export function startSession(session: AuthSession) {
   markAsMember();
 }
 
+/** Oublie le jeton d'accès en mémoire (le serveur l'a refusé) : le prochain appel le rafraîchit. */
+export function invalidateAccessToken() {
+  access = null;
+}
+
 export function clearSession() {
   access = null;
   writeStored(null);

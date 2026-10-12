@@ -4,7 +4,8 @@
 
 - **`/`** — landing page complète (navigation, hero, 9 sections, pied de page), précédée de la cinématique de 7 s à chaque ouverture.
 - **`/communaute`**, **`/blog`**, **`/docs`** — les pages Communauté, Blog et Documentation (maquettes Stitch), plus un article modèle (`/blog/idempotence-webhooks`) et un premier guide (`/docs/creer-son-compte`).
-- **`/inscription`**, **`/connexion`**, **`/confirmation-email`**, **`/mot-de-passe-oublie`** — l'authentification, reliée à l'API (y compris « Continuer avec GitHub ») ; après connexion : **`/espace`** (page blanche pour l'instant). Voir [docs/AUTH.md](docs/AUTH.md).
+- **`/inscription`**, **`/connexion`**, **`/confirmation-email`**, **`/mot-de-passe-oublie`** — l'authentification, reliée à l'API (y compris « Continuer avec GitHub ») ; après connexion : **`/accueil`**. Voir [docs/AUTH.md](docs/AUTH.md).
+- **`/accueil`**, **`/publications/[id]`**, **`/hashtags/[tag]`**, **`/enregistres`** — l'espace membre (lot 1 : fil d'actualité, statuts, publication et commentaires). Voir [docs/ESPACE_MEMBRE.md](docs/ESPACE_MEMBRE.md).
 - **`/intro`** — la cinématique seule, en plein écran, pour la présenter ou la filmer.
 
 ## Prérequis

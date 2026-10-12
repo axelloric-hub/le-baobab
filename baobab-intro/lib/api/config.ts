@@ -15,3 +15,14 @@ export const API_BASE_URL = (RAW || "/api/v1").replace(/\/+$/, "");
 
 /** Temps maximal d'une requête : le serveur gratuit (Render) peut mettre jusqu'à une minute à se réveiller. */
 export const API_TIMEOUT_MS = 60_000;
+
+/**
+ * Adresse WebSocket du serveur, déduite de l'adresse de l'API :
+ * https://routeur/api/v1 → wss://routeur  (les sockets sont servis sur /ws/…).
+ */
+export function websocketBase(): string {
+  const origin = typeof window === "undefined" ? "http://localhost" : window.location.origin;
+  const url = new URL(API_BASE_URL, origin);
+  url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
+  return `${url.protocol}//${url.host}`;
+}
