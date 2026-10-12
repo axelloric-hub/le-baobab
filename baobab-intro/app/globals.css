@@ -133,3 +133,12 @@ a[data-auth-link] {
     scroll-behavior: auto !important;
   }
 }
+
+/* iPhone : un champ de moins de 16 px déclenche un zoom automatique à la saisie. */
+@media (max-width: 639px) {
+  input,
+  select,
+  textarea {
+    font-size: max(16px, 1em) !important;
+  }
+}

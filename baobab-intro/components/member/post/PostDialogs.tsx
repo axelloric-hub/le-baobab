@@ -58,7 +58,7 @@ export function ReportDialog({ open, onClose, target }: { open: boolean; onClose
       open={open}
       onClose={onClose}
       busy={sending}
-      size="sm"
+      size="md"
       title={target.type === "post" ? "Signaler la publication" : "Signaler le commentaire"}
       footer={
         <>

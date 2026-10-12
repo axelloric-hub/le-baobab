@@ -208,6 +208,7 @@
 .editor {
   position: relative;
   margin-top: 16px;
+  font-size: 17px;
 }
 
 .editorMirror,
@@ -218,12 +219,25 @@
   padding: 4px 2px;
   border: 0;
   font: inherit;
-  font-size: 17px;
+  font-size: inherit;
   line-height: 1.6;
   letter-spacing: normal;
   white-space: pre-wrap;
   overflow-wrap: break-word;
   word-break: normal;
+}
+
+/* Un outil est ouvert : la zone de texte se fait discrète pour laisser voir le formulaire de l'outil. */
+.editor[data-compact] .editorMirror,
+.editor[data-compact] .editorInput {
+  min-height: 56px;
+}
+
+@media (max-width: 639px) {
+  .editorMirror,
+  .editorInput {
+    min-height: 96px;
+  }
 }
 
 .editorMirror {
@@ -697,9 +711,16 @@
 /* ---------- Pied du composeur ---------- */
 
 .footerNote {
+  display: -webkit-box;
+  flex: 1 1 auto;
+  min-width: 0;
   margin-right: auto;
+  overflow: hidden;
   font-size: 12.5px;
+  line-height: 1.35;
   color: var(--bb-ink-muted);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .error {
@@ -786,11 +807,15 @@
   box-shadow: var(--bb-shadow-md);
 }
 
+/* Mobile : le formulaire d'abord (on agit tout de suite), l'aperçu ensuite, en format réduit. */
 @media (max-width: 759px) {
   .preview {
-    order: -1;
-    width: min(220px, 60vw);
+    width: min(200px, 56vw);
     margin: 0 auto;
+  }
+
+  .previewLabel {
+    text-align: center;
   }
 }
 

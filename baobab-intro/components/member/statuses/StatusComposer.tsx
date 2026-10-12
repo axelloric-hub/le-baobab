@@ -118,7 +118,7 @@ function StatusDialog({ onClose }: { onClose: () => void }) {
       footer={
         <>
           <span className={styles.footerNote}>{blocker && (body || file || link) ? blocker : "Visible pendant 24 heures"}</span>
-          <button type="button" className={cx(ui.button, ui.ghost)} onClick={onClose} disabled={create.isPending}>
+          <button type="button" className={cx(ui.button, ui.ghost, ui.hideOnMobile)} onClick={onClose} disabled={create.isPending}>
             Annuler
           </button>
           <button type="button" className={cx(ui.button, ui.primary)} onClick={submit} disabled={Boolean(blocker) || create.isPending}>

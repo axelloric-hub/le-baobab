@@ -347,7 +347,14 @@
   background: var(--bb-line);
 }
 
-/* ---------- Boîte de dialogue (élément <dialog> natif) ---------- */
+/* ---------- Boîte de dialogue (élément <dialog> natif) ----------
+ * Ordinateur : fenêtre centrée. Mobile (< 640 px) :
+ *  - « fullscreen » (formulaires) : plein écran, calé sur la zone VISIBLE (visualViewport) pour que
+ *    le clavier ne recouvre jamais le formulaire ni le bouton d'envoi ;
+ *  - « sheet » (choix courts, confirmations) : feuille qui monte du bas, posée au-dessus du clavier.
+ * Le corps défile ; une ombre en haut / en bas signale qu'il reste du contenu.
+ * Remarque : `flex: 1 1 auto` (et non `flex: 1`) — Safari calcule une hauteur nulle avec une base de 0 %.
+ */
 
 .dialog {
   width: min(560px, calc(100vw - 32px));
@@ -421,51 +428,129 @@
 }
 
 .dialogHeader {
+  position: relative;
+  z-index: 1;
   display: flex;
+  flex: none;
   align-items: center;
   gap: 12px;
   min-height: 60px;
   padding: 10px 10px 10px 20px;
   border-bottom: 1px solid var(--bb-line);
   background: var(--bb-surface-warm);
+  transition: box-shadow var(--bb-dur-base) var(--bb-ease-standard);
+}
+
+.dialog[data-scrolled] .dialogHeader {
+  box-shadow: 0 6px 14px -8px rgba(42, 20, 10, 0.28);
 }
 
 .dialogTitle {
-  flex: 1;
+  flex: 1 1 auto;
   min-width: 0;
   margin: 0;
+  overflow: hidden;
   font-size: 17px;
   font-weight: 700;
   letter-spacing: -0.01em;
   color: var(--bb-brown-800);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .dialogBody {
-  flex: 1;
+  flex: 1 1 auto;
   min-height: 0;
   padding: 20px;
   overflow-y: auto;
   overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  scroll-padding: 16px 0 24px;
 }
 
 .dialogFooter {
+  position: relative;
+  z-index: 1;
   display: flex;
-  flex-wrap: wrap;
+  flex: none;
   align-items: center;
   justify-content: flex-end;
   gap: 10px;
-  padding: 14px 20px calc(14px + env(safe-area-inset-bottom));
+  padding: 12px 20px calc(12px + env(safe-area-inset-bottom));
   border-top: 1px solid var(--bb-line);
   background: var(--bb-surface);
+  transition: box-shadow var(--bb-dur-base) var(--bb-ease-standard);
 }
 
-/* Mobile : la boîte de dialogue devient une feuille qui monte du bas. */
+/* Il reste du contenu plus bas : ombre au-dessus du pied + indication « Suite ». */
+.dialog[data-more] .dialogFooter {
+  box-shadow: 0 -8px 16px -10px rgba(42, 20, 10, 0.3);
+}
+
+.moreHint {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--bb-brown-950);
+  color: #fff;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 650;
+  box-shadow: var(--bb-shadow-md);
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 6px);
+  transition:
+    opacity var(--bb-dur-base) var(--bb-ease-standard),
+    transform var(--bb-dur-base) var(--bb-ease-standard);
+}
+
+.moreHint svg {
+  width: 15px;
+  height: 15px;
+}
+
+.dialog[data-more] .moreHint {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translate(-50%, 0);
+}
+
+.moreHint:focus-visible {
+  outline: none;
+  box-shadow: var(--bb-focus-ring);
+}
+
 @media (max-width: 639px) {
+  /* Les deux variantes suivent la zone visible : --vv-top, --vv-height, --vv-bottom (Dialog.tsx). */
   .dialog,
   .dialog[data-size] {
+    position: fixed;
     width: 100vw;
-    max-height: 92dvh;
-    margin: auto 0 0;
+    max-width: 100vw;
+    margin: 0;
+  }
+
+  .dialog[data-mobile="fullscreen"] {
+    inset: var(--vv-top, 0px) 0 auto 0;
+    height: var(--vv-height, 100dvh);
+    max-height: var(--vv-height, 100dvh);
+    border-radius: 0;
+    box-shadow: none;
+    transform: translateY(24px);
+  }
+
+  .dialog[data-mobile="sheet"] {
+    inset: auto 0 var(--vv-bottom, 0px) 0;
+    max-height: calc(var(--vv-height, 100dvh) - 32px);
     border-radius: var(--bb-radius-lg) var(--bb-radius-lg) 0 0;
     transform: translateY(100%);
   }
@@ -475,15 +560,24 @@
   }
 
   @starting-style {
-    .dialog[open] {
+    .dialog[data-mobile="fullscreen"][open] {
+      opacity: 0;
+      transform: translateY(24px);
+    }
+
+    .dialog[data-mobile="sheet"][open] {
       transform: translateY(100%);
     }
   }
 
-  .dialogHeader::before {
+  .dialog[data-mobile="sheet"] .dialogHeader {
+    padding-top: 18px;
+  }
+
+  .dialog[data-mobile="sheet"] .dialogHeader::before {
     content: "";
     position: absolute;
-    top: 6px;
+    top: 7px;
     left: 50%;
     width: 36px;
     height: 4px;
@@ -492,9 +586,32 @@
     transform: translateX(-50%);
   }
 
-  .dialogHeader {
-    position: relative;
-    padding-top: 16px;
+  .dialog[data-mobile="fullscreen"] .dialogHeader {
+    min-height: 56px;
+    padding: 6px 8px 6px 16px;
+    padding-top: max(6px, env(safe-area-inset-top));
+  }
+
+  .dialogBody {
+    padding: 16px;
+  }
+
+  .dialogFooter {
+    padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+  }
+
+  /* Clavier ouvert : la zone de sécurité du bas est déjà masquée par le clavier. */
+  .dialog[data-keyboard] .dialogFooter {
+    padding-bottom: 10px;
+  }
+
+  .hideOnMobile {
+    display: none !important;
+  }
+
+  /* Clavier ouvert : la pastille « Suite » masquerait le champ en cours de saisie. */
+  .dialog[data-keyboard] .moreHint {
+    display: none;
   }
 }
 

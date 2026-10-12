@@ -134,12 +134,24 @@ function ComposerDialog({ initialTool, onClose }: { initialTool?: ComposerTool; 
     if (!node) return;
     node.style.height = "auto";
     node.style.height = `${node.scrollHeight}px`;
-  }, [draft.body]);
+  }, [draft.body, draft.tool, uploads.items.length]);
 
+  // Ouverture : le texte reçoit le focus, sauf si un outil a été choisi (son premier champ le reçoit).
   useEffect(() => {
     if (initialTool === "media") fileRef.current?.click();
-    else textRef.current?.focus();
+    else if (!initialTool) textRef.current?.focus({ preventScroll: true });
   }, [initialTool]);
+
+  // Outil ouvert (code, sondage, lien, projet) : son premier champ est amené à l'écran et reçoit le focus.
+  useEffect(() => {
+    if (!draft.tool || draft.tool === "media") return;
+    const frame = requestAnimationFrame(() => {
+      const field = document.querySelector<HTMLElement>("[data-tool-focus]");
+      field?.scrollIntoView({ block: "center", behavior: "smooth" });
+      field?.focus({ preventScroll: true });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [draft.tool]);
 
   const set = <K extends keyof Draft>(key: K, value: Draft[K]) => setDraft((d) => ({ ...d, [key]: value }));
   const setTool = (next: ComposerTool) => {
@@ -267,7 +279,7 @@ function ComposerDialog({ initialTool, onClose }: { initialTool?: ComposerTool; 
           <span className={styles.footerNote} aria-live="polite">
             {blocker && (draft.body || uploads.items.length || kindTool) ? blocker : "Brouillon enregistré sur cet appareil"}
           </span>
-          <button type="button" className={cx(ui.button, ui.ghost)} onClick={onClose} disabled={create.isPending}>
+          <button type="button" className={cx(ui.button, ui.ghost, ui.hideOnMobile)} onClick={onClose} disabled={create.isPending}>
             Plus tard
           </button>
           <button type="button" className={cx(ui.button, ui.primary)} onClick={submit} disabled={Boolean(blocker) || create.isPending} aria-describedby={error ? "composer-error" : undefined}>
@@ -316,7 +328,7 @@ function ComposerDialog({ initialTool, onClose }: { initialTool?: ComposerTool; 
         </div>
       )}
 
-      <div className={styles.editor}>
+      <div className={styles.editor} data-compact={kindTool || showMedia ? "" : undefined}>
         <div className={styles.editorMirror} aria-hidden="true">
           {highlight(draft.body)}
         </div>
@@ -331,12 +343,12 @@ function ComposerDialog({ initialTool, onClose }: { initialTool?: ComposerTool; 
           onChange={(e) => set("body", e.target.value)}
           placeholder={
             kindTool === "code"
-              ? "Expliquez votre code en quelques mots…"
+              ? "Expliquez votre code (facultatif)…"
               : kindTool === "poll"
-                ? "Donnez un peu de contexte à votre sondage (facultatif)…"
+                ? "Contexte du sondage (facultatif)…"
                 : "De quoi voulez-vous parler ? Utilisez #hashtags et @mentions."
           }
-          rows={4}
+          rows={kindTool || showMedia ? 1 : 3}
           onKeyDown={(e) => {
             if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
               e.preventDefault();
@@ -480,6 +492,8 @@ function ComposerDialog({ initialTool, onClose }: { initialTool?: ComposerTool; 
               </label>
               <textarea
                 id="code-body"
+                data-tool-focus
+                placeholder="Collez ou écrivez votre code ici"
                 className={cx(ui.textarea, styles.code)}
                 spellCheck={false}
                 autoCapitalize="off"
@@ -511,7 +525,7 @@ function ComposerDialog({ initialTool, onClose }: { initialTool?: ComposerTool; 
             <label className={ui.label} htmlFor="link-url">
               Adresse
             </label>
-            <input id="link-url" className={ui.input} type="url" inputMode="url" placeholder="https://" value={draft.link} onChange={(e) => set("link", e.target.value)} />
+            <input id="link-url" data-tool-focus className={ui.input} type="url" inputMode="url" placeholder="https://" value={draft.link} onChange={(e) => set("link", e.target.value)} />
           </div>,
           () => set("tool", null),
         )}
@@ -527,6 +541,7 @@ function ComposerDialog({ initialTool, onClose }: { initialTool?: ComposerTool; 
               </label>
               <input
                 id="poll-question"
+                data-tool-focus
                 className={ui.input}
                 maxLength={300}
                 placeholder="ex. : Quel framework backend utilisez-vous ?"
@@ -596,7 +611,7 @@ function ComposerDialog({ initialTool, onClose }: { initialTool?: ComposerTool; 
               <label className={ui.label} htmlFor="project-name">
                 Nom du projet
               </label>
-              <input id="project-name" className={ui.input} maxLength={120} value={draft.project.name} onChange={(e) => set("project", { ...draft.project, name: e.target.value })} />
+              <input id="project-name" data-tool-focus className={ui.input} maxLength={120} value={draft.project.name} onChange={(e) => set("project", { ...draft.project, name: e.target.value })} />
             </div>
             <div>
               <label className={ui.label} htmlFor="project-description">

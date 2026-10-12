@@ -615,9 +615,11 @@ a.navLink:hover svg {
 
 /* ---------- Palette de recherche (Ctrl + K) ---------- */
 
-.palette {
-  align-self: flex-start;
-  margin-top: 10vh;
+@media (min-width: 640px) {
+  .palette {
+    align-self: flex-start;
+    margin-top: 10vh;
+  }
 }
 
 .paletteInput {
