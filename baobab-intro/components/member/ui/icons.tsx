@@ -38,6 +38,7 @@ export const CloseIcon = I(<path d="M6 6l12 12M18 6L6 18" />);
 export const ChevronLeftIcon = I(<path d="M14.5 6l-6 6 6 6" />);
 export const ChevronRightIcon = I(<path d="M9.5 6l6 6-6 6" />);
 export const ChevronDownIcon = I(<path d="M6 9.5l6 6 6-6" />);
+export const ChevronUpIcon = I(<path d="M6 14.5l6-6 6 6" />);
 export const ArrowUpIcon = I(<path d="M12 19V5M6 11l6-6 6 6" />);
 export const ArrowLeftIcon = I(<path d="M19 12H5M11 6l-6 6 6 6" />);
 export const GlobeIcon = I(<><circle cx="12" cy="12" r="8.5" /><path d="M3.5 12h17M12 3.5c2.3 2.4 3.5 5.2 3.5 8.5s-1.2 6.1-3.5 8.5c-2.3-2.4-3.5-5.2-3.5-8.5S9.7 5.9 12 3.5z" /></>);

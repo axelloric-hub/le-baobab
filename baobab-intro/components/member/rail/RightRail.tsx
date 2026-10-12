@@ -82,7 +82,7 @@ export function InvitationsCard() {
   );
 }
 
-function TrendsCard() {
+export function TrendsCard() {
   const trending = useTrending();
   const items = (trending.data ?? []).slice(0, 5);
   if (items.length === 0) return null;
@@ -114,7 +114,7 @@ function TrendsCard() {
   );
 }
 
-function SuggestedGroupsCard() {
+export function SuggestedGroupsCard() {
   const groups = useSuggestedGroups();
   const join = useJoinGroup();
   const toast = useToast();

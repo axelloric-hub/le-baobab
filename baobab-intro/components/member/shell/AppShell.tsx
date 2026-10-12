@@ -3,10 +3,11 @@
 import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { BaobabMark } from "@/components/baobab/BaobabMark";
 import { BRAND } from "@/components/landing/landing-content";
-import { useMe, useMyEnrollments, useMyGroups } from "@/features/me/me";
+import { useMe } from "@/features/me/me";
 import { useUnreadMessages, useUnreadNotifications } from "@/features/notifications/hooks";
 import { currentUser, endSession } from "@/lib/auth/session";
 import { ROUTES } from "@/lib/routes";
@@ -32,6 +33,8 @@ import { Menu, type MenuEntry } from "../ui/Menu";
 import { useToast } from "../ui/Toast";
 import ui from "../ui/ui.module.css";
 import { useCreation } from "./creation-context";
+import { MobileDrawer } from "./MobileDrawer";
+import { MyCoursesSection, MyGroupsSection } from "./MySpaces";
 import { NAV_APPS, SOON } from "./nav";
 import styles from "./Shell.module.css";
 
@@ -139,8 +142,6 @@ function TopBar() {
 
 function SideNav() {
   const pathname = usePathname();
-  const groups = useMyGroups(true);
-  const courses = useMyEnrollments();
 
   return (
     <nav className={styles.sidenav} aria-label="Applications">
@@ -169,48 +170,8 @@ function SideNav() {
         </li>
       </ul>
 
-      {groups.data && groups.data.length > 0 && (
-        <section className={styles.navSection} aria-labelledby="nav-groupes">
-          <h2 id="nav-groupes" className={styles.navHeading}>
-            Mes groupes
-          </h2>
-          <ul className={styles.navMini}>
-            {groups.data.slice(0, 5).map((group) => (
-              <li key={group.slug} className={styles.navMiniItem}>
-                <Avatar name={group.name} src={group.avatar_url} size={24} />
-                <span>{group.name}</span>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      {courses.data && courses.data.length > 0 && (
-        <section className={styles.navSection} aria-labelledby="nav-cours">
-          <h2 id="nav-cours" className={styles.navHeading}>
-            Mes cours
-          </h2>
-          {courses.data.map((enrollment) => {
-            const percent = Math.round(enrollment.progress.percent);
-            return (
-              <div key={enrollment.course.id} className={styles.course}>
-                <span className={styles.courseTitle}>{enrollment.course.title}</span>
-                <span className={styles.courseMeta}>Progression&nbsp;: {percent}&nbsp;%</span>
-                <span
-                  className={styles.progress}
-                  role="progressbar"
-                  aria-valuenow={percent}
-                  aria-valuemin={0}
-                  aria-valuemax={100}
-                  aria-label={`Progression du cours ${enrollment.course.title}`}
-                >
-                  <span style={{ width: `${percent}%` }} />
-                </span>
-              </div>
-            );
-          })}
-        </section>
-      )}
+      <MyGroupsSection />
+      <MyCoursesSection />
 
       <p className={styles.navFooter}>
         <Link href="/docs">Documentation</Link> · <Link href="/blog">Blog</Link> · <Link href={ROUTES.discover} prefetch={false}>À propos</Link>
@@ -220,23 +181,23 @@ function SideNav() {
   );
 }
 
-/** Barre d'onglets mobile : uniquement des destinations qui existent (loi de Jakob : 5 onglets, « + » au centre). */
-function BottomBar() {
+/**
+ * Barre d'onglets mobile (5 onglets, « + » au centre). La poignée au-dessus ouvre le panneau
+ * « Toutes les fonctionnalités », qui donne sur mobile tout ce que l'ordinateur affiche en colonnes.
+ */
+function BottomBar({ drawerOpen, setDrawerOpen }: { drawerOpen: boolean; setDrawerOpen: (open: boolean) => void }) {
   const pathname = usePathname();
   const { openSearch, openPost, openStatus } = useCreation();
   const logout = useLogout();
   const identity = useIdentity();
   const [createOpen, setCreateOpen] = useState(false);
 
-  const meMenu: MenuEntry[] = [
-    { kind: "link", label: "Découvrir LE BAOBAB", href: ROUTES.discover, icon: <GlobeIcon /> },
-    { kind: "separator" },
-    { label: "Se déconnecter", icon: <LogoutIcon />, onSelect: () => void logout() },
-  ];
-
   return (
     <>
-      <nav className={styles.bottombar} aria-label="Navigation principale">
+      <nav className={styles.bottombar} aria-label="Navigation principale" inert={drawerOpen}>
+        <MobileDrawerSlot>
+          <MobileDrawer open={drawerOpen} onOpenChange={setDrawerOpen} identity={identity} onLogout={() => void logout()} />
+        </MobileDrawerSlot>
         <Link href={ROUTES.feed} className={styles.tab} aria-current={pathname === ROUTES.feed ? "page" : undefined}>
           <HomeIcon />
           Accueil
@@ -252,20 +213,10 @@ function BottomBar() {
           <BookmarkIcon />
           Enregistrés
         </Link>
-        <div className={styles.tabMenu}>
-          <Menu
-            label={`Mon compte${identity.username ? ` (@${identity.username})` : ""}`}
-            items={meMenu}
-            side="top"
-            triggerClassName={styles.tab}
-            trigger={
-              <>
-                <UserIcon />
-                Moi
-              </>
-            }
-          />
-        </div>
+        <button type="button" className={styles.tab} onClick={() => setDrawerOpen(true)} aria-expanded={drawerOpen} aria-controls="toutes-les-fonctionnalites">
+          <UserIcon />
+          Moi
+        </button>
       </nav>
 
       <Dialog open={createOpen} onClose={() => setCreateOpen(false)} title="Créer" size="sm">
@@ -308,20 +259,30 @@ function BottomBar() {
   );
 }
 
+/** Le panneau mobile est rendu hors de la barre (sinon il hériterait de son inertie quand il est ouvert). */
+function MobileDrawerSlot({ children }: { children: ReactNode }) {
+  const [host, setHost] = useState<HTMLElement | null>(null);
+  useEffect(() => setHost(document.body), []);
+  return host ? createPortal(children, host) : null;
+}
+
 export function AppShell({ children }: { children: ReactNode }) {
+  const [drawerOpen, setDrawerOpen] = useState(false);
   return (
     <div className={styles.app}>
       <a href="#contenu" className={styles.skip}>
         Aller au contenu
       </a>
-      <TopBar />
-      <div className={styles.frame}>
+      <div inert={drawerOpen} style={{ display: "contents" }}>
+        <TopBar />
+      </div>
+      <div className={styles.frame} inert={drawerOpen}>
         <SideNav />
         <main id="contenu" className={styles.main} tabIndex={-1}>
           {children}
         </main>
       </div>
-      <BottomBar />
+      <BottomBar drawerOpen={drawerOpen} setDrawerOpen={setDrawerOpen} />
     </div>
   );
 }

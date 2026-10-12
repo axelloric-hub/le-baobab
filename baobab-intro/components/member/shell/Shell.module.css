@@ -855,3 +855,372 @@ a.navLink:hover svg {
     height: 32px;
   }
 }
+
+/* ====================================================================== */
+/* Mobile : poignée et panneau « Toutes les fonctionnalités »              */
+/* ====================================================================== */
+
+/* Poignée posée sur le bord supérieur de la barre d'onglets ; la flèche fait un va-et-vient. */
+.drawerHandle {
+  position: fixed;
+  bottom: calc(var(--bottombar-h, 64px) + env(safe-area-inset-bottom) - 1px);
+  left: 50%;
+  z-index: 31;
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid var(--bb-line);
+  border-bottom: 0;
+  border-radius: 14px 14px 0 0;
+  background: rgba(255, 255, 255, 0.97);
+  color: var(--bb-brown-700);
+  box-shadow: 0 -6px 14px -10px rgba(42, 20, 10, 0.35);
+  cursor: grab;
+  touch-action: none;
+  transform: translateX(-50%);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.drawerHandle:active {
+  cursor: grabbing;
+}
+
+.drawerHandle:focus-visible {
+  outline: none;
+  box-shadow: var(--bb-focus-ring);
+}
+
+/* Zone tactile agrandie (44 px) sans grossir la poignée. */
+.drawerHandle::before {
+  content: "";
+  position: absolute;
+  inset: -14px -10px 0;
+}
+
+.drawerArrow {
+  width: 22px;
+  height: 22px;
+  stroke-width: 2.4;
+  animation: drawerHint 1.6s var(--bb-ease-standard) infinite;
+}
+
+.drawerHandle[aria-expanded="true"] .drawerArrow {
+  animation: none;
+}
+
+@keyframes drawerHint {
+  0%,
+  100% {
+    transform: translateY(2px);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+.drawer {
+  position: fixed;
+  inset: 0;
+  z-index: 45;
+  display: flex;
+  flex-direction: column;
+  background: var(--bb-canvas);
+  transform: translateY(100%);
+  visibility: hidden;
+  transition:
+    transform var(--bb-dur-slow) var(--bb-ease-exit),
+    visibility 0s linear var(--bb-dur-slow);
+  will-change: transform;
+}
+
+.drawer[data-open] {
+  transform: translateY(0);
+  visibility: visible;
+  transition:
+    transform 380ms var(--bb-ease-enter),
+    visibility 0s;
+}
+
+.drawer[data-dragging] {
+  visibility: visible;
+  transition: none;
+}
+
+.drawerHeader {
+  position: relative;
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  min-height: 60px;
+  padding: max(14px, env(safe-area-inset-top)) 8px 6px 16px;
+  border-bottom: 1px solid var(--bb-line);
+  background: var(--bb-surface);
+  cursor: grab;
+  touch-action: none;
+}
+
+.drawerGrip {
+  position: absolute;
+  top: max(6px, calc(env(safe-area-inset-top) - 6px));
+  left: 50%;
+  width: 40px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--bb-bone);
+  transform: translateX(-50%);
+}
+
+.drawerTitle {
+  flex: 1 1 auto;
+  margin: 0;
+  font-size: 17px;
+  font-weight: 750;
+  color: var(--bb-brown-800);
+}
+
+.drawerClose {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--bb-ink-soft);
+  cursor: pointer;
+}
+
+.drawerClose:hover {
+  background: var(--bb-sand);
+}
+
+.drawerClose:focus-visible {
+  outline: none;
+  box-shadow: var(--bb-focus-ring);
+}
+
+.drawerClose svg {
+  width: 22px;
+  height: 22px;
+}
+
+.drawerBody {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 16px 16px calc(24px + env(safe-area-inset-bottom));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.drawerProfile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--bb-line);
+  border-radius: var(--bb-radius-lg);
+  background: var(--bb-surface);
+}
+
+.drawerProfile > span:last-child {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.drawerProfile strong {
+  overflow: hidden;
+  font-size: 16px;
+  color: var(--bb-brown-950);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.drawerProfile small {
+  font-size: 13px;
+  color: var(--bb-ink-muted);
+}
+
+.drawerHeading {
+  margin: 22px 4px 10px;
+  font-size: 12px;
+  font-weight: 750;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--bb-ink-soft);
+}
+
+.drawerApps {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.drawerApp {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  min-height: 92px;
+  padding: 14px;
+  border: 1px solid var(--bb-line);
+  border-radius: var(--bb-radius-md);
+  background: var(--bb-surface);
+  color: var(--bb-brown-950);
+  font-size: 14.5px;
+  font-weight: 650;
+  text-decoration: none;
+  transition:
+    border-color var(--bb-dur-fast) var(--bb-ease-standard),
+    transform var(--bb-dur-fast) var(--bb-ease-standard);
+}
+
+a.drawerApp:active {
+  transform: scale(0.98);
+}
+
+a.drawerApp:focus-visible {
+  outline: none;
+  box-shadow: var(--bb-focus-ring);
+}
+
+.drawerApp[aria-current="page"] {
+  border-color: var(--bb-brown-700);
+  background: #f8ece3;
+}
+
+.drawerApp[aria-disabled="true"] {
+  color: rgba(74, 59, 51, 0.7);
+}
+
+.drawerApp .soon {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: inline-block;
+}
+
+.drawerAppIcon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--bb-radius-sm);
+  background: var(--bb-brown-700);
+  color: #fff;
+}
+
+.drawerApp[aria-disabled="true"] .drawerAppIcon {
+  background: var(--bb-sand);
+  color: var(--bb-ink-muted);
+}
+
+.drawerAppIcon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.drawerCards {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 18px;
+}
+
+/* Les sections « Mes groupes » / « Mes cours » prennent l'allure d'une carte dans le panneau. */
+.drawerCards > .navSection {
+  display: block;
+  margin: 0;
+  padding: 16px 10px 12px;
+  border: 1px solid var(--bb-line);
+  border-radius: var(--bb-radius-lg);
+  background: var(--bb-surface);
+}
+
+.drawerLinks {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 6px;
+  border: 1px solid var(--bb-line);
+  border-radius: var(--bb-radius-lg);
+  background: var(--bb-surface);
+  list-style: none;
+}
+
+.drawerLink {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 48px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--bb-radius-sm);
+  background: transparent;
+  color: var(--bb-brown-950);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 550;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.drawerLink svg {
+  width: 20px;
+  height: 20px;
+  color: var(--bb-ink-muted);
+}
+
+.drawerLink:active {
+  background: var(--bb-sand);
+}
+
+.drawerLink:focus-visible {
+  outline: none;
+  box-shadow: var(--bb-focus-ring);
+}
+
+.drawerLink[data-tone="danger"],
+.drawerLink[data-tone="danger"] svg {
+  color: #b42318;
+}
+
+.drawerBottomClose {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  min-height: 48px;
+  margin-top: 18px;
+  border: 0;
+  background: transparent;
+  color: var(--bb-ink-muted);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.drawerBottomClose svg {
+  width: 18px;
+  height: 18px;
+}
+
+@media (min-width: 768px) {
+  .drawerHandle,
+  .drawer {
+    display: none;
+  }
+}
