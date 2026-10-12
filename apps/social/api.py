@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from django.db import connection
+from django.utils import timezone
 from rest_framework import serializers as s
 from rest_framework.response import Response
 
@@ -14,7 +15,7 @@ from apps.profiles.selectors import get_active_or_404 as _u
 from apps.social import feed as FD
 from apps.social import selectors as SS
 from apps.social import services as SV
-from apps.social.models import Comment, Post, PostReaction, Save, Status
+from apps.social.models import Comment, CommentReaction, Poll, PollVote, Post, PostReaction, Save, Status, StatusView
 from apps.storage.services import resolve_owned, signed_url
 
 VIS = [c[0] for c in Visibility.choices]
@@ -32,13 +33,34 @@ def _vid(request):
     return getattr(request.user, "pk", None)
 
 
+def _polls(post_ids, viewer_id) -> dict[str, dict]:
+    """Sondages des publications donnees : question, options avec leur nombre de votes, et mes votes."""
+    polls = {str(p.post_id): p for p in Poll.objects.filter(post_id__in=list(post_ids)).prefetch_related("options")}
+    if not polls:
+        return {}
+    mine: dict[str, list[str]] = {}
+    if viewer_id:
+        for poll_id, option_id in PollVote.objects.filter(poll_id__in=list(polls), user_id=viewer_id).values_list("poll_id", "option_id"):
+            mine.setdefault(str(poll_id), []).append(str(option_id))
+    now, out = timezone.now(), {}
+    for pid, poll in polls.items():
+        options = sorted(poll.options.all(), key=lambda o: o.position)
+        out[pid] = {"question": poll.question, "allows_multiple": poll.allows_multiple, "is_anonymous": poll.is_anonymous,
+                    "closes_at": poll.closes_at, "closed": bool(poll.closes_at and poll.closes_at < now),
+                    "options": [{"id": str(o.pk), "label": o.label, "votes": o.vote_count} for o in options],
+                    "total_votes": sum(o.vote_count for o in options), "my_votes": mine.get(pid, [])}
+    return out
+
+
 def _post(p: Post, viewer_id) -> dict:
     mine = PostReaction.objects.filter(post=p, user_id=viewer_id).values_list("type", flat=True).first() if viewer_id else None
     return {"id": str(p.pk), "author": user_brief(p.author), "kind": p.kind, "title": p.title, "body": p.body, "visibility": p.visibility, "group": p.group.slug if p.group_id else None,
+            "group_name": p.group.name if p.group_id else None,
             "payload": p.payload, "published_at": p.published_at, "edited_at": p.edited_at,
             "media": [{"kind": m.kind, "url": signed_url(m.storage_key), "width": m.width, "height": m.height, "alt": m.alt_text} for m in p.media.all()],
             "counters": {"reactions": p.reaction_count, "comments": p.comment_count, "shares": p.share_count, "saves": p.save_count, "views": p.view_count},
-            "my_reaction": mine, "saved": bool(viewer_id) and Save.objects.filter(post=p, user_id=viewer_id).exists()}
+            "my_reaction": mine, "saved": bool(viewer_id) and Save.objects.filter(post=p, user_id=viewer_id).exists(),
+            "poll": _polls([p.pk], viewer_id).get(str(p.pk)) if p.kind == Post.Kind.POLL else None}
 
 
 def _card(c: dict) -> dict:
@@ -97,7 +119,18 @@ def user_posts(request, username):
 @endpoint("Mon fil d'actualite. 'before' : curseur renvoye par la page precedente (next_cursor).", query={"limit": s.IntegerField(min_value=1, max_value=50, default=20), "before": s.FloatField(required=False)})
 def feed(request):
     page = FD.get_feed(request.user.pk, request.q["limit"], request.q.get("before"))
-    return {"results": [_card(c) for c in page.posts], "next_cursor": page.next_cursor}
+    cards = [_card(c) for c in page.posts]
+    ids, uid = [c["id"] for c in cards], request.user.pk
+    # Etat propre au lecteur (jamais stocke dans la carte partagee) : ma reaction, enregistre, sondages, nom du groupe.
+    reactions = {str(k): v for k, v in PostReaction.objects.filter(post_id__in=ids, user_id=uid).values_list("post_id", "type")}
+    saves = {str(k) for k in Save.objects.filter(post_id__in=ids, user_id=uid).values_list("post_id", flat=True)}
+    polls = _polls([c["id"] for c in cards if c["kind"] == Post.Kind.POLL], uid)
+    group_ids = {c.get("group_id") for c in page.posts if c.get("group_id")}
+    groups = {str(pk): (slug, name) for pk, slug, name in Group.objects.filter(pk__in=group_ids).values_list("pk", "slug", "name")} if group_ids else {}
+    for card, raw in zip(cards, page.posts):
+        slug, name = groups.get(str(raw.get("group_id")), (None, None))
+        card.update({"my_reaction": reactions.get(card["id"]), "saved": card["id"] in saves, "poll": polls.get(card["id"]), "group": slug, "group_name": name})
+    return {"results": cards, "next_cursor": page.next_cursor}
 
 
 @endpoint("Reagir a une publication (type = null pour retirer).", body={"type": s.CharField(allow_null=True, max_length=12)})
@@ -111,11 +144,22 @@ def react_post(request, post_id):
 def comments(request, post_id):
     _visible(request, post_id)
     qs = Comment.objects.filter(post_id=post_id, parent__isnull=True, deleted_at__isnull=True).select_related("author__profile")
-    return paginate(request, qs, ("-created_at", "-id"), _comment, 20)
+    return _with_my_reactions(paginate(request, qs, ("-created_at", "-id"), _comment, 20), _vid(request))
 
 
 def _comment(c: Comment) -> dict:
     return {"id": str(c.pk), "author": user_brief(c.author), "body": c.body, "parent": str(c.parent_id) if c.parent_id else None, "depth": c.depth, "reactions": c.reaction_count, "replies": c.reply_count, "created_at": c.created_at}
+
+
+def _with_my_reactions(response, viewer_id):
+    """Ajoute « my_reaction » a chaque commentaire d'une page (une requete pour toute la page)."""
+    rows = response.data["results"]
+    mine = {}
+    if viewer_id and rows:
+        mine = {str(cid): t for cid, t in CommentReaction.objects.filter(comment_id__in=[r["id"] for r in rows], user_id=viewer_id).values_list("comment_id", "type")}
+    for r in rows:
+        r["my_reaction"] = mine.get(r["id"])
+    return response
 
 
 @endpoint("Commenter (parent = identifiant d'un commentaire pour repondre).", status=201, body={"body": s.CharField(max_length=5000), "parent": s.UUIDField(required=False)})
@@ -128,7 +172,7 @@ def add_comment(request, post_id):
 def replies(request, comment_id):
     parent = get_or_404(Comment.objects.filter(pk=comment_id, deleted_at__isnull=True))
     _visible(request, parent.post_id)
-    return paginate(request, Comment.objects.filter(parent=parent, deleted_at__isnull=True).select_related("author__profile"), ("created_at", "id"), _comment, 20)
+    return _with_my_reactions(paginate(request, Comment.objects.filter(parent=parent, deleted_at__isnull=True).select_related("author__profile"), ("created_at", "id"), _comment, 20), _vid(request))
 
 
 @endpoint("Supprimer un commentaire (auteur, auteur du post ou moderateur de groupe).", status=204)
@@ -186,9 +230,9 @@ def vote(request, post_id):
 
 
 # ------------------------------------------------------------------ statuts ephemeres (24 h)
-def _status(st: Status) -> dict:
+def _status(st: Status, viewed: bool = False) -> dict:
     return {"id": str(st.pk), "author": user_brief(st.author), "kind": st.kind, "body": st.body, "media_url": signed_url(st.storage_key) if st.storage_key else None, "mime_type": st.mime_type,
-            "link_url": st.link_url, "style": st.style, "expires_at": st.expires_at, "created_at": st.created_at}
+            "link_url": st.link_url, "style": st.style, "visibility": st.visibility, "expires_at": st.expires_at, "created_at": st.created_at, "viewed": viewed}
 
 
 @endpoint("Publier un statut ephemere (24 h). file : fichier envoye (usage 'status_media').", status=201,
@@ -205,7 +249,9 @@ def create_status(request):
 
 @endpoint("Statuts actifs que je peux voir.")
 def statuses(request):
-    return [_status(st) for st in SS.active_statuses_for(request.user.pk).select_related("author__profile")[:200]]
+    items = list(SS.active_statuses_for(request.user.pk).select_related("author__profile")[:200])
+    seen = set(StatusView.objects.filter(viewer=request.user, status_id__in=[st.pk for st in items]).values_list("status_id", flat=True))
+    return [_status(st, viewed=st.pk in seen or st.author_id == request.user.pk) for st in items]
 
 
 @endpoint("Marquer un statut comme vu.", status=202)
