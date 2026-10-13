@@ -138,9 +138,22 @@ def user_profile(request, username):
     with connection.cursor() as cur:
         cur.execute("SELECT post_count, follower_count, following_count, friend_count FROM baobab_user_stats(%s)", [owner.pk])
         out["stats"] = dict(zip(("posts", "followers", "following", "friends"), cur.fetchone()))
+    out["joined_at"] = owner.date_joined
     if request.user.is_authenticated and request.user.pk != owner.pk:
-        out["relation"] = {"is_friend": FS.are_friends(request.user.pk, owner.pk), "is_following": Follow.objects.filter(follower=request.user, followee=owner).exists()}
+        out["relation"] = _relation(request.user, owner)
     return out
+
+
+def _relation(viewer, owner) -> dict:
+    """Etat de la relation vue par `viewer` : ami, abonnement, demande d'ami en attente (sens + id pour y repondre), ami proche."""
+    from apps.friends.models import CloseFriend, Friendship
+
+    low, high = Friendship.ordered_pair(viewer.pk, owner.pk)
+    pending = Friendship.objects.filter(user_low_id=low, user_high_id=high, status=Friendship.Status.PENDING).only("pk", "requested_by_id").first()
+    return {"is_friend": FS.are_friends(viewer.pk, owner.pk), "is_following": Follow.objects.filter(follower=viewer, followee=owner).exists(),
+            "follows_me": Follow.objects.filter(follower=owner, followee=viewer).exists(),
+            "friend_request": {"id": str(pending.pk), "direction": "sent" if pending.requested_by_id == viewer.pk else "received"} if pending else None,
+            "is_close_friend": CloseFriend.objects.filter(owner=viewer, friend=owner).exists()}
 
 
 @endpoint("Rechercher des utilisateurs par nom ou pseudo (profils 'recherchables' uniquement, minimum 2 caracteres).", auth="optional", query={"q": s.CharField(min_length=2, max_length=60)})

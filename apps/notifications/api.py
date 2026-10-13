@@ -33,7 +33,7 @@ def mark_read(request):
 
 @endpoint("Mes preferences de notification.")
 def preferences(request):
-    return {"types": [{"code": t.code, "category": t.category, "critical": t.is_critical} for t in NotificationType.objects.filter(is_active=True)],
+    return {"types": [{"code": t.code, "category": t.category, "critical": t.is_critical, "default_channels": list(t.default_channels)} for t in NotificationType.objects.filter(is_active=True)],
             "preferences": [{"type": p.type_id, "channel": p.channel, "enabled": p.enabled} for p in NotificationPreference.objects.filter(user=request.user)]}
 
 

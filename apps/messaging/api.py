@@ -19,27 +19,55 @@ def _member(user, conversation_id) -> ConversationMember:
     return get_or_404(ConversationMember.objects.filter(conversation_id=conversation_id, user=user, left_at__isnull=True).select_related("conversation"))
 
 
-def _msg(m: Message) -> dict:
+def _msg(m: Message, viewer_id=None) -> dict:
     return {"id": str(m.pk), "seq": m.seq, "sender": user_brief(m.sender) if m.sender else None, "kind": m.kind, "body": m.body, "metadata": m.metadata,
             "reply_to": str(m.reply_to_id) if m.reply_to_id else None, "thread_root": str(m.thread_root_id) if m.thread_root_id else None, "reply_count": m.reply_count,
             "edited_at": m.edited_at, "created_at": m.created_at,
             "attachments": [{"filename": a.filename, "content_type": a.mime_type, "size_bytes": a.size_bytes, "url": signed_url(a.storage_key, a.filename)} for a in m.attachments.all()],
-            "reactions": dict(Counter(r.emoji for r in m.reactions.all()))}
+            "reactions": dict(Counter(r.emoji for r in m.reactions.all())),
+            "my_reactions": sorted({r.emoji for r in m.reactions.all() if r.user_id == viewer_id}) if viewer_id else []}
 
 
-def _conv(m: ConversationMember, others: dict) -> dict:
+def _conv(m: ConversationMember, others: dict, last: dict, read: dict) -> dict:
     c = m.conversation
     other = others.get(c.pk)
     return {"id": str(c.pk), "type": c.type, "title": c.title or (other["display_name"] if other else ""), "with": other, "unread": max(m.unread, 0), "last_message_at": c.last_message_at,
-            "last_read_seq": m.last_read_seq, "message_seq": c.message_seq}
+            "last_read_seq": m.last_read_seq, "message_seq": c.message_seq, "last_message": last.get(c.pk), "others_read_seq": read.get(c.pk)}
 
 
-@endpoint("Ma boite de reception (conversations triees par activite, avec le nombre de non-lus).")
+def _preview(m: Message) -> dict:
+    return {"id": str(m.pk), "seq": m.seq, "kind": m.kind, "body": m.body[:140], "sender": m.sender.username if m.sender_id else None,
+            "sender_name": (m.sender.profile.display_name if getattr(m.sender, "profile", None) else m.sender.username) if m.sender_id else None,
+            "attachments": m.attachments.count() if m.kind != "text" else 0, "created_at": m.created_at}
+
+
+@endpoint("Ma boite de reception (conversations triees par activite, avec le nombre de non-lus, le dernier message et, en direct, la presence et la lecture par l'autre si les deux l'autorisent).")
 def inbox(request):
-    page = list(MS.inbox(request.user.pk)[:100])
+    from apps.core import redis as R
+
+    me = request.user
+    page = list(MS.inbox(me.pk)[:100])
+    ids = [m.conversation_id for m in page]
     direct_ids = [m.conversation_id for m in page if m.conversation.type == "direct"]
-    others = {c.conversation_id: user_brief(c.user) for c in ConversationMember.objects.filter(conversation_id__in=direct_ids).exclude(user=request.user).select_related("user__profile")}
-    return [_conv(m, others) for m in page]
+    other_members = list(ConversationMember.objects.filter(conversation_id__in=direct_ids).exclude(user=me).select_related("user__profile", "user__privacy"))
+    my_receipts = getattr(getattr(me, "privacy", None), "show_read_receipts", True)
+    others, read = {}, {}
+    for c in other_members:
+        brief = user_brief(c.user)
+        privacy = getattr(c.user, "privacy", None)
+        try:
+            online = bool(privacy and privacy.show_presence and R.is_online(c.user_id))
+        except Exception:  # noqa: BLE001 - presence = confort ; Redis indisponible => inconnue
+            online = False
+        others[c.conversation_id] = {**brief, "online": online}
+        if my_receipts and privacy and privacy.show_read_receipts:  # reciprocite (comme WhatsApp)
+            read[c.conversation_id] = c.last_read_seq
+    last = {}
+    latest = (Message.objects.filter(conversation_id__in=ids, thread_root__isnull=True, deleted_at__isnull=True).exclude(hidden_for__user_id=me.pk)
+              .order_by("conversation_id", "-seq").distinct("conversation_id").select_related("sender__profile"))
+    for m in latest:
+        last[m.conversation_id] = _preview(m)
+    return [_conv(m, others, last, read) for m in page]
 
 
 @endpoint("Ouvrir (ou retrouver) la conversation directe avec un utilisateur.", status=201, body={"username": s.CharField(max_length=30)})
@@ -58,7 +86,7 @@ def create_group_conversation(request):
 @endpoint("Historique d'une conversation, du plus recent au plus ancien (curseur).")
 def history(request, conversation_id):
     _member(request.user, conversation_id)
-    return paginate(request, MS.history(conversation_id, request.user.pk), ("-seq",), _msg, 50)
+    return paginate(request, MS.history(conversation_id, request.user.pk), ("-seq",), lambda m: _msg(m, request.user.pk), 50)
 
 
 @endpoint("Envoyer un message. client_msg_id (UUID) rend l'envoi idempotent : un nouvel essai apres coupure reseau ne cree pas de doublon. attachments : identifiants de fichiers (usage 'message_attachment').", status=201,
@@ -73,14 +101,14 @@ def send(request, conversation_id):
         atts.append({"storage_key": f.key, "filename": f.filename, "mime_type": f.content_type, "size_bytes": f.size_bytes})
     m = MV.send_message(conversation_id=conversation_id, sender=request.user, body=d["body"], kind=d["kind"], reply_to_id=d.get("reply_to"), thread_root_id=d.get("thread_root"),
                         client_msg_id=d.get("client_msg_id"), attachments=atts, metadata=d.get("metadata"))
-    return _msg(Message.objects.prefetch_related("attachments", "reactions").select_related("sender__profile").get(pk=m.pk))
+    return _msg(Message.objects.prefetch_related("attachments", "reactions").select_related("sender__profile").get(pk=m.pk), request.user.pk)
 
 
 @endpoint("Fil de discussion d'un message.")
 def thread(request, conversation_id, message_id):
     _member(request.user, conversation_id)
     root = get_or_404(Message.objects.filter(pk=message_id, conversation_id=conversation_id))
-    return [_msg(m) for m in MS.thread(root.pk, request.user.pk).select_related("sender__profile").prefetch_related("attachments", "reactions")[:200]]
+    return [_msg(m, request.user.pk) for m in MS.thread(root.pk, request.user.pk).select_related("sender__profile").prefetch_related("attachments", "reactions")[:200]]
 
 
 @endpoint("Marquer comme lu jusqu'a un numero de message (seq).", body={"up_to_seq": s.IntegerField(min_value=0)})
@@ -93,7 +121,7 @@ def mark_read(request, conversation_id):
 @endpoint("Modifier mon message.", body={"body": s.CharField(max_length=10000)})
 def edit(request, message_id):
     m = MV.edit_message(message_id, request.user, request.input["body"])
-    return _msg(Message.objects.prefetch_related("attachments", "reactions").select_related("sender__profile").get(pk=m.pk))
+    return _msg(Message.objects.prefetch_related("attachments", "reactions").select_related("sender__profile").get(pk=m.pk), request.user.pk)
 
 
 @endpoint("Supprimer un message : pour moi seulement, ou pour tous (auteur/moderation).", status=204, query={"for_everyone": s.BooleanField(default=False)})
