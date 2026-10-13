@@ -15,7 +15,7 @@ export interface NavApp {
 
 export const NAV_APPS: NavApp[] = [
   { id: "accueil", label: "Accueil", href: ROUTES.feed, Icon: HomeIcon },
-  { id: "messages", label: "Messages", Icon: MessageIcon },
+  { id: "messages", label: "Messages", href: ROUTES.messages, Icon: MessageIcon },
   { id: "communaute", label: "Communauté", Icon: CommunityIcon },
   { id: "learn", label: "Learn", Icon: LearnIcon },
   { id: "showcase", label: "Showcase", Icon: ShowcaseIcon },

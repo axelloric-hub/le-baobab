@@ -81,3 +81,25 @@ export const WifiOffIcon = I(<><path d="M3 3l18 18" /><path d="M8.5 16.5a5 5 0 0
 export const SparklesIcon = I(<path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9zM18.5 15.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z" />);
 export const ExternalIcon = I(<><path d="M13.5 4.5h6v6M19.5 4.5L11 13" /><path d="M17.5 14v4a1.5 1.5 0 0 1-1.5 1.5H6A1.5 1.5 0 0 1 4.5 18V8A1.5 1.5 0 0 1 6 6.5h4" /></>);
 export const SpinnerIcon = I(<path d="M12 3.5a8.5 8.5 0 1 1-8.5 8.5" />);
+
+/* Lot 2 : messagerie, profil, notifications. */
+export const PaperclipIcon = I(<path d="M20 11.5l-7.8 7.8a4.6 4.6 0 0 1-6.5-6.5l8.4-8.4a3.1 3.1 0 0 1 4.4 4.4l-8.4 8.4a1.5 1.5 0 0 1-2.2-2.2l7.6-7.6" />);
+export const DoubleCheckIcon = I(<><path d="M2.5 12.5l4.2 4.2L15 8.5" /><path d="M11 16.2l.5.5L21.5 6.5" /></>);
+export const ClockIcon = I(<><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3 2" /></>);
+export const ReplyIcon = I(<path d="M10 7L4.5 12 10 17M4.5 12H14a5.5 5.5 0 0 1 5.5 5.5V19" />);
+export const SmileIcon = I(<><circle cx="12" cy="12" r="8.5" /><path d="M8.5 14c.9 1.3 2.1 2 3.5 2s2.6-.7 3.5-2" /><path d="M9 9.8h.01M15 9.8h.01" strokeWidth="2.4" /></>);
+export const ArrowDownIcon = I(<path d="M12 5v14M6 13l6 6 6-6" />);
+export const MapPinIcon = I(<><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z" /><circle cx="12" cy="10" r="2.3" /></>);
+export const CalendarIcon = I(<><rect x="3.5" y="5" width="17" height="15.5" rx="2" /><path d="M3.5 10h17M8 3v4M16 3v4" /></>);
+export const UserPlusIcon = I(<><circle cx="9.5" cy="8.5" r="3.5" /><path d="M3 19.5c.7-3.2 3.3-5.2 6.5-5.2 1.6 0 3 .5 4.1 1.3M18 13v6M15 16h6" /></>);
+export const UserMinusIcon = I(<><circle cx="9.5" cy="8.5" r="3.5" /><path d="M3 19.5c.7-3.2 3.3-5.2 6.5-5.2 1.6 0 3 .5 4.1 1.3M15 16h6" /></>);
+export const BlockIcon = I(<><circle cx="12" cy="12" r="8.5" /><path d="M6 6l12 12" /></>);
+export const VerifiedIcon = I(<><path d="M12 2.8l2.4 1.7 2.9-.1.9 2.8 2.3 1.8-.9 2.8.9 2.8-2.3 1.8-.9 2.8-2.9-.1L12 21.2l-2.4-1.7-2.9.1-.9-2.8-2.3-1.8.9-2.8-.9-2.8 2.3-1.8.9-2.8 2.9.1z" /><path d="M8.6 12.2l2.3 2.3 4.6-4.6" /></>);
+export const SettingsIcon = I(<><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z" /></>);
+export const CheckAllIcon = DoubleCheckIcon;
+export const CameraIcon = I(<><path d="M4 8.5A1.5 1.5 0 0 1 5.5 7h2l1.5-2h6l1.5 2h2A1.5 1.5 0 0 1 20 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17.5z" /><circle cx="12" cy="12.5" r="3.5" /></>);
+export const GraduationIcon = LearnIcon;
+export const AwardIcon = I(<><circle cx="12" cy="9" r="5.5" /><path d="M8.5 13.5L7 21l5-2.5 5 2.5-1.5-7.5" /></>);
+export const TimelineIcon = I(<><circle cx="6" cy="6" r="2" /><circle cx="6" cy="18" r="2" /><path d="M6 8v8M10 6h10M10 18h10M10 12h7" /></>);
+export const RepoIcon = I(<><path d="M5.5 4.5A1.5 1.5 0 0 1 7 3h12v15H7a1.5 1.5 0 0 0-1.5 1.5z" /><path d="M5.5 19.5A1.5 1.5 0 0 0 7 21h12v-3M9 7h6" /></>);
+export const StarIcon = I(<path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z" />);

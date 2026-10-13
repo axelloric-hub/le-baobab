@@ -244,6 +244,17 @@
   outline: none;
 }
 
+/* Pages pleine hauteur (messagerie) : pas de défilement de la page elle-même. */
+.main:has([data-fullheight]) {
+  padding-bottom: calc(var(--bottombar-h) + 16px + env(safe-area-inset-bottom));
+}
+
+@media (min-width: 768px) {
+  .main:has([data-fullheight]) {
+    padding-bottom: 24px;
+  }
+}
+
 /* ---------- Navigation latérale ---------- */
 
 .navList {
@@ -1018,6 +1029,8 @@ a.navLink:hover svg {
 }
 
 .drawerProfile {
+  color: inherit;
+  text-decoration: none;
   display: flex;
   align-items: center;
   gap: 12px;

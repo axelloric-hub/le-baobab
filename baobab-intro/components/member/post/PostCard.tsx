@@ -137,12 +137,14 @@ function PostCardImpl({ post, variant = "feed", isNew, onComment }: PostCardProp
   return (
     <article ref={articleRef} className={styles.card} data-new={isNew || undefined} aria-labelledby={titleId}>
       <header className={styles.header}>
-        <Avatar name={name} src={post.author.avatar_url} size={44} />
+        <Link href={ROUTES.profile(post.author.username)} className={styles.avatarLink} tabIndex={-1} aria-hidden="true">
+          <Avatar name={name} src={post.author.avatar_url} size={44} />
+        </Link>
         <div className={styles.who}>
           <p className={styles.authorLine}>
-            <span id={titleId} className={styles.author}>
+            <Link href={ROUTES.profile(post.author.username)} id={titleId} className={styles.author}>
               {name}
-            </span>
+            </Link>
             <span className={styles.handle}>@{post.author.username}</span>
             {post.group_name && (
               <span className={styles.group}>

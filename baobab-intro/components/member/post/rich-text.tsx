@@ -25,11 +25,10 @@ function inline(text: string, keyBase: string): ReactNode[] {
         </Link>,
       );
     } else if (mention) {
-      // Les pages de profil arrivent au lot 2 : la mention est mise en valeur, sans lien.
       out.push(
-        <span key={key} className={styles.mention}>
+        <Link key={key} href={ROUTES.profile(mention)} className={styles.mention} onClick={(e) => e.stopPropagation()}>
           @{mention}
-        </span>,
+        </Link>,
       );
     } else if (url) {
       let label = url.replace(/^https?:\/\/(www\.)?/, "");

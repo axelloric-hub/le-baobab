@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { InvitationsCard, SuggestedGroupsCard, TrendsCard } from "../rail/RightRail";
 import { Avatar } from "../ui/Avatar";
-import { BookmarkIcon, ChevronDownIcon, ChevronUpIcon, CloseIcon, FileIcon, GlobeIcon, LogoutIcon } from "../ui/icons";
+import { BellIcon, BookmarkIcon, ChevronDownIcon, ChevronUpIcon, CloseIcon, FileIcon, GlobeIcon, LogoutIcon } from "../ui/icons";
 import { MyCoursesSection, MyGroupsSection } from "./MySpaces";
 import { NAV_APPS, SOON } from "./nav";
 import styles from "./Shell.module.css";
@@ -160,20 +160,20 @@ export function MobileDrawer({ open, onOpenChange, identity, onLogout }: MobileD
         </header>
 
         <div className={styles.drawerBody}>
-          <div className={styles.drawerProfile}>
+          <Link href={identity.username ? ROUTES.profile(identity.username) : ROUTES.feed} className={styles.drawerProfile} onClick={close}>
             <Avatar name={identity.name || "?"} src={identity.avatar} size={48} />
             <span>
               <strong>{identity.name}</strong>
-              {identity.username && <small>@{identity.username}</small>}
+              {identity.username && <small>@{identity.username} · Voir mon profil</small>}
             </span>
-          </div>
+          </Link>
 
           <h3 className={styles.drawerHeading}>Applications</h3>
           <ul className={styles.drawerApps}>
             {NAV_APPS.map(({ id, label, href, Icon }) => (
               <li key={id}>
                 {href ? (
-                  <Link href={href} className={styles.drawerApp} aria-current={pathname === href ? "page" : undefined} onClick={close}>
+                  <Link href={href} className={styles.drawerApp} aria-current={pathname === href || pathname.startsWith(`${href}/`) ? "page" : undefined} onClick={close}>
                     <span className={styles.drawerAppIcon}>
                       <Icon aria-hidden="true" />
                     </span>
@@ -210,6 +210,12 @@ export function MobileDrawer({ open, onOpenChange, identity, onLogout }: MobileD
 
           <h3 className={styles.drawerHeading}>Compte et aide</h3>
           <ul className={styles.drawerLinks}>
+            <li>
+              <Link href={`${ROUTES.notifications}#parametres`} className={styles.drawerLink} onClick={close}>
+                <BellIcon aria-hidden="true" />
+                Notifications et paramètres
+              </Link>
+            </li>
             <li>
               <Link href={ROUTES.discover} prefetch={false} className={styles.drawerLink}>
                 <GlobeIcon aria-hidden="true" />

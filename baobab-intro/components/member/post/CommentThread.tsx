@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, type RefObject } from "react";
 import { useMe } from "@/features/me/me";
 import { useAddComment, useComments, useDeleteComment, useReactComment, useReplies } from "@/features/social/hooks";
@@ -7,6 +8,7 @@ import type { Comment, Post } from "@/features/social/types";
 import { describeError } from "@/lib/api/errors";
 import { currentUser } from "@/lib/auth/session";
 import { compactNumber, fullDate, relativeTime } from "@/lib/format";
+import { ROUTES } from "@/lib/routes";
 import { Avatar } from "../ui/Avatar";
 import { cx } from "../ui/cx";
 import { ChevronDownIcon, CommentIcon, FlagIcon, SendIcon, ThumbIcon, TrashIcon } from "../ui/icons";
@@ -53,11 +55,15 @@ function CommentItem({
 
   return (
     <li className={styles.comment}>
-      <Avatar name={name} src={comment.author.avatar_url} size={comment.parent ? 32 : 36} />
+      <Link href={ROUTES.profile(comment.author.username)} tabIndex={-1} aria-hidden="true" style={{ display: "inline-flex" }}>
+        <Avatar name={name} src={comment.author.avatar_url} size={comment.parent ? 32 : 36} />
+      </Link>
       <div className={styles.commentMain}>
         <div className={styles.bubble} data-author={comment.author.username === post.author.username || undefined}>
           <p className={styles.bubbleHead}>
-            <span className={styles.bubbleName}>{name}</span>
+            <Link href={ROUTES.profile(comment.author.username)} className={styles.bubbleName}>
+              {name}
+            </Link>
             {comment.author.username === post.author.username && <span className={styles.authorBadge}>Auteur</span>}
             <time className={styles.bubbleTime} dateTime={comment.created_at} title={fullDate(comment.created_at)}>
               {relativeTime(comment.created_at)}

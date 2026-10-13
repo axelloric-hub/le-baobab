@@ -2,10 +2,12 @@
 
 import { useRouter } from "next/navigation";
 import { useId, useMemo, useState, type ReactNode } from "react";
+import { usePeopleSearch } from "@/features/people/hooks";
 import { useTrending } from "@/features/social/hooks";
 import { plural } from "@/lib/format";
 import { ROUTES } from "@/lib/routes";
 import { TAG_RE } from "../post/rich-text";
+import { Avatar } from "../ui/Avatar";
 import { Dialog } from "../ui/Dialog";
 import { BookmarkIcon, HashIcon, HomeIcon, ImageIcon, PenIcon, SearchIcon, TrendingIcon } from "../ui/icons";
 import { useCreation } from "./creation-context";
@@ -35,6 +37,7 @@ function PaletteDialog({ onClose }: { onClose: () => void }) {
   const { openPost, openStatus } = useCreation();
   const trending = useTrending();
   const [query, setQuery] = useState("");
+  const people = usePeopleSearch(query.trim().startsWith("#") ? "" : query);
   const [active, setActive] = useState(0);
   const listId = useId();
 
@@ -46,6 +49,19 @@ function PaletteDialog({ onClose }: { onClose: () => void }) {
     const q = query.trim().toLowerCase();
     const tag = q.replace(/^#/, "");
     const list: Entry[] = [];
+
+    if (!q.startsWith("#")) {
+      for (const user of (people.data ?? []).slice(0, 6)) {
+        list.push({
+          id: `user-${user.username}`,
+          group: "Personnes",
+          label: user.display_name || user.username,
+          hint: `@${user.username}`,
+          icon: <Avatar name={user.display_name || user.username} src={user.avatar_url} size={24} />,
+          run: go(ROUTES.profile(user.username)),
+        });
+      }
+    }
 
     if (tag && TAG_RE.test(tag)) {
       list.push({ id: `tag-${tag}`, group: "Hashtag", label: `#${tag}`, hint: "Voir les publications", icon: <HashIcon />, run: go(ROUTES.hashtag(tag)) });
@@ -91,7 +107,7 @@ function PaletteDialog({ onClose }: { onClose: () => void }) {
       if (list.length > 14) break;
     }
     return list;
-  }, [query, trending.data, router, onClose, openPost, openStatus]);
+  }, [query, trending.data, people.data, router, onClose, openPost, openStatus]);
 
   const current = Math.min(active, Math.max(0, entries.length - 1));
 
@@ -119,8 +135,8 @@ function PaletteDialog({ onClose }: { onClose: () => void }) {
           aria-expanded="true"
           aria-controls={listId}
           aria-activedescendant={entries[current] ? `${listId}-${entries[current].id}` : undefined}
-          aria-label="Rechercher un hashtag ou une page"
-          placeholder="#python, enregistrements, statut…"
+          aria-label="Rechercher une personne, un hashtag ou une page"
+          placeholder="Une personne, #python, une page…"
           value={query}
           onChange={(event) => {
             setQuery(event.target.value);
@@ -161,7 +177,7 @@ function PaletteDialog({ onClose }: { onClose: () => void }) {
           );
         })}
       </ul>
-      {entries.length === 0 && <p className={styles.paletteEmpty}>Aucun résultat. Un hashtag s&apos;écrit avec des lettres, des chiffres ou «&nbsp;_&nbsp;».</p>}
+      {entries.length === 0 && <p className={styles.paletteEmpty}>Aucun résultat. Tapez au moins deux lettres pour chercher une personne ; un hashtag s&apos;écrit avec des lettres, des chiffres ou «&nbsp;_&nbsp;».</p>}
     </Dialog>
   );
 }

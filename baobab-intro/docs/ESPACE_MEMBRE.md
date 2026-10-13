@@ -1,6 +1,9 @@
-# Espace membre — lot 1 (Accueil, Statuts, Publication)
+# Espace membre
 
-Pages réservées aux membres connectés, intégrées à partir des maquettes Stitch du lot 1 et branchées sur l'API réelle. **Aucune donnée de démonstration** : tout ce qui s'affiche vient du serveur ; un bloc sans données ne s'affiche pas (ou affiche un état vide explicite).
+- **Lot 1** : Accueil, Statuts, Publication.
+- **Lot 2** : Messages, Profil développeur, Notifications et paramètres (voir la section « Lot 2 » plus bas).
+
+Pages réservées aux membres connectés, intégrées à partir des maquettes Stitch et branchées sur l'API réelle. **Aucune donnée de démonstration** : tout ce qui s'affiche vient du serveur ; un bloc sans données ne s'affiche pas (ou affiche un état vide explicite).
 
 ## Pages
 
@@ -10,6 +13,9 @@ Pages réservées aux membres connectés, intégrées à partir des maquettes St
 | `/publications/[id]` | publication complète + discussion (réponses chargées à la demande) | `GET /posts/{id}/`, `GET /posts/{id}/comments/`, `GET /comments/{id}/replies/` |
 | `/hashtags/[tag]` | publications d'un hashtag | `GET /hashtags/{tag}/posts/` |
 | `/enregistres` | mes publications enregistrées | `GET /me/saved/` |
+| `/messages`, `/messages/[id]` | messagerie (lot 2) | voir « Lot 2 » |
+| `/u/[pseudo]` | profil développeur (lot 2) | voir « Lot 2 » |
+| `/notifications` | notifications et paramètres (lot 2) | voir « Lot 2 » |
 | `/espace` | ancienne adresse → redirection vers `/accueil` (`next.config.ts`) | — |
 
 Le gabarit (`app/(membre)/layout.tsx` → `components/member/MemberApp.tsx`) vérifie la session au chargement ; sans session (ou si elle expire en cours de route), retour à `/connexion`.
@@ -18,9 +24,9 @@ Le gabarit (`app/(membre)/layout.tsx` → `components/member/MemberApp.tsx`) vé
 
 - **Ordinateur (≥ 1100 px)** : barre supérieure (logo, recherche Ctrl + K, « Créer », messages, notifications, compte), navigation latérale complète, colonne « Pour vous » à partir de 1240 px.
 - **Tablette (768–1099 px)** : navigation latérale réduite aux icônes ; les invitations passent en tête du fil.
-- **Mobile (< 768 px)** : barre supérieure compacte + barre d'onglets en bas : Accueil · Explorer · ＋ · Enregistrés · Moi.
+- **Mobile (< 768 px)** : barre supérieure compacte + barre d'onglets en bas : Accueil · Explorer · ＋ · Messages (avec le nombre de non-lus) · Moi. Une poignée au-dessus de la barre ouvre le panneau « Toutes les fonctionnalités » (Enregistrés, groupes, cours, tendances, notifications, compte).
 
-Les applications pas encore livrées (Messages, Communauté, Learn, Showcase, Opportunités, Boutique) sont affichées **« Bientôt »** et ne sont pas cliquables : aucun lien ne mène à une page 404. Les compteurs de messages et de notifications sont réels. Livrer une application = renseigner son `href` dans `components/member/shell/nav.ts`.
+Les applications pas encore livrées (Communauté, Learn, Showcase, Opportunités, Boutique) sont affichées **« Bientôt »** et ne sont pas cliquables : aucun lien ne mène à une page 404. Les compteurs de messages et de notifications sont réels. Livrer une application = renseigner son `href` dans `components/member/shell/nav.ts`.
 
 ## Fonctionnalités
 
@@ -36,7 +42,7 @@ Les applications pas encore livrées (Messages, Communauté, Learn, Showcase, Op
 
 ## Ce que les maquettes Stitch montraient et qui n'a PAS été repris
 
-Chiffres inventés (« 1 240 publications », « 2.8k membres », « 14 copies »), « Synchronisation en direct », « Mode Studio Split », « Markdown pris en charge », statut « Document » (le serveur refuse les PDF pour un statut), présence en ligne et accusés de lecture (non exposés par l'API), profils cliquables (lot 2).
+Chiffres inventés (« 1 240 publications », « 2.8k membres », « 14 copies »), « Synchronisation en direct », « Mode Studio Split », « Markdown pris en charge », statut « Document » (le serveur refuse les PDF pour un statut), présence en ligne et accusés de lecture (ajoutés au lot 2, dans le respect des réglages de confidentialité).
 
 ## Conventions du champ `payload` des publications
 
@@ -57,12 +63,52 @@ Fichier `apps/social/api.py` + tests `tests/test_api_social_viewer_state.py` (5 
 - statuts : `viewed` et `visibility` ;
 - commentaires et réponses : `my_reaction`.
 
+## Lot 2 — Messages, Profil développeur, Notifications et paramètres
+
+### Messages (`/messages`, `/messages/[id]`)
+
+- **Ordinateur** : liste des conversations à gauche, conversation ouverte à droite ; **mobile** : liste, puis conversation en plein écran (la barre de saisie reste au-dessus du clavier, iPhone compris).
+- **Liste** : dernier message (« Vous : … », pièce jointe, code), heure, nombre de non-lus, présence en ligne, filtres « Non lues » et « Groupes », recherche dans la liste ; nouvelle conversation directe ou de groupe (recherche de membres).
+- **Conversation** : temps réel (`/ws/conversations/{id}/`), « … est en train d'écrire », envoi optimiste avec `client_msg_id` (un nouvel essai ne crée pas de doublon), états « envoi », « envoyé », « lu » ; historique chargé en remontant ; pastille « Nouveaux messages » ; brouillon conservé par conversation.
+- **Messages** : réponse citée (clic = retour au message cité), réactions (les miennes mises en évidence), modification, suppression pour moi ou pour tous, copie, message de code coloré, pièces jointes (jusqu'à 10 fichiers, envoi direct au stockage avec progression). Mobile : glisser vers la droite = répondre, appui long = actions.
+- **Confidentialité** : la présence n'est affichée que si l'autre l'autorise ; « Lu » n'est affiché que si les **deux** membres ont activé les accusés de lecture (réciprocité).
+
+### Profil développeur (`/u/[pseudo]`)
+
+- **En-tête** : couverture, photo, nom, titre, métier, ville et pays, disponibilité, date d'inscription, liens (GitHub, GitLab, LinkedIn, site…), compteurs réels (publications, abonnés, abonnements, amis).
+- **Relation** (profil d'un autre membre) : ajouter en ami, annuler la demande, accepter ou refuser une demande reçue, retirer des amis, s'abonner, « Vous suit », ami proche, Message, mettre en sourdine, bloquer.
+- **Onglets** (adresse `?onglet=`) : Aperçu, Publications, Projets, Parcours, Certificats.
+- **Mon profil** : modification de l'identité, des photos, du titre, de la bio, du métier, du pays, de la disponibilité, des compétences (avec niveau) et des liens ; ajout, modification et suppression de projets, expériences, formations et certificats ; carte « Profil complété à N % » avec les éléments manquants.
+
+### Notifications et paramètres (`/notifications`)
+
+- **Cloche (ordinateur)** : panneau « Toutes / Non lues », « Tout marquer comme lu », accepter ou refuser une demande d'ami sans quitter la page. **Mobile** : la cloche mène à la page.
+- **Page** : notifications groupées (Aujourd'hui, Hier, Cette semaine, Plus tôt), défilement continu, nouvelle notification annoncée en direct (`/ws/notifications/`, une seule connexion pour toute l'application).
+- **Paramètres** : tableau par type et par canal (dans l'application, e-mail), enregistré immédiatement ; les notifications de sécurité ne peuvent pas être désactivées. Les types que le serveur n'émet pas encore ne sont pas proposés.
+
+### Correctifs backend livrés avec le lot 2
+
+Fichiers `apps/messaging/api.py`, `apps/profiles/api.py`, `apps/notifications/api.py`, `apps/portfolio/selectors.py` + tests `tests/test_api_lot2_member_space.py` (6 tests). **À déployer sur Render**, sinon ces éléments n'apparaissent pas (le frontend fonctionne quand même) :
+
+- boîte de réception : `last_message` (aperçu), `with.online` (si l'autre l'autorise), `others_read_seq` (si les deux l'autorisent) ;
+- messages : `my_reactions` ;
+- profil : `joined_at` et `relation` complète (`follows_me`, `friend_request` avec son sens, `is_close_friend`) ;
+- préférences de notification : `default_channels` de chaque type ;
+- portfolio : un membre qui n'a encore rien ajouté obtient un portfolio vide au lieu d'une erreur 404.
+
+### Limites connues
+
+- Les données de référence (compétences, métiers, pays) sont enregistrées **sans accents** dans la base ; elles s'affichent telles quelles. À corriger côté données.
+- Sur Render (offre gratuite, une seule instance), la couche temps réel est en mémoire : suffisant pour une instance, à passer sur Redis si le service est multiplié.
+
 ## Mouvement et accessibilité
 
 - 4 courbes et 4 durées (`--bb-ease-*`, `--bb-dur-*` dans `app/globals.css`) ; `prefers-reduced-motion` réduit toutes les animations ; pas de lecture automatique des vidéos en mode économie de données.
 - Boîtes de dialogue sur l'élément `<dialog>` natif (piège du focus, Échap, retour du focus), feuilles montantes sur mobile.
-- Menus au motif ARIA « menu button », recherche au motif « combobox », notifications annoncées (`role="status"`), cibles tactiles ≥ 40 px, contrastes AA.
+- Menus au motif ARIA « menu button », recherche au motif « combobox », onglets au motif « tabs », conversation en `role="log"`, interrupteurs en `role="switch"`, notifications annoncées (`role="status"`), cibles tactiles ≥ 40 px, contrastes AA.
 
 ## Vérification
 
 Suite de bout en bout Playwright contre le **vrai backend** lancé en local (PostgreSQL, Redis, stockage simulé) : 53 contrôles — inscription → confirmation → `/accueil`, connexion, réactions persistées, sélecteur de réactions, enregistrement, vote, recherche, hashtag, commentaires et réponses, création (texte, code, image avec envoi, sondage, audience personnalisée), modification, suppression, signalement, statuts (lecture, réaction, navigation, création), invitation, déconnexion ; aucune erreur console ; aucun débordement horizontal de 320 à 1920 px.
+
+Lot 2 : 72 contrôles supplémentaires — cloche et panneau, demande d'ami acceptée depuis une notification, tout marquer comme lu, préférence enregistrée, type critique verrouillé ; envoi, accusé de lecture et réception en temps réel, réponse, réaction, modification, suppression pour tous, message de code, pièce jointe, nouvelle conversation directe et de groupe ; abonnement, onglets du profil, demande d'ami envoyée puis annulée, bouton Message, modification de la bio, du métier et des compétences, ajout et suppression d'une expérience ; recherche de personnes ; conversation mobile en plein écran ; aucun débordement de 320 à 1920 px ; aucune erreur console. Les suites précédentes (lot 1 : 53, formulaires mobiles : 32, panneau mobile : 50, site public) et les 454 tests backend passent toujours.

@@ -8,7 +8,9 @@ import { createPortal } from "react-dom";
 import { BaobabMark } from "@/components/baobab/BaobabMark";
 import { BRAND } from "@/components/landing/landing-content";
 import { useMe } from "@/features/me/me";
-import { useUnreadMessages, useUnreadNotifications } from "@/features/notifications/hooks";
+import { useNotificationSocket, useUnreadMessages, useUnreadNotifications } from "@/features/notifications/hooks";
+import { NotificationBell } from "../notifications/NotificationBell";
+import { liveText } from "../notifications/describe";
 import { currentUser, endSession } from "@/lib/auth/session";
 import { ROUTES } from "@/lib/routes";
 import { Avatar } from "../ui/Avatar";
@@ -55,21 +57,34 @@ function useLogout() {
   };
 }
 
-/** Bouton d'une application pas encore livrée : compteur réel, mais pas de page derrière. */
-function SoonIconButton({ label, count, children }: { label: string; count: number; children: ReactNode }) {
-  const toast = useToast();
+/** Icône avec pastille de compteur, menant à une page. */
+function CountLink({ href, label, count, children, className }: { href: string; label: string; count: number; children: ReactNode; className?: string }) {
+  const pathname = usePathname();
   return (
-    <button
-      type="button"
-      className={cx(ui.iconButton, styles.soonButton)}
-      aria-label={`${label}${count ? ` : ${count} non lus` : ""} (bientôt disponible)`}
-      title={`${label} — ${SOON.toLowerCase()}`}
-      onClick={() => toast(`${label} : cet espace arrive avec la prochaine mise à jour.`)}
-    >
+    <Link href={href} className={cx(ui.iconButton, className)} aria-label={`${label}${count ? ` : ${count} non lus` : ""}`} aria-current={pathname.startsWith(href) ? "page" : undefined}>
       {children}
-      {count > 0 && <span className={ui.badge}>{count > 99 ? "99+" : count}</span>}
-    </button>
+      {count > 0 && (
+        <span key={count} className={ui.badge}>
+          {count > 99 ? "99+" : count}
+        </span>
+      )}
+    </Link>
   );
+}
+
+/** Notification reçue en direct : toast discret, sauf si la page ou le panneau des notifications est déjà ouvert. */
+function useLiveNotificationToast() {
+  const toast = useToast();
+  const pathname = usePathname();
+  useEffect(() => {
+    const onLive = (event: Event) => {
+      const detail = (event as CustomEvent<{ code?: string; data?: Record<string, unknown> }>).detail;
+      if (pathname === ROUTES.notifications || document.getElementById("panneau-notifications")) return;
+      toast(liveText(detail?.code, detail?.data));
+    };
+    window.addEventListener("baobab:notification", onLive);
+    return () => window.removeEventListener("baobab:notification", onLive);
+  }, [pathname, toast]);
 }
 
 function TopBar() {
@@ -80,7 +95,9 @@ function TopBar() {
   const messages = useUnreadMessages();
 
   const profileMenu: MenuEntry[] = [
+    ...(identity.username ? [{ kind: "link" as const, label: "Mon profil", href: ROUTES.profile(identity.username), icon: <UserIcon /> }] : []),
     { kind: "link", label: "Mes enregistrements", href: ROUTES.saved, icon: <BookmarkIcon /> },
+    { kind: "link", label: "Notifications et paramètres", href: `${ROUTES.notifications}#parametres`, icon: <BellIcon /> },
     { kind: "link", label: "Découvrir LE BAOBAB", href: ROUTES.discover, icon: <GlobeIcon /> },
     { kind: "separator" },
     { label: "Se déconnecter", icon: <LogoutIcon />, onSelect: () => void logout() },
@@ -98,7 +115,7 @@ function TopBar() {
 
       <button type="button" className={styles.search} onClick={openSearch} aria-keyshortcuts="Control+K Meta+K">
         <SearchIcon />
-        <span>Rechercher un hashtag, une page…</span>
+        <span>Rechercher une personne, un hashtag…</span>
         <kbd className={styles.kbd}>Ctrl K</kbd>
       </button>
 
@@ -111,13 +128,16 @@ function TopBar() {
           <SearchIcon />
         </button>
         <span className={styles.desktopOnly}>
-          <SoonIconButton label="Messages" count={messages}>
+          <CountLink href={ROUTES.messages} label="Messages" count={messages}>
             <MessageIcon />
-          </SoonIconButton>
+          </CountLink>
         </span>
-        <SoonIconButton label="Notifications" count={notifications}>
+        <span className={styles.desktopOnly}>
+          <NotificationBell />
+        </span>
+        <CountLink href={ROUTES.notifications} label="Notifications" count={notifications} className={styles.mobileOnly}>
           <BellIcon />
-        </SoonIconButton>
+        </CountLink>
         <span className={styles.desktopOnly}>
           <Menu
             label="Mon compte"
@@ -149,7 +169,7 @@ function SideNav() {
         {NAV_APPS.map(({ id, label, href, Icon }) => (
           <li key={id}>
             {href ? (
-              <Link href={href} className={styles.navLink} aria-current={pathname === href ? "page" : undefined} title={label}>
+              <Link href={href} className={styles.navLink} aria-current={pathname === href || pathname.startsWith(`${href}/`) ? "page" : undefined} title={label}>
                 <Icon />
                 <span className={styles.navLabel}>{label}</span>
               </Link>
@@ -190,6 +210,7 @@ function BottomBar({ drawerOpen, setDrawerOpen }: { drawerOpen: boolean; setDraw
   const { openSearch, openPost, openStatus } = useCreation();
   const logout = useLogout();
   const identity = useIdentity();
+  const messages = useUnreadMessages();
   const [createOpen, setCreateOpen] = useState(false);
 
   return (
@@ -209,9 +230,16 @@ function BottomBar({ drawerOpen, setDrawerOpen }: { drawerOpen: boolean; setDraw
         <button type="button" className={styles.tabCreate} onClick={() => setCreateOpen(true)} aria-label="Créer" aria-haspopup="dialog">
           <PlusIcon />
         </button>
-        <Link href={ROUTES.saved} className={styles.tab} aria-current={pathname === ROUTES.saved ? "page" : undefined}>
-          <BookmarkIcon />
-          Enregistrés
+        <Link href={ROUTES.messages} className={styles.tab} aria-current={pathname.startsWith(ROUTES.messages) ? "page" : undefined}>
+          <span style={{ position: "relative", display: "inline-flex" }}>
+            <MessageIcon />
+            {messages > 0 && (
+              <span className={ui.badge} style={{ top: -6, right: -10 }}>
+                {messages > 99 ? "99+" : messages}
+              </span>
+            )}
+          </span>
+          Messages
         </Link>
         <button type="button" className={styles.tab} onClick={() => setDrawerOpen(true)} aria-expanded={drawerOpen} aria-controls="toutes-les-fonctionnalites">
           <UserIcon />
@@ -268,6 +296,8 @@ function MobileDrawerSlot({ children }: { children: ReactNode }) {
 
 export function AppShell({ children }: { children: ReactNode }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  useNotificationSocket();
+  useLiveNotificationToast();
   return (
     <div className={styles.app}>
       <a href="#contenu" className={styles.skip}>

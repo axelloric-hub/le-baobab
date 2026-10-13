@@ -10,6 +10,10 @@ export const ROUTES = {
   memberSpace: "/accueil",
   feed: "/accueil",
   saved: "/enregistres",
+  messages: "/messages",
+  conversation: (id: string) => `/messages/${id}`,
+  notifications: "/notifications",
+  profile: (username: string) => `/u/${encodeURIComponent(username)}`,
   post: (id: string) => `/publications/${id}`,
   hashtag: (tag: string) => `/hashtags/${encodeURIComponent(tag.replace(/^#/, "").toLowerCase())}`,
   /** Accueil forcé pour un membre déjà inscrit qui veut revoir la présentation. */

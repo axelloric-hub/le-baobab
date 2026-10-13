@@ -78,6 +78,26 @@
   font-size: 15px;
   font-weight: 700;
   color: var(--bb-brown-950);
+  text-decoration: none;
+}
+
+a.author:hover,
+a.bubbleName:hover {
+  text-decoration: underline;
+}
+
+a.author:focus-visible,
+a.bubbleName:focus-visible,
+a.mention:focus-visible {
+  outline: none;
+  border-radius: 4px;
+  box-shadow: var(--bb-focus-ring);
+}
+
+.avatarLink {
+  display: inline-flex;
+  flex: none;
+  border-radius: 50%;
 }
 
 .handle {
@@ -236,6 +256,11 @@
 .mention {
   color: var(--bb-blue-700);
   font-weight: 600;
+  text-decoration: none;
+}
+
+a.mention:hover {
+  text-decoration: underline;
 }
 
 .inlineCode {
@@ -1197,6 +1222,7 @@ button.pollOption:hover {
   font-size: 13.5px;
   font-weight: 700;
   color: var(--bb-brown-950);
+  text-decoration: none;
 }
 
 .authorBadge {
