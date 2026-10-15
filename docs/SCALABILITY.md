@@ -17,7 +17,7 @@ Declenchement conseille : > 100 M lignes ou VACUUM > quelques minutes.
 
 ## Lectures / ecritures
 - Read replicas Supabase pour : explorer, profils publics, stats ; `DATABASES["replica"]` + routeur de lecture (non implemente).
-- Pool : `CONN_MAX_AGE=60` + health checks. Avec N conteneurs x M workers, **dimensionner le pooler** (connexions = conteneurs x workers x 1).
+- Pool : `CONN_MAX_AGE=0` (obligatoire sous ASGI : sinon une connexion fuit par thread de requete) + health checks. Avec N conteneurs x M workers, **dimensionner le pooler** (connexions = conteneurs x workers x 1).
 - MongoDB : `post_cards` accede par `_id` -> sharding hashed sur `_id` quand > ~100 M documents.
 - Redis : separer cache, channel layer et verrous sur des instances distinctes au-dela de ~10 k connexions WebSocket.
 

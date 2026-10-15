@@ -121,7 +121,10 @@ TEMPLATES = [
 DATABASES = {
     "default": dj_database_url.parse(
         env("DATABASE_URL", required=True),
-        conn_max_age=int(env("DB_CONN_MAX_AGE", "60")),
+        # 0 = une connexion par requete, fermee a la fin. OBLIGATOIRE sous ASGI (uvicorn) : Django y execute chaque requete
+        # synchrone dans un NOUVEAU thread ; avec conn_max_age>0 chaque thread garde sa connexion ouverte et le pooler
+        # Supabase gratuit (15 clients en mode session) sature -> EMAXCONNSESSION.
+        conn_max_age=int(env("DB_CONN_MAX_AGE", "0")),
         conn_health_checks=True,
         ssl_require=env_bool("DB_SSL_REQUIRE", False),
     )
@@ -133,7 +136,9 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 MONGODB_URL = env("MONGODB_URL", "mongodb://localhost:27017")
 MONGODB_DATABASE = env("MONGODB_DATABASE", "baobab")
 REDIS_URL = env("REDIS_URL", "redis://localhost:6379/0")
-CHANNEL_REDIS_URL = env("CHANNEL_REDIS_URL", "redis://localhost:6379/1")  # vide => channel layer en memoire (une seule instance)
+# Defaut VIDE => channel layer en memoire (une seule instance). Un defaut "redis://localhost" faisait planter le WebSocket
+# sur Render, ou aucun Redis n'ecoute en local (Error 111 connecting to localhost:6379).
+CHANNEL_REDIS_URL = env("CHANNEL_REDIS_URL", "")
 REDIS_KEY_PREFIX = "baobab"
 FIELD_ENCRYPTION_KEY = env("FIELD_ENCRYPTION_KEY", "")
 
@@ -189,6 +194,12 @@ SPECTACULAR_SETTINGS = {
 
 CORS_ALLOWED_ORIGINS = env_list("CORS_ALLOWED_ORIGINS")
 CSRF_TRUSTED_ORIGINS = env_list("CSRF_TRUSTED_ORIGINS")
+# Origines autorisees a ouvrir un WebSocket (en-tete Origin du navigateur). Le frontend Vercel n'est PAS dans ALLOWED_HOSTS :
+# sans cette liste, le WebSocket etait refuse en 403. On reprend les origines CORS/CSRF + WS_ALLOWED_ORIGINS (optionnel).
+WS_ALLOWED_ORIGINS = list(dict.fromkeys(
+    [o.split("://", 1)[-1].rstrip("/") for o in CORS_ALLOWED_ORIGINS + CSRF_TRUSTED_ORIGINS + env_list("WS_ALLOWED_ORIGINS")]
+    + ALLOWED_HOSTS
+))
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = "DENY"
 SESSION_COOKIE_HTTPONLY = True

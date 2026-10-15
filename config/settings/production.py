@@ -14,6 +14,8 @@ SECURE_HSTS_PRELOAD = True
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
 SECURE_REFERRER_POLICY = "same-origin"
+# Jamais de connexion persistante sous ASGI (voir base.py) : meme si DB_CONN_MAX_AGE est reste a 60 dans Render.
+DATABASES["default"]["CONN_MAX_AGE"] = 0
 DATABASES["default"]["OPTIONS"] = {**DATABASES["default"].get("OPTIONS", {}), "sslmode": "require"}
 if len(SECRET_KEY) < 50:  # noqa: F405
     raise RuntimeError("DJANGO_SECRET_KEY trop courte pour la production")
