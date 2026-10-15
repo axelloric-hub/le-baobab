@@ -31,6 +31,11 @@ def can_manage_job(user, job: Job) -> bool:
     return bool(job.company_id) and CompanyMember.objects.filter(company_id=job.company_id, user=user, role__in=RECRUITER_ROLES).exists()
 
 
+def recruiter_company_ids(user) -> list:
+    """Entreprises pour lesquelles l'utilisateur peut gerer les offres."""
+    return list(CompanyMember.objects.filter(user=user, role__in=RECRUITER_ROLES).values_list("company_id", flat=True))
+
+
 def _require_manager(user, job: Job) -> None:
     if not can_manage_job(user, job):
         raise PermissionDeniedError("Reserve aux recruteurs de cette offre.")
@@ -57,6 +62,33 @@ def create_job(poster, *, title: str, description: str, job_type: str, contract_
             JobSkill.objects.bulk_create([JobSkill(job=job, skill=s["skill"], is_required=s.get("required", True)) for s in (skills or [])])
     except IntegrityError as exc:
         raise DomainError("Fourchette de salaire incoherente (min <= max, devise et periode requises).", code="invalid_salary") from exc
+    return job
+
+
+@transaction.atomic
+def update_job(job: Job, actor, *, skills: list[dict] | None = None, salary=..., **fields) -> Job:
+    """Modifie une offre en brouillon, ouverte ou en pause. Une offre fermee ou pourvue n'est plus modifiable."""
+    _require_manager(actor, job)
+    job = Job.objects.select_for_update().get(pk=job.pk)
+    if job.status not in ("draft", "open", "paused"):
+        raise ConflictError("Une offre fermee ou pourvue n'est plus modifiable.", code="invalid_state")
+    for name, value in fields.items():
+        setattr(job, name, value)
+    if salary is not ...:
+        sal = salary or {}
+        job.salary_min_minor, job.salary_max_minor = sal.get("min"), sal.get("max")
+        job.salary_currency, job.salary_period = sal.get("currency", ""), sal.get("period", "")
+    if job.status == "open" and (len(job.description) < 50 or (skills is not None and not skills)):
+        raise DomainError("Une offre publiee exige une description detaillee (50 caracteres) et au moins une competence.", code="incomplete_job")
+    job.updated_at = timezone.now()
+    try:
+        with transaction.atomic():
+            job.save()
+            if skills is not None:
+                JobSkill.objects.filter(job=job).delete()
+                JobSkill.objects.bulk_create([JobSkill(job=job, skill=s["skill"], is_required=s.get("required", True)) for s in skills])
+    except IntegrityError as exc:
+        raise DomainError("Fourchette de salaire ou date limite incoherente.", code="invalid_salary") from exc
     return job
 
 
@@ -174,7 +206,8 @@ def book_slot(app_id, slot_id, actor, *, mode: str = "video", location: str = ""
         app.status = "interview"
         app.save(update_fields=["status", "updated_at"])
         _history(app, "shortlisted", "interview", actor, "creneau reserve")
-    publish_event("InterviewScheduled", "interview", interview.pk, {"user": str(app.applicant_id), "interviewer": str(slot.interviewer_id), "starts_at": slot.starts_at.isoformat()})
+    publish_event("InterviewScheduled", "interview", interview.pk, {"user": str(app.applicant_id), "interviewer": str(slot.interviewer_id), "starts_at": slot.starts_at.isoformat(),
+                                                                    "job": str(app.job_id)})
     return interview
 
 

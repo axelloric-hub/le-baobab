@@ -19,8 +19,10 @@ def _co(slug) -> Company:
     return c
 
 
-def _json(c: Company) -> dict:
-    return {"slug": c.slug, "name": c.name, "tagline": c.tagline, "description": c.description, "website": c.website, "industry": c.industry, "size_range": c.size_range, "city": c.city,
+def _json(c: Company, viewer=None) -> dict:
+    uid = getattr(viewer, "pk", None)
+    role = CompanyMember.objects.filter(company=c, user_id=uid).values_list("role", flat=True).first() if uid else None
+    return {"slug": c.slug, "name": c.name, "my_role": role, "created_at": c.created_at, "country_name": c.country.name if c.country_id else None, "tagline": c.tagline, "description": c.description, "website": c.website, "industry": c.industry, "size_range": c.size_range, "city": c.city,
             "country": c.country_id, "logo_url": file_url(c.logo_key), "cover_url": file_url(c.cover_key), "verified": c.status == "verified",
             "links": [{"provider": l.provider, "url": l.url} for l in c.social_links.all()],
             "projects": [{"title": p.title, "description": p.description, "url": p.url, "repo_url": p.repo_url} for p in c.projects.filter(is_public=True)],
@@ -33,17 +35,18 @@ def _json(c: Company) -> dict:
                                                                                     "city": s.CharField(max_length=80, required=False, allow_blank=True)})
 def create(request):
     d = dict(request.input)
-    return _json(C.create_company(request.user, name=d.pop("name"), slug=d.pop("slug"), **d))
+    return _json(C.create_company(request.user, name=d.pop("name"), slug=d.pop("slug"), **d), request.user)
 
 
 @endpoint("Mes entreprises.")
 def mine(request):
-    return [{"slug": m.company.slug, "name": m.company.name, "role": m.role} for m in CompanyMember.objects.filter(user=request.user).select_related("company")]
+    return [{"slug": m.company.slug, "name": m.company.name, "role": m.role, "logo_url": file_url(m.company.logo_key), "verified": m.company.status == "verified"}
+            for m in CompanyMember.objects.filter(user=request.user).select_related("company")]
 
 
-@endpoint("Page publique d'une entreprise.", auth="public")
+@endpoint("Page publique d'une entreprise (avec mon role si je suis connecte et membre).", auth="optional")
 def detail(request, slug):
-    return _json(_co(slug))
+    return _json(_co(slug), request.user)
 
 
 @endpoint("[Gestionnaire/editeur] Modifier l'entreprise. logo_file / cover_file : fichiers envoyes (usages 'company_logo' / 'company_cover').",
@@ -54,7 +57,7 @@ def update(request, slug):
     d, c = dict(request.input), _co(slug)
     logo = ... if "logo_file" not in d else ("" if d["logo_file"] is None else resolve_owned(request.user, d["logo_file"], ("company_logo",)).key)
     cover = ... if "cover_file" not in d else ("" if d["cover_file"] is None else resolve_owned(request.user, d["cover_file"], ("company_cover",)).key)
-    return _json(C.update_company(c, request.user, fields=d, logo_key=logo, cover_key=cover))
+    return _json(C.update_company(c, request.user, fields=d, logo_key=logo, cover_key=cover), request.user)
 
 
 @endpoint("Equipe visible sur la page publique.", auth="public")

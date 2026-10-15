@@ -120,7 +120,7 @@ def application_status(ev):
 @subscribe("InterviewScheduled")
 def interview_scheduled(ev):
     p = ev.payload
-    _each([p["user"], p["interviewer"]], type_code="interview_scheduled", target_type="interview", target_id=ev.aggregate_id, data={"starts_at": p["starts_at"]}, dedupe_key=f"is:{ev.event_id}")
+    _each([p["user"], p["interviewer"]], type_code="interview_scheduled", target_type="interview", target_id=ev.aggregate_id, data={"starts_at": p["starts_at"], "job": p.get("job")}, dedupe_key=f"is:{ev.event_id}")
 
 
 @subscribe("OfferSent")

@@ -9,7 +9,7 @@ import { CommunityIcon, PlusIcon, SearchIcon, SparklesIcon } from "../ui/icons";
 import { EmptyState, ErrorState, Spinner } from "../ui/States";
 import { TabPanel, Tabs, useUrlTab } from "../ui/Tabs";
 import ui from "../ui/ui.module.css";
-import styles from "./Community.module.css";
+import layout from "../ui/Page.module.css";
 import { CreateGroupDialog } from "./CreateGroupDialog";
 import { GroupCard, GroupCardSkeleton } from "./GroupCard";
 
@@ -21,7 +21,7 @@ function GroupGrid({ query, empty }: { query: Paged; empty: React.ReactNode }) {
   const groups = useMemo(() => query.data?.pages.flatMap((p) => p.results) ?? [], [query.data]);
   if (query.isPending) {
     return (
-      <div className={styles.grid} aria-busy="true" aria-label="Chargement des groupes">
+      <div className={layout.grid} aria-busy="true" aria-label="Chargement des groupes">
         {[0, 1, 2, 3, 4, 5].map((i) => (
           <GroupCardSkeleton key={i} />
         ))}
@@ -32,13 +32,13 @@ function GroupGrid({ query, empty }: { query: Paged; empty: React.ReactNode }) {
   if (groups.length === 0) return <>{empty}</>;
   return (
     <>
-      <div className={styles.grid}>
+      <div className={layout.grid}>
         {groups.map((group: Group) => (
           <GroupCard key={group.slug} group={group} />
         ))}
       </div>
       {query.hasNextPage && (
-        <div className={styles.more}>
+        <div className={layout.more}>
           {query.isFetchingNextPage ? (
             <Spinner label="Chargement de la suite" />
           ) : (
@@ -65,15 +65,15 @@ export function GroupsPage() {
   const searching = search.trim().length >= 2 || Boolean(community);
 
   return (
-    <div className={styles.page}>
-      <header className={styles.pageHeader}>
-        <div className={styles.pageHeaderMain}>
-          <span className={styles.pageHeaderIcon} aria-hidden="true">
+    <div className={layout.page}>
+      <header className={layout.pageHeader}>
+        <div className={layout.pageHeaderMain}>
+          <span className={layout.pageHeaderIcon} aria-hidden="true">
             <CommunityIcon />
           </span>
           <div>
-            <h1 className={styles.pageTitle}>Communauté</h1>
-            <p className={styles.pageLead}>Des groupes de développeurs africains pour apprendre, s&apos;entraider et construire ensemble.</p>
+            <h1 className={layout.pageTitle}>Communauté</h1>
+            <p className={layout.pageLead}>Des groupes de développeurs africains pour apprendre, s&apos;entraider et construire ensemble.</p>
           </div>
         </div>
         <button type="button" className={cx(ui.button, ui.primary)} onClick={() => setCreating(true)}>
@@ -94,9 +94,9 @@ export function GroupsPage() {
       />
 
       {tab === "decouvrir" ? (
-        <TabPanel idPrefix="groupes" id="decouvrir" className={styles.stack}>
-          <div className={styles.toolbar}>
-            <div className={styles.searchBox}>
+        <TabPanel idPrefix="groupes" id="decouvrir" className={layout.stack}>
+          <div className={layout.toolbar}>
+            <div className={layout.searchBox}>
               <SearchIcon />
               <input
                 className={ui.input}
@@ -109,7 +109,7 @@ export function GroupsPage() {
             </div>
           </div>
           {communities.data && communities.data.length > 0 && (
-            <div className={styles.chips} role="group" aria-label="Filtrer par communauté">
+            <div className={layout.chips} role="group" aria-label="Filtrer par communauté">
               <button type="button" className={ui.chip} aria-pressed={!community} onClick={() => setCommunity("")}>
                 Toutes
               </button>
@@ -138,7 +138,7 @@ export function GroupsPage() {
           />
         </TabPanel>
       ) : (
-        <TabPanel idPrefix="groupes" id="mes-groupes" className={styles.stack}>
+        <TabPanel idPrefix="groupes" id="mes-groupes" className={layout.stack}>
           <InvitationsCard />
           <GroupGrid
             query={mine}

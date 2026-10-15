@@ -43,5 +43,5 @@ export function useUserPosts(username: string, enabled: boolean) {
 }
 
 export function usePortfolio(username: string) {
-  return useQuery({ queryKey: peopleKeys.portfolio(username), queryFn: () => peopleApi.portfolio(username), staleTime: 60_000, retry: false });
+  return useQuery({ queryKey: peopleKeys.portfolio(username), queryFn: () => peopleApi.portfolio(username), staleTime: 60_000, retry: false, enabled: Boolean(username) });
 }

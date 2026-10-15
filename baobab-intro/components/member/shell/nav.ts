@@ -19,7 +19,7 @@ export const NAV_APPS: NavApp[] = [
   { id: "communaute", label: "Communauté", href: ROUTES.groups, Icon: CommunityIcon },
   { id: "learn", label: "Learn", Icon: LearnIcon },
   { id: "showcase", label: "Showcase", Icon: ShowcaseIcon },
-  { id: "opportunites", label: "Opportunités", Icon: BriefcaseIcon },
+  { id: "opportunites", label: "Opportunités", href: ROUTES.jobs, Icon: BriefcaseIcon },
   { id: "boutique", label: "Boutique", Icon: ShopIcon },
 ];
 

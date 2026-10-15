@@ -8,7 +8,20 @@
 import { authed } from "@/lib/api/authed";
 import { ApiError } from "@/lib/api/errors";
 
-export type UploadPurpose = "post_media" | "status_media" | "message_attachment" | "avatar" | "cover";
+export type UploadPurpose =
+  | "post_media"
+  | "status_media"
+  | "message_attachment"
+  | "avatar"
+  | "cover"
+  | "company_logo"
+  | "company_cover"
+  | "cv"
+  | "portfolio_media"
+  | "product_media"
+  | "product_asset"
+  | "course_content"
+  | "assignment_submission";
 
 export interface PurposeRule {
   purpose: string;

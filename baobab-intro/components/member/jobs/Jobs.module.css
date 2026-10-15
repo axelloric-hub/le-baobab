@@ -1,0 +1,576 @@
+/* Opportunités : liste d'offres, détail, suivi de candidature, recrutement. Mise en page commune : ui/Page.module.css. */
+
+/* ---------- Carte d'offre (liste) ---------- */
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.job {
+  position: relative;
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  gap: 14px;
+  padding: 16px 18px;
+  border: 1px solid var(--bb-line);
+  border-radius: var(--bb-radius-lg);
+  background: var(--bb-surface);
+  box-shadow: var(--bb-shadow-sm);
+  transition:
+    border-color var(--bb-dur-base) var(--bb-ease-standard),
+    box-shadow var(--bb-dur-base) var(--bb-ease-standard);
+}
+
+.job:hover {
+  border-color: rgba(111, 44, 14, 0.22);
+  box-shadow: var(--bb-shadow-md);
+}
+
+.jobLogo > span,
+.jobLogo img {
+  border-radius: var(--bb-radius-md) !important;
+}
+
+.jobMain {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.jobTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.jobTitle {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 750;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+
+.jobLink {
+  color: var(--bb-brown-950);
+  text-decoration: none;
+}
+
+.jobLink::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+
+.jobLink:focus-visible {
+  outline: none;
+}
+
+.jobLink:focus-visible::after {
+  box-shadow: var(--bb-focus-ring);
+}
+
+.jobOrg {
+  margin: 0;
+  font-size: 14px;
+  color: var(--bb-ink-soft);
+}
+
+.jobOrg strong {
+  font-weight: 650;
+  color: var(--bb-brown-800);
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 2px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: var(--bb-radius-sm);
+  background: var(--bb-canvas);
+  border: 1px solid var(--bb-line);
+  color: var(--bb-ink-soft);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.tag svg {
+  width: 14px;
+  height: 14px;
+}
+
+.tag[data-tone="money"] {
+  border-color: #cfe9d9;
+  background: #f1faf4;
+  color: #166534;
+}
+
+.skills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.skill {
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: var(--bb-blue-50);
+  color: var(--bb-blue-700);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.skill[data-optional] {
+  background: var(--bb-sand);
+  color: var(--bb-ink-soft);
+}
+
+.jobFoot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 12px;
+  margin-top: 2px;
+  font-size: 12.5px;
+  color: var(--bb-ink-muted);
+}
+
+.counts {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+}
+
+.counts strong {
+  color: var(--bb-brown-950);
+}
+
+.counts [data-new] {
+  color: #c2410c;
+  font-weight: 700;
+}
+
+/* ---------- Filtres ---------- */
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.filters select {
+  width: auto;
+  min-width: 0;
+  min-height: 40px;
+  padding: 8px 32px 8px 12px;
+  font-size: 14px;
+}
+
+@media (max-width: 559px) {
+  .filters select {
+    flex: 1 1 calc(50% - 4px);
+  }
+}
+
+/* ---------- Détail ---------- */
+
+.detail {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.hero {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: clamp(18px, 3vw, 26px);
+  border: 1px solid var(--bb-line);
+  border-radius: var(--bb-radius-lg);
+  background: var(--bb-surface);
+  box-shadow: var(--bb-shadow-sm);
+}
+
+.heroHead {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.heroTitle {
+  margin: 0;
+  font-size: clamp(22px, 3.2vw, 28px);
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: var(--bb-brown-950);
+}
+
+.heroOrg {
+  margin: 4px 0 0;
+  font-size: 15px;
+  color: var(--bb-ink-soft);
+}
+
+.heroOrg a {
+  color: var(--bb-brown-700);
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.heroOrg a:hover {
+  text-decoration: underline;
+}
+
+.heroActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.narrowOnly {
+  display: flex;
+}
+
+@media (min-width: 1100px) {
+  .narrowOnly {
+    display: none;
+  }
+}
+
+/* L'inverse : visible seulement en grand écran (le bouton du haut prend le relais ailleurs). */
+.wideOnly {
+  display: none;
+}
+
+@media (min-width: 1100px) {
+  .wideOnly {
+    display: block;
+  }
+}
+
+.body {
+  margin: 0;
+  font-size: 15.5px;
+  line-height: 1.7;
+  color: var(--bb-brown-950);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.sectionHeading {
+  margin: 0 0 10px;
+  font-size: 16px;
+  font-weight: 750;
+  color: var(--bb-brown-800);
+}
+
+/* ---------- Suivi de candidature ---------- */
+
+.steps {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 6px;
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  font-size: 11.5px;
+  font-weight: 650;
+  color: var(--bb-ink-muted);
+}
+
+.step::before {
+  content: "";
+  height: 5px;
+  border-radius: 999px;
+  background: var(--bb-bone);
+}
+
+.step[data-state="done"]::before {
+  background: var(--bb-brown-600);
+}
+
+.step[data-state="current"]::before {
+  background: linear-gradient(90deg, var(--bb-brown-600), var(--bb-blue-600));
+}
+
+.step[data-state="current"] {
+  color: var(--bb-brown-800);
+}
+
+@media (max-width: 479px) {
+  .step span {
+    display: none;
+  }
+
+  .step[data-state="current"] span {
+    display: inline;
+    white-space: nowrap;
+  }
+}
+
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.event {
+  position: relative;
+  display: grid;
+  grid-template-columns: 16px 1fr;
+  gap: 10px;
+  padding-bottom: 14px;
+  font-size: 13.5px;
+  color: var(--bb-ink-soft);
+}
+
+.event::before {
+  content: "";
+  width: 10px;
+  height: 10px;
+  margin: 4px 0 0 3px;
+  border-radius: 50%;
+  background: var(--bb-brown-600);
+}
+
+.event:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: 18px;
+  bottom: 0;
+  left: 7px;
+  width: 2px;
+  background: var(--bb-bone);
+}
+
+.event strong {
+  color: var(--bb-brown-950);
+}
+
+.event small {
+  display: block;
+  color: var(--bb-ink-muted);
+}
+
+.callout {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border-radius: var(--bb-radius-md);
+  background: var(--bb-surface-warm);
+  border: 1px solid var(--bb-line);
+}
+
+.callout[data-tone="green"] {
+  border-color: #cfe9d9;
+  background: #f4fbf6;
+}
+
+.callout p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--bb-ink-soft);
+}
+
+.callout strong {
+  color: var(--bb-brown-950);
+}
+
+.calloutActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.slots {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.slot {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--bb-line-strong);
+  border-radius: var(--bb-radius-md);
+  background: var(--bb-surface);
+  color: var(--bb-brown-950);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 650;
+  text-align: left;
+  cursor: pointer;
+}
+
+.slot small {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--bb-ink-muted);
+}
+
+.slot:hover {
+  border-color: rgba(111, 44, 14, 0.3);
+}
+
+.slot[aria-pressed="true"] {
+  border-color: var(--bb-brown-700);
+  background: var(--bb-surface-warm);
+  box-shadow: inset 0 0 0 1px var(--bb-brown-700);
+}
+
+.slot:focus-visible {
+  outline: none;
+  box-shadow: var(--bb-focus-ring);
+}
+
+/* ---------- Recrutement : candidatures ---------- */
+
+.applicant {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px;
+  border: 0;
+  border-radius: var(--bb-radius-md);
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.applicant:hover {
+  background: var(--bb-sand);
+}
+
+.applicant:focus-visible {
+  outline: none;
+  box-shadow: var(--bb-focus-ring);
+}
+
+.applicantName {
+  display: block;
+  overflow: hidden;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--bb-brown-950);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.applicantMeta {
+  display: block;
+  overflow: hidden;
+  font-size: 13px;
+  color: var(--bb-ink-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.letter {
+  margin: 0;
+  padding: 14px;
+  border-radius: var(--bb-radius-md);
+  background: var(--bb-surface-warm);
+  border: 1px solid var(--bb-line);
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: var(--bb-brown-950);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.linkList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.twoCols {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+@media (max-width: 479px) {
+  .twoCols {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.amountField {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 110px;
+  gap: 8px;
+}
+
+/* ---------- Contrats ---------- */
+
+.milestones {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.milestone {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 10px 12px;
+  border-radius: var(--bb-radius-md);
+  background: var(--bb-surface-warm);
+  border: 1px solid var(--bb-line);
+  font-size: 14px;
+}
+
+.milestone > span:first-child {
+  flex: 1 1 180px;
+  min-width: 0;
+  font-weight: 650;
+  color: var(--bb-brown-950);
+}

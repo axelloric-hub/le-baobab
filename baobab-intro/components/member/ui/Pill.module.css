@@ -1,0 +1,54 @@
+/* Pastilles d'état : couleurs de la charte, contraste AA sur fond clair. */
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--bb-sand);
+  color: var(--bb-ink-soft);
+  font-size: 12.5px;
+  font-weight: 700;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+
+.pill svg {
+  width: 14px;
+  height: 14px;
+}
+
+.pill[data-dot]::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.pill[data-tone="blue"] {
+  background: var(--bb-blue-50);
+  color: var(--bb-blue-700);
+}
+
+.pill[data-tone="green"] {
+  background: #e8f6ee;
+  color: #166534;
+}
+
+.pill[data-tone="amber"] {
+  background: #fdf3e2;
+  color: #92400e;
+}
+
+.pill[data-tone="red"] {
+  background: #fde8e6;
+  color: #b42318;
+}
+
+.pill[data-tone="brown"] {
+  background: #f6e9df;
+  color: var(--bb-brown-700);
+}

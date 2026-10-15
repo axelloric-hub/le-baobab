@@ -172,7 +172,7 @@ def update_group(group: Group, actor, *, fields: dict, avatar=..., cover=...) ->
             changed.append(name)
     for attr, value in (("avatar_key", avatar), ("cover_key", cover)):
         if value is not ...:
-            setattr(group, attr, value.storage_key if value is not None else "")
+            setattr(group, attr, value.key if value is not None else "")
             changed.append(attr)
     if changed:
         group.updated_at = timezone.now()

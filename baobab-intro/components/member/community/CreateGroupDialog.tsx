@@ -11,7 +11,7 @@ import { Dialog } from "../ui/Dialog";
 import { Field, slugify } from "../ui/Field";
 import { useToast } from "../ui/Toast";
 import ui from "../ui/ui.module.css";
-import styles from "./Community.module.css";
+import layout from "../ui/Page.module.css";
 import { JOIN_POLICY, PRIVACY } from "./labels";
 
 /** Créer un groupe : nom, adresse (déduite du nom, modifiable), description, confidentialité, adhésion, communauté. */
@@ -71,7 +71,7 @@ function CreateGroup({ onClose }: { onClose: () => void }) {
         </>
       }
     >
-      <form id="create-group" className={styles.form} onSubmit={submit} noValidate>
+      <form id="create-group" className={layout.form} onSubmit={submit} noValidate>
         <Field id="group-name" label="Nom du groupe" error={fieldError(error, "name")} hint="Par exemple : Devs Django de Douala, React Abidjan…">
           <input
             id="group-name"
@@ -86,8 +86,8 @@ function CreateGroup({ onClose }: { onClose: () => void }) {
         </Field>
 
         <Field id="group-slug" label="Adresse du groupe" error={slugError} hint="Lettres minuscules, chiffres et tirets. Elle ne pourra plus changer.">
-          <div className={styles.slugField}>
-            <span className={styles.slugPrefix}>/groupes/</span>
+          <div className={layout.slugField}>
+            <span className={layout.slugPrefix}>/groupes/</span>
             <input
               id="group-slug"
               value={effectiveSlug}
@@ -115,10 +115,10 @@ function CreateGroup({ onClose }: { onClose: () => void }) {
           />
         </Field>
 
-        <fieldset className={styles.choices}>
+        <fieldset className={layout.choices}>
           <legend className={ui.label}>Confidentialité</legend>
           {(Object.keys(PRIVACY) as GroupPrivacy[]).map((value) => (
-            <label key={value} className={styles.choice}>
+            <label key={value} className={layout.choice}>
               <input type="radio" name="group-privacy" value={value} checked={privacy === value} onChange={() => setPrivacy(value)} />
               <span>
                 <strong>{PRIVACY[value].label}</strong>
@@ -130,10 +130,10 @@ function CreateGroup({ onClose }: { onClose: () => void }) {
         </fieldset>
 
         {privacy !== "hidden" && (
-          <fieldset className={styles.choices}>
+          <fieldset className={layout.choices}>
             <legend className={ui.label}>Qui peut entrer&nbsp;?</legend>
             {(Object.keys(JOIN_POLICY) as JoinPolicy[]).map((value) => (
-              <label key={value} className={styles.choice}>
+              <label key={value} className={layout.choice}>
                 <input type="radio" name="group-policy" value={value} checked={joinPolicy === value} onChange={() => setJoinPolicy(value)} />
                 <span>
                   <strong>{JOIN_POLICY[value].label}</strong>

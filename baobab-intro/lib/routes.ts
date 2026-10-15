@@ -18,6 +18,10 @@ export const ROUTES = {
   hashtag: (tag: string) => `/hashtags/${encodeURIComponent(tag.replace(/^#/, "").toLowerCase())}`,
   groups: "/groupes",
   group: (slug: string) => `/groupes/${encodeURIComponent(slug)}`,
+  jobs: "/opportunites",
+  job: (id: string) => `/opportunites/${id}`,
+  jobManage: (id: string) => `/opportunites/${id}/candidatures`,
+  company: (slug: string) => `/entreprises/${encodeURIComponent(slug)}`,
   /** Accueil forcé pour un membre déjà inscrit qui veut revoir la présentation. */
   discover: "/?decouvrir=1",
 } as const;

@@ -1,7 +1,7 @@
 """Emplois et freelance : offres, candidatures (machine a etats), entretiens (creneaux), offres d'embauche, propositions, contrats et jalons. Un candidat ne voit que SES candidatures ; un recruteur que celles de SES offres."""
 from __future__ import annotations
 
-from django.db.models import Q
+from django.db.models import Count, Q
 from django.utils import timezone
 from rest_framework import serializers as s
 from rest_framework.response import Response
@@ -12,14 +12,18 @@ from apps.core.exceptions import PermissionDeniedError
 from apps.jobs import services as J
 from apps.jobs.models import Contract, FreelancerProfile, InterviewSlot, Job, JobApplication, Milestone, Offer, Proposal
 from apps.profiles.models import Country, Skill
-from apps.profiles.render import user_brief
+from apps.profiles.render import file_url, user_brief
 from apps.storage.services import resolve_owned, signed_url
 
 ST = [c[0] for c in JobApplication.Status.choices]
 
 
+def _jobs():
+    return Job.objects.select_related("company", "country", "category", "posted_by__profile").prefetch_related("job_skills__skill")
+
+
 def _job(request, job_id, *, manage=False) -> Job:
-    j = get_or_404(Job.objects.filter(pk=job_id).select_related("company", "country", "category"))
+    j = get_or_404(_jobs().filter(pk=job_id))
     mine = request.user.is_authenticated and J.can_manage_job(request.user, j)
     if manage and not mine:
         get_or_404(Job.objects.none())
@@ -28,11 +32,34 @@ def _job(request, job_id, *, manage=False) -> Job:
     return j
 
 
-def _job_json(j: Job) -> dict:
-    return {"id": str(j.pk), "title": j.title, "description": j.description, "company": {"slug": j.company.slug, "name": j.company.name} if j.company_id else None, "job_type": j.job_type,
-            "contract_type": j.contract_type, "experience_level": j.experience_level, "remote_policy": j.remote_policy, "country": j.country_id, "city": j.city,
+def _job_json(j: Job, viewer: dict | None = None) -> dict:
+    co = j.company
+    return {"id": str(j.pk), "title": j.title, "description": j.description,
+            "company": {"slug": co.slug, "name": co.name, "logo_url": file_url(co.logo_key), "verified": co.status == "verified"} if j.company_id else None,
+            "posted_by": user_brief(j.posted_by), "job_type": j.job_type,
+            "contract_type": j.contract_type, "experience_level": j.experience_level, "remote_policy": j.remote_policy, "country": j.country_id,
+            "country_name": j.country.name if j.country_id else None, "city": j.city,
             "salary": {"min_minor": j.salary_min_minor, "max_minor": j.salary_max_minor, "currency": j.salary_currency, "period": j.salary_period} if j.salary_min_minor is not None else None,
-            "skills": [{"slug": js.skill.slug, "required": js.is_required} for js in j.job_skills.select_related("skill")], "status": j.status, "published_at": j.published_at, "deadline": j.deadline}
+            "skills": [{"slug": js.skill.slug, "name": js.skill.name, "required": js.is_required} for js in j.job_skills.all()], "status": j.status, "published_at": j.published_at,
+            "deadline": j.deadline, "created_at": j.created_at, "viewer": viewer}
+
+
+class _Viewer:
+    """Etat propre au lecteur (je gere l'offre ? ma candidature ? ma proposition ?), calcule en 3 requetes pour toute une page."""
+
+    def __init__(self, user):
+        self.user = user if user.is_authenticated else None
+        if not self.user:
+            return
+        self.apps = {a["job_id"]: {"id": str(a["id"]), "status": a["status"]} for a in JobApplication.objects.filter(applicant=user).values("id", "job_id", "status")}
+        self.props = {p["job_id"]: {"id": str(p["id"]), "status": p["status"]} for p in Proposal.objects.filter(freelancer=user).values("id", "job_id", "status")}
+        self.companies = set(J.recruiter_company_ids(user))
+
+    def __call__(self, j: Job) -> dict | None:
+        if not self.user:
+            return None
+        manage = self.user.is_staff or j.posted_by_id == self.user.pk or (j.company_id in self.companies)
+        return {"can_manage": manage, "application": self.apps.get(j.pk), "proposal": self.props.get(j.pk)}
 
 
 class _Salary(s.Serializer):
@@ -51,7 +78,7 @@ class _SkillIn(s.Serializer):
                                                                                   "skill": s.CharField(required=False), "company": s.SlugField(required=False), "level": s.CharField(required=False)})
 def list_jobs(request):
     now = timezone.now()
-    qs = Job.objects.filter(status="open").filter(Q(deadline__isnull=True) | Q(deadline__gt=now)).select_related("company")
+    qs = _jobs().filter(status="open").filter(Q(deadline__isnull=True) | Q(deadline__gt=now))
     q = request.q
     for param, field in (("type", "job_type"), ("remote", "remote_policy"), ("level", "experience_level")):
         if q.get(param):
@@ -64,12 +91,42 @@ def list_jobs(request):
         qs = qs.filter(job_skills__skill__slug=q["skill"])
     if q.get("company"):
         qs = qs.filter(company__slug=q["company"])
-    return paginate(request, qs, ("-published_at", "-id"), _job_json, 20)
+    viewer = _Viewer(request.user)
+    return paginate(request, qs.distinct(), ("-published_at", "-id"), lambda j: _job_json(j, viewer(j)), 20)
 
 
-@endpoint("Detail d'une offre.", auth="optional")
+@endpoint("Detail d'une offre (avec, pour un membre connecte, son etat : gestionnaire, candidature, proposition).", auth="optional")
 def get_job(request, job_id):
-    return _job_json(_job(request, job_id))
+    j = _job(request, job_id)
+    return _job_json(j, _Viewer(request.user)(j))
+
+
+@endpoint("Les offres que je gere (publiees par moi ou par une entreprise dont je suis recruteur), tous statuts, avec le nombre de candidatures et de propositions.")
+def my_jobs(request):
+    qs = (_jobs().filter(Q(posted_by=request.user) | Q(company_id__in=J.recruiter_company_ids(request.user)))
+          .annotate(n_apps=Count("applications", distinct=True), n_new=Count("applications", filter=Q(applications__status="submitted"), distinct=True),
+                    n_props=Count("proposals", distinct=True)))
+    viewer = _Viewer(request.user)
+    return paginate(request, qs, ("-created_at", "-id"),
+                    lambda j: {**_job_json(j, viewer(j)), "counts": {"applications": j.n_apps, "new_applications": j.n_new, "proposals": j.n_props}}, 20)
+
+
+@endpoint("[Recruteur] Modifier une offre (brouillon, ouverte ou en pause). Le type et le contrat ne changent pas.",
+          body={"title": s.CharField(max_length=160, required=False), "description": s.CharField(max_length=20000, required=False),
+                "experience_level": s.ChoiceField(choices=[c[0] for c in Job.Level.choices], required=False), "remote_policy": s.ChoiceField(choices=[c[0] for c in Job.Remote.choices], required=False),
+                "country": s.CharField(max_length=2, required=False, allow_blank=True, allow_null=True), "city": s.CharField(max_length=80, required=False, allow_blank=True),
+                "salary": _Salary(required=False, allow_null=True), "skills": s.ListField(child=_SkillIn(), required=False, max_length=30), "deadline": s.DateTimeField(required=False, allow_null=True)})
+def update_job(request, job_id):
+    d, j = dict(request.input), _job(request, job_id, manage=True)
+    if "skills" in d:
+        d["skills"] = [{"skill": get_or_404(Skill.objects.filter(slug=sk["slug"])), "required": sk["required"]} for sk in d["skills"]]
+    if "country" in d:
+        d["country"] = get_or_404(Country.objects.filter(code=d["country"].upper())) if d["country"] else None
+    if d.get("salary"):
+        d["salary"] = {**d["salary"], "currency": d["salary"]["currency"].upper()}
+    J.update_job(j, request.user, **d)
+    j = _jobs().get(pk=j.pk)
+    return _job_json(j, _Viewer(request.user)(j))
 
 
 @endpoint("Creer une offre (brouillon). Un emploi exige une entreprise dont vous etes recruteur ; une mission freelance peut etre publiee a titre individuel.", status=201,
@@ -90,22 +147,41 @@ def create_job(request):
     sal = d.get("salary")
     j = J.create_job(request.user, title=d["title"], description=d["description"], job_type=d["job_type"], contract_type=d["contract_type"], company=company, skills=skills,
                      salary={"min": sal["min"], "max": sal["max"], "currency": sal["currency"].upper(), "period": sal["period"]} if sal else None, **extra)
-    return _job_json(j)
+    j = _jobs().get(pk=j.pk)
+    return _job_json(j, _Viewer(request.user)(j))
 
 
 @endpoint("[Recruteur] Publier l'offre.")
 def publish_job(request, job_id):
-    return _job_json(J.publish_job(_job(request, job_id, manage=True), request.user))
+    J.publish_job(_job(request, job_id, manage=True), request.user)
+    j = _jobs().get(pk=job_id)
+    return _job_json(j, _Viewer(request.user)(j))
 
 
 @endpoint("[Recruteur] Fermer l'offre (filled=true : poste pourvu).", body={"filled": s.BooleanField(default=False)})
 def close_job(request, job_id):
-    return _job_json(J.close_job(_job(request, job_id, manage=True), request.user, filled=request.input["filled"]))
+    J.close_job(_job(request, job_id, manage=True), request.user, filled=request.input["filled"])
+    j = _jobs().get(pk=job_id)
+    return _job_json(j, _Viewer(request.user)(j))
 
 
 # ------------------------------------------------------------------ candidatures
+def _interview(iv) -> dict:
+    sl = iv.slot
+    return {"id": str(iv.pk), "mode": iv.mode, "location": iv.location, "status": iv.status,
+            "starts_at": sl.starts_at if sl else None, "ends_at": sl.ends_at if sl else None}
+
+
+def _offer(o: Offer) -> dict:
+    return {"id": str(o.pk), "amount_minor": o.amount_minor, "currency": o.currency, "period": o.period, "start_date": o.start_date, "expires_at": o.expires_at, "status": o.status}
+
+
 def _app(a: JobApplication, *, manager: bool) -> dict:
-    out = {"id": str(a.pk), "job": {"id": str(a.job_id), "title": a.job.title}, "status": a.status, "cover_letter": a.cover_letter, "portfolio_url": a.portfolio_url, "github_url": a.github_url, "gitlab_url": a.gitlab_url,
+    co = a.job.company
+    offers = sorted(a.offers.all(), key=lambda o: o.created_at)
+    out = {"id": str(a.pk), "job": {"id": str(a.job_id), "title": a.job.title, "job_type": a.job.job_type, "status": a.job.status,
+                                     "company": {"slug": co.slug, "name": co.name, "logo_url": file_url(co.logo_key)} if co else None},
+           "status": a.status, "interviews": [_interview(iv) for iv in a.interviews.all()], "offer": _offer(offers[-1]) if offers else None, "cover_letter": a.cover_letter, "portfolio_url": a.portfolio_url, "github_url": a.github_url, "gitlab_url": a.gitlab_url,
            "cv_url": signed_url(a.cv_storage_key) if a.cv_storage_key else None, "available_from": a.available_from, "created_at": a.created_at,
            "projects": [{"id": str(p.pk), "title": p.title} for p in a.projects.all()], "history": [{"from": h.from_status, "to": h.to_status, "note": h.note, "at": h.created_at} for h in a.history.all()]}
     if manager:
@@ -115,7 +191,7 @@ def _app(a: JobApplication, *, manager: bool) -> dict:
 
 
 def _app_qs():
-    return JobApplication.objects.select_related("job", "applicant__profile").prefetch_related("projects", "history")
+    return JobApplication.objects.select_related("job__company", "applicant__profile").prefetch_related("projects", "history", "interviews__slot", "offers")
 
 
 @endpoint("Postuler a une offre (une seule candidature par offre). cv_file : fichier envoye (usage 'cv').", status=201,
@@ -203,8 +279,9 @@ def make_offer(request, application_id):
 
 @endpoint("Mes offres d'embauche recues.")
 def my_offers(request):
-    return [{"id": str(o.pk), "job": o.application.job.title, "amount_minor": o.amount_minor, "currency": o.currency, "period": o.period, "start_date": o.start_date, "expires_at": o.expires_at, "status": o.status}
-            for o in Offer.objects.filter(application__applicant=request.user).select_related("application__job")]
+    return [{"id": str(o.pk), "job": o.application.job.title, "job_id": str(o.application.job_id), "application": str(o.application_id), "amount_minor": o.amount_minor, "currency": o.currency,
+             "period": o.period, "start_date": o.start_date, "expires_at": o.expires_at, "status": o.status}
+            for o in Offer.objects.filter(application__applicant=request.user).select_related("application__job").order_by("-created_at")]
 
 
 @endpoint("Accepter ou refuser une offre d'embauche (l'acceptation cree le contrat).", body={"accept": s.BooleanField()})
@@ -238,12 +315,15 @@ def submit_proposal(request, job_id):
 def job_proposals(request, job_id):
     j = _job(request, job_id, manage=True)
     return paginate(request, Proposal.objects.filter(job=j).select_related("freelancer__profile"), ("-created_at", "-id"),
-                    lambda p: {"id": str(p.pk), "freelancer": user_brief(p.freelancer), "cover_letter": p.cover_letter, "bid_minor": p.bid_minor, "currency": p.currency, "delivery_days": p.delivery_days, "status": p.status}, 30)
+                    lambda p: {"id": str(p.pk), "freelancer": user_brief(p.freelancer), "cover_letter": p.cover_letter, "bid_minor": p.bid_minor, "currency": p.currency, "delivery_days": p.delivery_days,
+                               "status": p.status, "created_at": p.created_at}, 30)
 
 
 @endpoint("Mes propositions.")
 def my_proposals(request):
-    return [{"id": str(p.pk), "job": {"id": str(p.job_id), "title": p.job.title}, "bid_minor": p.bid_minor, "currency": p.currency, "status": p.status} for p in Proposal.objects.filter(freelancer=request.user).select_related("job")]
+    return [{"id": str(p.pk), "job": {"id": str(p.job_id), "title": p.job.title, "status": p.job.status}, "cover_letter": p.cover_letter, "bid_minor": p.bid_minor, "currency": p.currency,
+             "delivery_days": p.delivery_days, "status": p.status, "created_at": p.created_at}
+            for p in Proposal.objects.filter(freelancer=request.user).select_related("job").order_by("-created_at")[:200]]
 
 
 class _MilestoneIn(s.Serializer):
@@ -262,13 +342,15 @@ def accept_proposal(request, proposal_id):
 
 
 def _contract(c: Contract) -> dict:
-    return {"id": str(c.pk), "kind": c.kind, "client": user_brief(c.client), "contractor": user_brief(c.contractor), "amount_minor": c.amount_minor, "currency": c.currency, "status": c.status,
+    title = c.proposal.job.title if c.proposal_id else (c.application.job.title if c.application_id else "")
+    return {"id": str(c.pk), "kind": c.kind, "title": title, "client": user_brief(c.client), "contractor": user_brief(c.contractor), "amount_minor": c.amount_minor, "currency": c.currency, "status": c.status,
             "start_date": c.start_date, "end_date": c.end_date, "milestones": [{"id": str(m.pk), "position": m.position, "title": m.title, "amount_minor": m.amount_minor, "due_on": m.due_on, "status": m.status} for m in c.milestones.order_by("position")]}
 
 
 @endpoint("Mes contrats (comme client ou prestataire).")
 def my_contracts(request):
-    qs = Contract.objects.filter(Q(client=request.user) | Q(contractor=request.user)).select_related("client__profile", "contractor__profile").prefetch_related("milestones")
+    qs = (Contract.objects.filter(Q(client=request.user) | Q(contractor=request.user))
+          .select_related("client__profile", "contractor__profile", "proposal__job", "application__job").prefetch_related("milestones"))
     return paginate(request, qs, ("-created_at", "-id"), _contract, 20)
 
 

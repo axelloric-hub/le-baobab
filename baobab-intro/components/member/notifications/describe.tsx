@@ -17,7 +17,19 @@ const DATE = new Intl.DateTimeFormat("fr", { weekday: "long", day: "numeric", mo
  * Texte et destination de chaque type de notification (apps/notifications/handlers.py).
  * Chaque notification mène à la page concernée quand l'élément a une adresse.
  */
+/** Étapes d'une candidature, telles qu'annoncées au candidat. */
+const APPLICATION_STEP: Record<string, string> = {
+  reviewing: "en cours d'examen",
+  shortlisted: "présélectionnée",
+  interview: "entretien",
+  offer: "offre reçue",
+  hired: "embauche confirmée",
+  rejected: "non retenue",
+  withdrawn: "retirée",
+};
+
 export function describe(n: AppNotification): Described {
+  const job = str(n.data.job);
   const who = <strong>{n.actor?.display_name || n.actor?.username || str(n.data.from) || "Quelqu'un"}</strong>;
   const profile = n.actor ? ROUTES.profile(n.actor.username) : str(n.data.from) ? ROUTES.profile(str(n.data.from)) : undefined;
   switch (n.type) {
@@ -75,19 +87,26 @@ export function describe(n: AppNotification): Described {
     case "refund_processed":
       return { text: <>Votre remboursement a été effectué</>, Icon: ShopIcon, tone: "amber" };
     case "application_received":
-      return { text: <>{who} a postulé à l&apos;une de vos offres</>, Icon: BriefcaseIcon, tone: "brown" };
-    case "application_status":
-      return { text: <>Votre candidature a changé d&apos;étape</>, Icon: BriefcaseIcon, tone: "blue" };
+      return { text: <>{who} a postulé à l&apos;une de vos offres</>, href: job ? ROUTES.jobManage(job) : ROUTES.jobs, Icon: BriefcaseIcon, tone: "brown" };
+    case "application_status": {
+      const to = APPLICATION_STEP[str(n.data.to)];
+      return {
+        text: to ? <>Votre candidature : <strong>{to}</strong></> : <>Votre candidature a changé d&apos;étape</>,
+        href: job ? ROUTES.job(job) : ROUTES.jobs,
+        Icon: BriefcaseIcon,
+        tone: str(n.data.to) === "rejected" ? "amber" : "blue",
+      };
+    }
     case "interview_scheduled": {
       const at = str(n.data.starts_at);
-      return { text: <>Entretien planifié{at && <> le <strong>{DATE.format(new Date(at))}</strong></>}</>, Icon: BriefcaseIcon, tone: "blue" };
+      return { text: <>Entretien planifié{at && <> le <strong>{DATE.format(new Date(at))}</strong></>}</>, href: job ? ROUTES.job(job) : undefined, Icon: BriefcaseIcon, tone: "blue" };
     }
     case "offer_received":
-      return { text: <>Vous avez reçu une offre</>, Icon: BriefcaseIcon, tone: "green" };
+      return { text: <>Vous avez reçu une offre d&apos;embauche</>, href: job ? ROUTES.job(job) : ROUTES.jobs, Icon: BriefcaseIcon, tone: "green" };
     case "proposal_received":
-      return { text: <>Nouvelle proposition sur l&apos;une de vos missions</>, Icon: BriefcaseIcon, tone: "brown" };
+      return { text: <>Nouvelle proposition sur l&apos;une de vos missions</>, href: job ? ROUTES.jobManage(job) : ROUTES.jobs, Icon: BriefcaseIcon, tone: "brown" };
     case "proposal_accepted":
-      return { text: <>Votre proposition a été acceptée</>, Icon: BriefcaseIcon, tone: "green" };
+      return { text: <>Votre proposition a été acceptée : le contrat est ouvert</>, href: `${ROUTES.jobs}?onglet=contrats`, Icon: BriefcaseIcon, tone: "green" };
     case "security_alert":
       return { text: <>Alerte de sécurité sur votre compte</>, Icon: LockIcon, tone: "red" };
     case "moderation_notice":

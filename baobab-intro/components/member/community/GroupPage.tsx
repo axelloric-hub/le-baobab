@@ -13,6 +13,7 @@ import { PostList } from "../feed/PostList";
 import { ConfirmDialog } from "../post/PostDialogs";
 import { useCreation } from "../shell/creation-context";
 import { Avatar } from "../ui/Avatar";
+import { EntityHeader, EntityHeaderSkeleton } from "../ui/EntityHeader";
 import { cx } from "../ui/cx";
 import {
   ArrowLeftIcon,
@@ -37,6 +38,7 @@ import { EmptyState, ErrorState, Skeleton, Spinner } from "../ui/States";
 import { TabPanel, Tabs, useUrlTab } from "../ui/Tabs";
 import { useToast } from "../ui/Toast";
 import ui from "../ui/ui.module.css";
+import layout from "../ui/Page.module.css";
 import styles from "./Community.module.css";
 import { PrivacyBadge } from "./GroupCard";
 import { EditGroupDialog, InviteDialog, ModerateDialog } from "./GroupDialogs";
@@ -76,19 +78,14 @@ function GroupHeader({ group, onEdit, onInvite }: { group: Group; onEdit: () => 
   ];
 
   return (
-    <header className={styles.header}>
-      <div className={styles.cover}>
-        {group.cover_url && (
-          // eslint-disable-next-line @next/next/no-img-element -- URL signée
-          <img src={group.cover_url} alt="" />
-        )}
-      </div>
-      <div className={styles.identity}>
-        <div className={styles.avatarRow}>
-          <span className={styles.avatarRing}>
-            <Avatar name={group.name} src={group.avatar_url} size={96} />
-          </span>
-          <div className={styles.actions}>
+    <>
+      <EntityHeader
+        name={group.name}
+        coverUrl={group.cover_url}
+        avatarUrl={group.avatar_url}
+        description={group.description || undefined}
+        actions={
+          <>
             {isMember && canInGroup(group, "post.create") && (
               <button type="button" className={cx(ui.button, ui.primary)} onClick={() => openPost(undefined, { slug: group.slug, name: group.name, privacy: group.privacy })}>
                 <PenIcon />
@@ -103,28 +100,26 @@ function GroupHeader({ group, onEdit, onInvite }: { group: Group; onEdit: () => 
             )}
             {!isMember && <JoinButton group={group} />}
             <Menu label="Actions du groupe" items={menu} trigger={<MoreIcon />} />
-          </div>
-        </div>
-        <div>
-          <h1 className={styles.name}>{group.name}</h1>
-        </div>
-        <ul className={styles.meta}>
-          <li>
-            <PrivacyBadge privacy={group.privacy} />
-          </li>
-          <li>
-            <UsersIcon aria-hidden="true" />
-            {plural(group.member_count, "membre", "membres")}
-          </li>
-          {group.my_role && (
+          </>
+        }
+        meta={
+          <>
             <li>
-              <UserCheckIcon aria-hidden="true" />
-              Vous êtes {roleLabel(group.my_role).toLowerCase()}
+              <PrivacyBadge privacy={group.privacy} />
             </li>
-          )}
-        </ul>
-        {group.description && <p className={styles.description}>{group.description}</p>}
-      </div>
+            <li>
+              <UsersIcon aria-hidden="true" />
+              {plural(group.member_count, "membre", "membres")}
+            </li>
+            {group.my_role && (
+              <li>
+                <UserCheckIcon aria-hidden="true" />
+                Vous êtes {roleLabel(group.my_role).toLowerCase()}
+              </li>
+            )}
+          </>
+        }
+      />
 
       <ConfirmDialog
         open={confirmLeave}
@@ -148,7 +143,7 @@ function GroupHeader({ group, onEdit, onInvite }: { group: Group; onEdit: () => 
           })
         }
       />
-    </header>
+    </>
   );
 }
 
@@ -184,7 +179,7 @@ function PostsTab({ group }: { group: Group }) {
   return (
     <>
       {canPost && (
-        <div className={styles.panelCard} style={{ padding: 14 }}>
+        <div className={layout.panelCard} style={{ padding: 14 }}>
           <button
             type="button"
             className={ui.input}
@@ -235,18 +230,18 @@ function MemberRow({ group, member, onModerate }: { group: Group; member: GroupM
     ...(canInGroup(group, "member.ban") ? [{ label: "Bannir du groupe", icon: <BlockIcon />, tone: "danger" as const, onSelect: () => onModerate("ban") }] : []),
   ];
   return (
-    <li className={styles.person}>
+    <li className={layout.person}>
       <Avatar name={member.display_name || member.username} src={member.avatar_url} size={40} />
-      <span className={styles.personText}>
-        <Link href={ROUTES.profile(member.username)} className={styles.personName}>
+      <span className={layout.personText}>
+        <Link href={ROUTES.profile(member.username)} className={layout.personName}>
           {member.display_name || member.username}
           {isSelf && " (vous)"}
         </Link>
-        <span className={styles.personMeta}>
+        <span className={layout.personMeta}>
           @{member.username} · a rejoint {relativeTime(member.joined_at)}
         </span>
       </span>
-      <span className={styles.personActions}>
+      <span className={layout.personActions}>
         {member.role !== "member" && <span className={styles.role}>{roleLabel(member.role)}</span>}
         {actionable && items.length > 0 && <Menu label={`Modérer ${member.display_name || member.username}`} items={items} trigger={<MoreIcon />} />}
       </span>
@@ -262,9 +257,9 @@ function MembersTab({ group }: { group: Group }) {
   if (!visible) return <LockedContent group={group} />;
   if (members.isPending) {
     return (
-      <div className={styles.people} aria-busy="true">
+      <div className={layout.people} aria-busy="true">
         {[0, 1, 2].map((i) => (
-          <div key={i} className={styles.person}>
+          <div key={i} className={layout.person}>
             <Skeleton width={40} height={40} radius="50%" />
             <Skeleton width="50%" height={14} />
           </div>
@@ -275,13 +270,13 @@ function MembersTab({ group }: { group: Group }) {
   if (members.isError) return <ErrorState error={members.error} onRetry={() => members.refetch()} />;
   return (
     <>
-      <ul className={styles.people} aria-label={`Membres de ${group.name}`}>
+      <ul className={layout.people} aria-label={`Membres de ${group.name}`}>
         {list.map((member) => (
           <MemberRow key={member.username} group={group} member={member} onModerate={(kind) => setModerating({ member, kind })} />
         ))}
       </ul>
       {members.hasNextPage && (
-        <div className={styles.more}>
+        <div className={layout.more}>
           {members.isFetchingNextPage ? (
             <Spinner label="Chargement de la suite" />
           ) : (
@@ -306,7 +301,7 @@ function RequestsTab({ group }: { group: Group }) {
     return <EmptyState icon={<UserCheckIcon />} title="Aucune demande en attente" text="Les demandes d'adhésion apparaîtront ici. Elles sont aussi signalées par un compteur sur cet onglet." />;
   }
   return (
-    <ul className={styles.people} aria-label="Demandes d'adhésion">
+    <ul className={layout.people} aria-label="Demandes d'adhésion">
       {requests.data.map((request) => {
         const name = request.user.display_name || request.user.username;
         const answer = (approve: boolean) =>
@@ -318,18 +313,18 @@ function RequestsTab({ group }: { group: Group }) {
             },
           );
         return (
-          <li key={request.id} className={styles.person} data-request="">
+          <li key={request.id} className={layout.person} data-request="">
             <Avatar name={name} src={request.user.avatar_url} size={40} />
-            <span className={styles.personText}>
-              <Link href={ROUTES.profile(request.user.username)} className={styles.personName}>
+            <span className={layout.personText}>
+              <Link href={ROUTES.profile(request.user.username)} className={layout.personName}>
                 {name}
               </Link>
-              <span className={styles.personMeta}>
+              <span className={layout.personMeta}>
                 @{request.user.username} · {relativeTime(request.created_at)}
               </span>
-              {request.message && <p className={styles.requestMessage}>{request.message}</p>}
+              {request.message && <p className={layout.requestMessage}>{request.message}</p>}
             </span>
-            <span className={styles.personActions}>
+            <span className={layout.personActions}>
               <button type="button" className={cx(ui.button, ui.primary, ui.small)} onClick={() => answer(true)} disabled={review.isPending}>
                 Approuver
               </button>
@@ -347,23 +342,23 @@ function RequestsTab({ group }: { group: Group }) {
 function AboutCard({ group }: { group: Group }) {
   const PrivacyIcon = group.privacy === "public" ? GlobeIcon : LockIcon;
   return (
-    <section className={styles.panelCard} aria-labelledby="groupe-a-propos">
-      <h2 id="groupe-a-propos" className={styles.panelTitle}>
+    <section className={layout.panelCard} aria-labelledby="groupe-a-propos">
+      <h2 id="groupe-a-propos" className={layout.panelTitle}>
         <CommunityIcon aria-hidden="true" />À propos
       </h2>
-      <dl className={styles.facts}>
-        <div className={styles.fact}>
+      <dl className={layout.facts}>
+        <div className={layout.fact}>
           <PrivacyIcon aria-hidden="true" />
           <dt>{PRIVACY[group.privacy].label}</dt>
           <dd>{PRIVACY[group.privacy].hint}</dd>
         </div>
-        <div className={styles.fact}>
+        <div className={layout.fact}>
           <UserPlusIcon aria-hidden="true" />
           <dt>Adhésion&nbsp;: {JOIN_POLICY[group.join_policy].label.toLowerCase()}</dt>
           <dd>{JOIN_POLICY[group.join_policy].hint}</dd>
         </div>
         {group.created_at && (
-          <div className={styles.fact}>
+          <div className={layout.fact}>
             <CalendarIcon aria-hidden="true" />
             <dt>Créé en {MONTH_YEAR.format(new Date(group.created_at))}</dt>
             <dd>{plural(group.member_count, "membre aujourd'hui", "membres aujourd'hui")}</dd>
@@ -388,22 +383,15 @@ export function GroupPage({ slug }: { slug: string }) {
 
   if (group.isPending) {
     return (
-      <div className={styles.page} aria-busy="true">
-        <div className={styles.header}>
-          <div className={styles.cover} />
-          <div className={styles.identity} style={{ paddingTop: 16 }}>
-            <Skeleton width={96} height={96} radius={18} style={{ marginTop: -60 }} />
-            <Skeleton width="40%" height={28} />
-            <Skeleton width="30%" height={14} />
-          </div>
-        </div>
+      <div className={layout.page} aria-busy="true">
+        <EntityHeaderSkeleton />
       </div>
     );
   }
   if (group.isError) {
     const hidden = group.error instanceof ApiError && group.error.status === 404;
     return (
-      <div className={styles.page}>
+      <div className={layout.page}>
         <Link href={ROUTES.groups} className={cx(ui.button, ui.ghost)} style={{ alignSelf: "flex-start" }}>
           <ArrowLeftIcon />
           Tous les groupes
@@ -427,19 +415,19 @@ export function GroupPage({ slug }: { slug: string }) {
   const active: Tab = tabs.some((t) => t.id === tab) ? tab : "publications";
 
   return (
-    <div className={styles.page}>
+    <div className={layout.page}>
       <GroupHeader group={data} onEdit={() => setEditing(true)} onInvite={() => setInviting(true)} />
       <Tabs idPrefix="groupe" label="Sections du groupe" value={active} onChange={setTab} items={tabs} />
       <TabPanel idPrefix="groupe" id={active}>
-        <div className={styles.layout}>
-          <div className={styles.column}>
+        <div className={layout.layout}>
+          <div className={layout.column}>
             {active === "publications" && <PostsTab group={data} />}
             {active === "membres" && <MembersTab group={data} />}
             {active === "demandes" && <RequestsTab group={data} />}
             {active === "a-propos" && <AboutCard group={data} />}
           </div>
           {active !== "a-propos" && (
-            <aside className={styles.aside} aria-label="À propos du groupe">
+            <aside className={layout.aside} aria-label="À propos du groupe">
               <AboutCard group={data} />
             </aside>
           )}

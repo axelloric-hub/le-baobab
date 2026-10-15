@@ -3,7 +3,8 @@ from apps.jobs import api
 
 urlpatterns = [
     route("jobs/", GET=api.list_jobs, POST=api.create_job),
-    route("jobs/<uuid:job_id>/", GET=api.get_job),
+    route("jobs/<uuid:job_id>/", GET=api.get_job, PATCH=api.update_job),
+    route("me/jobs/", GET=api.my_jobs),
     route("jobs/<uuid:job_id>/publish/", POST=api.publish_job),
     route("jobs/<uuid:job_id>/close/", POST=api.close_job),
     route("jobs/<uuid:job_id>/apply/", POST=api.apply),

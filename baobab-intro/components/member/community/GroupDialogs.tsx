@@ -16,7 +16,7 @@ import { Field } from "../ui/Field";
 import { TrashIcon } from "../ui/icons";
 import { useToast } from "../ui/Toast";
 import ui from "../ui/ui.module.css";
-import styles from "./Community.module.css";
+import layout from "../ui/Page.module.css";
 import { JOIN_POLICY, MUTE_DURATIONS, PRIVACY } from "./labels";
 
 /* ------------------------------------------------------------------ */
@@ -83,16 +83,16 @@ function EditGroup({ group, onClose }: { group: Group; onClose: () => void }) {
         </>
       }
     >
-      <form id="edit-group" className={styles.form} onSubmit={submit} noValidate>
+      <form id="edit-group" className={layout.form} onSubmit={submit} noValidate>
         <div>
           <span className={ui.label}>Couverture</span>
-          <div className={styles.photoPreview}>
+          <div className={layout.photoPreview}>
             {group.cover_url && (
               // eslint-disable-next-line @next/next/no-img-element -- URL signée
               <img src={group.cover_url} alt="" />
             )}
           </div>
-          <div className={styles.photoRow} style={{ marginTop: 8 }}>
+          <div className={layout.photoRow} style={{ marginTop: 8 }}>
             <PhotoButton label={photo?.kind === "cover" ? `Envoi… ${Math.round(photo.progress * 100)} %` : "Changer la couverture"} disabled={busy} onFile={(f) => uploadPhoto("cover", f)} />
             {group.cover_url && (
               <button type="button" className={cx(ui.button, ui.ghost, ui.small)} onClick={() => removePhoto("cover")} disabled={busy}>
@@ -104,7 +104,7 @@ function EditGroup({ group, onClose }: { group: Group; onClose: () => void }) {
         </div>
         <div>
           <span className={ui.label}>Photo du groupe</span>
-          <div className={styles.photoRow}>
+          <div className={layout.photoRow}>
             <Avatar name={group.name} src={group.avatar_url} size={56} />
             <PhotoButton label={photo?.kind === "avatar" ? `Envoi… ${Math.round(photo.progress * 100)} %` : "Changer la photo"} disabled={busy} onFile={(f) => uploadPhoto("avatar", f)} />
             {group.avatar_url && (
@@ -122,10 +122,10 @@ function EditGroup({ group, onClose }: { group: Group; onClose: () => void }) {
           <textarea id="edit-group-description" className={ui.textarea} maxLength={3000} value={description} onChange={(e) => setDescription(e.target.value)} />
         </Field>
         {group.privacy !== "hidden" && (
-          <fieldset className={styles.choices}>
+          <fieldset className={layout.choices}>
             <legend className={ui.label}>Qui peut entrer&nbsp;?</legend>
             {(Object.keys(JOIN_POLICY) as JoinPolicy[]).map((value) => (
-              <label key={value} className={styles.choice}>
+              <label key={value} className={layout.choice}>
                 <input type="radio" name="edit-group-policy" checked={policy === value} onChange={() => setPolicy(value)} />
                 <span>
                   <strong>{JOIN_POLICY[value].label}</strong>
@@ -207,7 +207,7 @@ export function InviteDialog({ group, open, onClose }: { group: Group; open: boo
         </>
       }
     >
-      <div className={styles.form}>
+      <div className={layout.form}>
         <p className={ui.hint} style={{ marginTop: 0 }}>
           Les personnes invitées reçoivent une notification et peuvent accepter ou refuser depuis leur fil.
         </p>
@@ -265,14 +265,14 @@ export function ModerateDialog({ group, member, kind, onClose }: { group: Group;
         </>
       }
     >
-      <div className={styles.form}>
+      <div className={layout.form}>
         <p style={{ margin: 0, fontSize: 15, lineHeight: 1.6, color: "var(--bb-ink-soft)" }}>
           {kind === "ban"
             ? "Ce membre est retiré du groupe et ne pourra plus le rejoindre ni voir son contenu privé."
             : "Ce membre reste dans le groupe mais ne peut plus y publier ni commenter pendant la durée choisie."}
         </p>
         {kind === "mute" && (
-          <fieldset className={styles.choices}>
+          <fieldset className={layout.choices}>
             <legend className={ui.label}>Durée</legend>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
               {MUTE_DURATIONS.map((d) => (
