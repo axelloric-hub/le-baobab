@@ -25,7 +25,7 @@ const AVAILABILITIES: Array<{ value: Availability; label: string }> = [
 ];
 
 /** Bouton accessible au clavier qui ouvre le sélecteur de fichier. */
-function PhotoButton({ label, disabled, onFile }: { label: string; disabled: boolean; onFile: (file: File) => void }) {
+export function PhotoButton({ label, disabled, onFile }: { label: string; disabled: boolean; onFile: (file: File) => void }) {
   const input = useRef<HTMLInputElement>(null);
   return (
     <>

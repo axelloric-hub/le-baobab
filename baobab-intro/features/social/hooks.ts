@@ -86,8 +86,11 @@ export function useTrending() {
 
 type PostLists = InfiniteData<FeedPage | Page<Post>>;
 
+/** Premières clés des listes de publications en cache (fil, enregistrés, hashtag, profil, groupe). */
+const POST_LISTS = ["feed", "saved", "hashtag", "user-posts", "group-posts"];
+
 function findPost(client: QueryClient, id: string): Post | undefined {
-  for (const [, data] of client.getQueriesData<PostLists>({ predicate: (q) => ["feed", "saved", "hashtag", "user-posts"].includes(q.queryKey[0] as string) })) {
+  for (const [, data] of client.getQueriesData<PostLists>({ predicate: (q) => POST_LISTS.includes(q.queryKey[0] as string) })) {
     for (const page of data?.pages ?? []) {
       if (!page?.results) continue;
       const found = page.results.find((p) => p.id === id);
@@ -100,7 +103,7 @@ function findPost(client: QueryClient, id: string): Post | undefined {
 /** Applique une modification à la publication partout où elle est en cache (fil, détail, listes). */
 export function patchPost(client: QueryClient, id: string, update: (post: Post) => Post | null) {
   client.setQueryData<Post>(keys.post(id), (post) => (post ? (update(post) ?? post) : post));
-  client.setQueriesData<PostLists>({ predicate: (q) => ["feed", "saved", "hashtag", "user-posts"].includes(q.queryKey[0] as string) }, (data) =>
+  client.setQueriesData<PostLists>({ predicate: (q) => POST_LISTS.includes(q.queryKey[0] as string) }, (data) =>
     data?.pages
       ? {
           ...data,

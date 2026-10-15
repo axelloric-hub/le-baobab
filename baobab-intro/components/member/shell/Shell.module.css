@@ -377,6 +377,22 @@ a.navLink:hover svg {
   color: var(--bb-ink-soft);
 }
 
+a.navMiniItem {
+  border-radius: var(--bb-radius-sm);
+  text-decoration: none;
+  transition: background-color var(--bb-dur-fast) var(--bb-ease-standard);
+}
+
+a.navMiniItem:hover {
+  background: var(--bb-sand);
+  color: var(--bb-brown-800);
+}
+
+a.navMiniItem:focus-visible {
+  outline: none;
+  box-shadow: var(--bb-focus-ring);
+}
+
 .navMiniItem > span:last-child {
   overflow: hidden;
   text-overflow: ellipsis;

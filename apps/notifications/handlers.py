@@ -38,6 +38,21 @@ def message_mentions(ev):
                data={"from": sender.username, "conversation": ev.payload["conversation"]}, dedupe_key=f"mn:{ev.aggregate_id}:{uid}")
 
 
+# ------------------------------------------------------------------ communaute
+@subscribe("GroupInvitationSent")
+def group_invitation(ev):
+    p = ev.payload
+    notify(recipient=User.objects.get(pk=p["to"]), type_code="group_invitation", actor=User.objects.get(pk=p["by"]), target_type="group_invitation",
+           target_id=ev.aggregate_id, data={"group": p["slug"], "group_name": p["name"]}, dedupe_key=f"ginv:{ev.aggregate_id}")
+
+
+@subscribe("GroupJoinApproved")
+def group_join_approved(ev):
+    p = ev.payload
+    notify(recipient=User.objects.get(pk=p["user"]), type_code="group_join_approved", actor=User.objects.get(pk=p["by"]), target_type="group",
+           target_id=ev.aggregate_id, data={"group": p["slug"], "group_name": p["name"]}, dedupe_key=f"gja:{ev.event_id}")
+
+
 # ------------------------------------------------------------------ education
 @subscribe("SubmissionGraded")
 def submission_graded(ev):

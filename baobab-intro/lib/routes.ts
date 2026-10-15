@@ -16,6 +16,8 @@ export const ROUTES = {
   profile: (username: string) => `/u/${encodeURIComponent(username)}`,
   post: (id: string) => `/publications/${id}`,
   hashtag: (tag: string) => `/hashtags/${encodeURIComponent(tag.replace(/^#/, "").toLowerCase())}`,
+  groups: "/groupes",
+  group: (slug: string) => `/groupes/${encodeURIComponent(slug)}`,
   /** Accueil forcé pour un membre déjà inscrit qui veut revoir la présentation. */
   discover: "/?decouvrir=1",
 } as const;

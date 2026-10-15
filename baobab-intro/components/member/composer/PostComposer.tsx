@@ -1,5 +1,6 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useMe, useMyGroups } from "@/features/me/me";
@@ -10,7 +11,7 @@ import type { UserBrief, Visibility } from "@/features/social/types";
 import { describeError } from "@/lib/api/errors";
 import { currentUser } from "@/lib/auth/session";
 import { ROUTES } from "@/lib/routes";
-import type { ComposerTool } from "../shell/creation-context";
+import type { ComposerTool, GroupTarget } from "../shell/creation-context";
 import { Avatar } from "../ui/Avatar";
 import { cx } from "../ui/cx";
 import { Dialog } from "../ui/Dialog";
@@ -93,12 +94,35 @@ const TOOLS: Array<{ tool: ComposerTool; label: string; Icon: typeof ImageIcon }
   { tool: "link", label: "Lien", Icon: LinkIcon },
 ];
 
-export function PostComposer({ open, tool, onClose }: { open: boolean; tool?: ComposerTool; onClose: () => void }) {
-  return open ? <ComposerDialog initialTool={tool} onClose={onClose} /> : null;
+export function PostComposer({ open, tool, group, onClose }: { open: boolean; tool?: ComposerTool; group?: GroupTarget; onClose: () => void }) {
+  return open ? <ComposerDialog initialTool={tool} target={group} onClose={onClose} /> : null;
 }
 
-function ComposerDialog({ initialTool, onClose }: { initialTool?: ComposerTool; onClose: () => void }) {
+/**
+ * Publication dans un groupe : un groupe public accepte « Public » (visible partout, rangé dans le groupe)
+ * ou « Membres du groupe » ; un groupe privé ou secret n'accepte que « Membres du groupe » (règle du serveur).
+ */
+function GroupAudience({ target, value, onChange }: { target: GroupTarget; value: Visibility; onChange: (v: Visibility) => void }) {
+  if (target.privacy !== "public") {
+    return <p className={ui.hint}>Groupe {target.privacy === "hidden" ? "secret" : "privé"} : seuls ses membres verront cette publication.</p>;
+  }
+  return (
+    <fieldset className={styles.stack} style={{ border: 0, margin: 0, padding: 0 }}>
+      <legend className={ui.label}>Qui peut voir cette publication&nbsp;?</legend>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+        {(["public", "group_members"] as const).map((option) => (
+          <button key={option} type="button" className={ui.chip} aria-pressed={value === option} onClick={() => onChange(option)}>
+            {option === "public" ? "Tout le monde" : "Membres du groupe"}
+          </button>
+        ))}
+      </div>
+    </fieldset>
+  );
+}
+
+function ComposerDialog({ initialTool, target, onClose }: { initialTool?: ComposerTool; target?: GroupTarget; onClose: () => void }) {
   const router = useRouter();
+  const client = useQueryClient();
   const toast = useToast();
   const me = useMe();
   const create = useCreatePost();
@@ -107,10 +131,10 @@ function ComposerDialog({ initialTool, onClose }: { initialTool?: ComposerTool; 
     const saved = readDraft();
     return initialTool ? { ...saved, tool: initialTool } : saved;
   });
-  const [visibility, setVisibility] = useState<Visibility | null>(null);
+  const [visibility, setVisibility] = useState<Visibility | null>(target ? (target.privacy === "public" ? "public" : "group_members") : null);
   const [audienceOpen, setAudienceOpen] = useState(false);
   const [audience, setAudience] = useState<UserBrief[]>([]);
-  const [group, setGroup] = useState("");
+  const [group, setGroup] = useState(target?.slug ?? "");
   const [techInput, setTechInput] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
@@ -198,7 +222,8 @@ function ComposerDialog({ initialTool, onClose }: { initialTool?: ComposerTool; 
     setError(null);
     const media = uploads.items.filter((i) => i.fileId).map((i) => ({ file: i.fileId!, alt: i.alt.trim() }));
     const input: CreatePostInput = { kind: "text", body: draft.body.trim(), visibility: effectiveVisibility, media };
-    if (effectiveVisibility === "group_members") input.group = group;
+    if (target) input.group = target.slug;
+    else if (effectiveVisibility === "group_members") input.group = group;
     if (effectiveVisibility === "custom") input.audience = audience.map((u) => u.username);
     switch (kindTool) {
       case "code":
@@ -235,6 +260,7 @@ function ComposerDialog({ initialTool, onClose }: { initialTool?: ComposerTool; 
     }
     create.mutate(input, {
       onSuccess: (post) => {
+        if (target) void client.invalidateQueries({ queryKey: ["group-posts", target.slug] });
         writeDraft(null);
         uploads.reset();
         onClose();
@@ -273,7 +299,7 @@ function ComposerDialog({ initialTool, onClose }: { initialTool?: ComposerTool; 
       onClose={onClose}
       busy={create.isPending}
       size="lg"
-      title="Créer une publication"
+      title={target ? `Publier dans « ${target.name} »` : "Créer une publication"}
       footer={
         <>
           <span className={styles.footerNote} aria-live="polite">
@@ -295,13 +321,19 @@ function ComposerDialog({ initialTool, onClose }: { initialTool?: ComposerTool; 
           <button type="button" className={styles.audienceButton} aria-expanded={audienceOpen} onClick={() => setAudienceOpen((v) => !v)}>
             <vis.Icon aria-hidden="true" />
             {vis.label}
-            {effectiveVisibility === "group_members" && group && ` · ${groups.data?.find((g) => g.slug === group)?.name ?? ""}`}
+            {target ? ` · ${target.name}` : effectiveVisibility === "group_members" && group && ` · ${groups.data?.find((g) => g.slug === group)?.name ?? ""}`}
             <ChevronDownIcon aria-hidden="true" />
           </button>
         </div>
       </div>
 
-      {audienceOpen && (
+      {audienceOpen && target && (
+        <div className={styles.panel}>
+          <GroupAudience target={target} value={effectiveVisibility} onChange={setVisibility} />
+        </div>
+      )}
+
+      {audienceOpen && !target && (
         <div className={styles.panel}>
           <div className={styles.stack}>
             <VisibilityPicker value={effectiveVisibility} onChange={setVisibility} legend="Qui peut voir cette publication ?" />

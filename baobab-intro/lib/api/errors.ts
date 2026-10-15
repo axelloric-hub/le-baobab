@@ -64,6 +64,22 @@ const MESSAGES: Record<string, string> = {
   github_already_linked: "Ce compte GitHub est déjà lié à un autre compte LE BAOBAB.",
   signup_conflict: "Conflit lors de la création du compte : recommencez.",
   ticket_invalid: "La connexion GitHub a expiré : recommencez.",
+  // Droits et états (communs à toutes les applications)
+  forbidden: "Vous n'avez pas le droit de faire cette action.",
+  not_found: "Cet élément n'existe plus ou n'est pas visible pour vous.",
+  not_pending: "Cette demande a déjà été traitée.",
+  expired: "Cette invitation a expiré.",
+  slug_taken: "Cette adresse est déjà prise : choisissez-en une autre.",
+  // Communauté
+  already_member: "Vous êtes déjà membre.",
+  already_requested: "Votre demande est déjà en attente.",
+  already_invited: "Cette personne a déjà une invitation en attente.",
+  invite_only: "Ce groupe n'accepte que les personnes invitées.",
+  banned: "Vous ne pouvez pas rejoindre ce groupe.",
+  owner_cannot_leave: "Le propriétaire ne peut pas quitter son groupe.",
+  group_post_forbidden: "Vous ne pouvez pas publier dans ce groupe.",
+  muted: "Vous êtes en sourdine dans ce groupe pour le moment.",
+  archived: "Ce groupe est archivé.",
 };
 
 /** Message lisible pour n'importe quelle erreur (ApiError ou autre). */

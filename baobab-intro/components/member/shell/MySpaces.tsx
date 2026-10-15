@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { ROUTES } from "@/lib/routes";
 import { useMyEnrollments, useMyGroups } from "@/features/me/me";
 import { Avatar } from "../ui/Avatar";
 import styles from "./Shell.module.css";
@@ -15,9 +17,11 @@ export function MyGroupsSection({ limit = 5, idPrefix = "nav" }: { limit?: numbe
       </h2>
       <ul className={styles.navMini}>
         {groups.data.slice(0, limit).map((group) => (
-          <li key={group.slug} className={styles.navMiniItem}>
-            <Avatar name={group.name} src={group.avatar_url} size={24} />
-            <span>{group.name}</span>
+          <li key={group.slug}>
+            <Link href={ROUTES.group(group.slug)} className={styles.navMiniItem}>
+              <Avatar name={group.name} src={group.avatar_url} size={24} />
+              <span>{group.name}</span>
+            </Link>
           </li>
         ))}
       </ul>

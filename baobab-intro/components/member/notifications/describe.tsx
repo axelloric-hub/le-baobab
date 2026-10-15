@@ -15,7 +15,7 @@ const DATE = new Intl.DateTimeFormat("fr", { weekday: "long", day: "numeric", mo
 
 /**
  * Texte et destination de chaque type de notification (apps/notifications/handlers.py).
- * Les applications pas encore livrées (Learn, Boutique, Opportunités) n'ont pas de lien : le texte suffit.
+ * Chaque notification mène à la page concernée quand l'élément a une adresse.
  */
 export function describe(n: AppNotification): Described {
   const who = <strong>{n.actor?.display_name || n.actor?.username || str(n.data.from) || "Quelqu'un"}</strong>;
@@ -40,10 +40,24 @@ export function describe(n: AppNotification): Described {
       };
     case "message":
       return { text: <>Nouveau message de {who}</>, href: str(n.data.conversation) ? ROUTES.conversation(str(n.data.conversation)) : ROUTES.messages, Icon: MessageIcon, tone: "blue" };
-    case "group_invitation":
-      return { text: <>{who} vous invite à rejoindre un groupe</>, href: ROUTES.feed, Icon: HubIcon, tone: "brown" };
-    case "group_join_approved":
-      return { text: <>Votre demande pour rejoindre un groupe a été acceptée</>, Icon: HubIcon, tone: "green" };
+    case "group_invitation": {
+      const group = str(n.data.group_name);
+      return {
+        text: group ? <>{who} vous invite à rejoindre <strong>{group}</strong></> : <>{who} vous invite à rejoindre un groupe</>,
+        href: str(n.data.group) ? ROUTES.group(str(n.data.group)) : ROUTES.groups,
+        Icon: HubIcon,
+        tone: "brown",
+      };
+    }
+    case "group_join_approved": {
+      const group = str(n.data.group_name);
+      return {
+        text: group ? <>Bienvenue dans <strong>{group}</strong> : votre demande a été acceptée</> : <>Votre demande pour rejoindre un groupe a été acceptée</>,
+        href: str(n.data.group) ? ROUTES.group(str(n.data.group)) : ROUTES.groups,
+        Icon: HubIcon,
+        tone: "green",
+      };
+    }
     case "classroom_invitation":
       return { text: <>{who} vous invite dans une classe Learn</>, href: ROUTES.feed, Icon: LearnIcon, tone: "brown" };
     case "course_enrollment":

@@ -14,6 +14,7 @@ from apps.core.api import endpoint, get_or_404, paginate
 from apps.core.exceptions import PermissionDeniedError
 from apps.profiles.render import file_url, user_brief
 from apps.profiles.selectors import get_active_or_404 as _u
+from apps.storage.services import resolve_owned
 
 
 def _group(request, slug, *, need_visible=True) -> Group:
@@ -30,6 +31,8 @@ def _json(g: Group, viewer) -> dict:
     return {"slug": g.slug, "name": g.name, "description": g.description, "privacy": g.privacy, "join_policy": g.join_policy, "member_count": g.member_count,
             "avatar_url": file_url(g.avatar_key), "cover_url": file_url(g.cover_key), "community": g.community.slug if g.community_id else None,
             "my_role": m.role.name if m else None,
+            "my_permissions": sorted(CS.permissions_of(uid, g.pk)) if m else [],
+            "created_at": g.created_at,
             "my_request_pending": bool(uid) and not m and GroupJoinRequest.objects.filter(group=g, user_id=uid, status="pending").exists()}
 
 
@@ -57,12 +60,43 @@ def create_group(request):
     d = request.input
     community = get_or_404(Community.objects.filter(slug=d["community"])) if d.get("community") else None
     g = CV.create_group(owner=request.user, name=d["name"], slug=d["slug"], community=community, privacy=d["privacy"], join_policy=d["join_policy"], description=d.get("description", ""))
+    g.refresh_from_db(fields=["member_count"])  # compteur maintenu par trigger SQL : relu apres l'inscription du proprietaire
     return _json(g, request.user)
 
 
 @endpoint("Detail d'un groupe.", auth="optional")
 def group_detail(request, slug):
     return _json(_group(request, slug), request.user)
+
+
+@endpoint("Modifier un groupe (permission 'group.edit'). avatar_file / cover_file : fichier envoye (usage 'avatar' / 'cover'), ou null pour effacer. "
+          "La confidentialite n'est pas modifiable.",
+          body={"name": s.CharField(max_length=120, required=False), "description": s.CharField(max_length=3000, required=False, allow_blank=True),
+                "join_policy": s.ChoiceField(choices=[c[0] for c in Group.JoinPolicy.choices], required=False),
+                "avatar_file": s.UUIDField(required=False, allow_null=True), "cover_file": s.UUIDField(required=False, allow_null=True)})
+def update_group(request, slug):
+    d = request.input
+
+    def file_arg(name, purpose):
+        if name not in d:
+            return ...
+        return None if d[name] is None else resolve_owned(request.user, d[name], (purpose,))
+
+    g = CV.update_group(_group(request, slug), request.user, fields=d, avatar=file_arg("avatar_file", "avatar"), cover=file_arg("cover_file", "cover"))
+    return _json(g, request.user)
+
+
+@endpoint("Publications d'un groupe (seulement celles que je peux voir), des plus recentes aux plus anciennes.", auth="optional")
+def group_posts(request, slug):
+    from apps.social.api import _post
+    from apps.social.selectors import visible_posts
+
+    g = _group(request, slug)
+    uid = getattr(request.user, "pk", None)
+    if not CS.can_view_group_content(uid, g):
+        get_or_404(Group.objects.none())
+    qs = visible_posts(uid).filter(group=g).select_related("author__profile", "group").prefetch_related("media")
+    return paginate(request, qs, ("-published_at", "-id"), lambda p: _post(p, uid), 20)
 
 
 @endpoint("Rejoindre un groupe : adhesion immediate, ou demande en attente selon la politique du groupe.", status=201)

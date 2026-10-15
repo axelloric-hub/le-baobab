@@ -18,8 +18,12 @@ from apps.core.outbox import publish_event
 def create_group(*, owner, name: str, slug: str, community=None, privacy=Group.Privacy.PUBLIC,
                  join_policy=Group.JoinPolicy.OPEN, description: str = "") -> Group:
     """Cree le groupe, ses roles par defaut et inscrit le createur comme owner."""
-    group = Group.objects.create(owner=owner, name=name, slug=slug, community=community, privacy=privacy,
-                                 join_policy=join_policy, description=description)
+    try:
+        with transaction.atomic():
+            group = Group.objects.create(owner=owner, name=name, slug=slug, community=community, privacy=privacy,
+                                         join_policy=join_policy, description=description)
+    except IntegrityError as exc:
+        raise ConflictError("Cette adresse de groupe est deja prise.", code="slug_taken") from exc
     for code, desc in DEFAULT_PERMISSIONS.items():
         GroupPermission.objects.get_or_create(code=code, defaults={"description": desc})
     roles = {}
@@ -79,6 +83,7 @@ def review_join_request(request_id, reviewer, approve: bool) -> GroupJoinRequest
     req.save(update_fields=["status", "reviewed_by", "reviewed_at"])
     if approve and not is_banned(req.user_id, req.group_id):
         _add_member(req.group, req.user, invited_by=reviewer)
+        publish_event("GroupJoinApproved", "group", req.group_id, {"user": str(req.user_id), "by": str(reviewer.pk), "slug": req.group.slug, "name": req.group.name})
     return req
 
 
@@ -90,10 +95,12 @@ def invite_user(group: Group, inviter, invited_user, ttl_days: int = 14) -> Grou
         raise ConflictError("Deja membre.", code="already_member")
     try:
         with transaction.atomic():
-            return GroupInvitation.objects.create(group=group, invited_user=invited_user, invited_by=inviter,
-                                                  expires_at=timezone.now() + timedelta(days=ttl_days))
+            inv = GroupInvitation.objects.create(group=group, invited_user=invited_user, invited_by=inviter,
+                                                 expires_at=timezone.now() + timedelta(days=ttl_days))
     except IntegrityError as exc:
         raise ConflictError("Invitation deja en attente.", code="already_invited") from exc
+    publish_event("GroupInvitationSent", "group_invitation", inv.pk, {"to": str(invited_user.pk), "by": str(inviter.pk), "slug": group.slug, "name": group.name})
+    return inv
 
 
 @transaction.atomic
@@ -149,6 +156,29 @@ def mute_member(group: Group, actor, target, duration: timedelta, reason: str = 
     )
     invalidate_permissions(target.pk, group.pk)
     return mute
+
+
+@transaction.atomic
+def update_group(group: Group, actor, *, fields: dict, avatar=..., cover=...) -> Group:
+    """Modifie le groupe (permission 'group.edit'). La confidentialite n'est PAS modifiable : les publications deja
+    faites sous une confidentialite ne doivent jamais devenir visibles d'un public plus large."""
+    if not can(actor.pk, group.pk, "group.edit"):
+        raise PermissionDeniedError("Permission 'group.edit' requise.")
+    group = Group.objects.select_for_update().get(pk=group.pk)
+    changed = []
+    for name in ("name", "description", "join_policy"):
+        if name in fields and getattr(group, name) != fields[name]:
+            setattr(group, name, fields[name])
+            changed.append(name)
+    for attr, value in (("avatar_key", avatar), ("cover_key", cover)):
+        if value is not ...:
+            setattr(group, attr, value.storage_key if value is not None else "")
+            changed.append(attr)
+    if changed:
+        group.updated_at = timezone.now()
+        group.save(update_fields=[*changed, "updated_at"])
+        publish_event("GroupUpdated", "group", group.pk, {"by": str(actor.pk), "fields": changed})
+    return group
 
 
 @transaction.atomic

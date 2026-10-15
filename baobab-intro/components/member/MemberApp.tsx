@@ -10,7 +10,7 @@ import { ROUTES } from "@/lib/routes";
 import { PostComposer } from "./composer/PostComposer";
 import { AppShell } from "./shell/AppShell";
 import { CommandPalette } from "./shell/CommandPalette";
-import { CreationContext, type ComposerTool } from "./shell/creation-context";
+import { CreationContext, type ComposerTool, type GroupTarget } from "./shell/creation-context";
 import styles from "./shell/Shell.module.css";
 import { StatusComposer } from "./statuses/StatusComposer";
 import { ToastProvider } from "./ui/Toast";
@@ -54,13 +54,13 @@ export function MemberApp({ children }: { children: ReactNode }) {
     };
   }, [toLogin]);
 
-  const [composer, setComposer] = useState<{ open: boolean; tool?: ComposerTool }>({ open: false });
+  const [composer, setComposer] = useState<{ open: boolean; tool?: ComposerTool; group?: GroupTarget }>({ open: false });
   const [statusOpen, setStatusOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
 
   const creation = useMemo(
     () => ({
-      openPost: (tool?: ComposerTool) => setComposer({ open: true, tool }),
+      openPost: (tool?: ComposerTool, group?: GroupTarget) => setComposer({ open: true, tool, group }),
       openStatus: () => setStatusOpen(true),
       openSearch: () => setSearchOpen(true),
     }),
@@ -93,7 +93,7 @@ export function MemberApp({ children }: { children: ReactNode }) {
       <ToastProvider>
         <CreationContext.Provider value={creation}>
           <AppShell>{children}</AppShell>
-          <PostComposer open={composer.open} tool={composer.tool} onClose={() => setComposer({ open: false })} />
+          <PostComposer open={composer.open} tool={composer.tool} group={composer.group} onClose={() => setComposer({ open: false })} />
           <StatusComposer open={statusOpen} onClose={() => setStatusOpen(false)} />
           <CommandPalette open={searchOpen} onClose={() => setSearchOpen(false)} />
         </CreationContext.Provider>
