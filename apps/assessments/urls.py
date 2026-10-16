@@ -2,7 +2,7 @@ from apps.assessments import api
 from apps.core.api import route
 
 urlpatterns = [
-    route("courses/<uuid:course_id>/quizzes/", POST=api.create_quiz),
+    route("courses/<uuid:course_id>/quizzes/", GET=api.course_quizzes, POST=api.create_quiz),
     route("quizzes/<uuid:quiz_id>/", GET=api.get_quiz),
     route("quizzes/<uuid:quiz_id>/questions/", POST=api.add_question),
     route("quizzes/<uuid:quiz_id>/publish/", POST=api.publish_quiz),

@@ -103,3 +103,10 @@ export const AwardIcon = I(<><circle cx="12" cy="9" r="5.5" /><path d="M8.5 13.5
 export const TimelineIcon = I(<><circle cx="6" cy="6" r="2" /><circle cx="6" cy="18" r="2" /><path d="M6 8v8M10 6h10M10 18h10M10 12h7" /></>);
 export const RepoIcon = I(<><path d="M5.5 4.5A1.5 1.5 0 0 1 7 3h12v15H7a1.5 1.5 0 0 0-1.5 1.5z" /><path d="M5.5 19.5A1.5 1.5 0 0 0 7 21h12v-3M9 7h6" /></>);
 export const StarIcon = I(<path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z" />);
+export const CartIcon = I(<><path d="M3 4h2.2l2.1 10.2a1.5 1.5 0 0 0 1.5 1.2h8.4a1.5 1.5 0 0 0 1.5-1.1L20.5 8H6.2" /><circle cx="9.5" cy="19.5" r="1.3" /><circle cx="17" cy="19.5" r="1.3" /></>);
+export const HeartIcon = I(<path d="M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.3a4.3 4.3 0 0 1 7.5 2.5C19.5 15.4 12 20 12 20z" />);
+export const DownloadIcon = I(<><path d="M12 4v11M7.5 10.5L12 15l4.5-4.5" /><path d="M4.5 16.5v2A1.5 1.5 0 0 0 6 20h12a1.5 1.5 0 0 0 1.5-1.5v-2" /></>);
+export const KeyIcon = I(<><circle cx="8" cy="15" r="4" /><path d="M10.9 12.1L20 3M16.5 6.5l2.5 2.5M14.5 8.5l2 2" /></>);
+export const TagIcon = I(<><path d="M3.5 12.6V4.5a1 1 0 0 1 1-1h8.1l8 8a1.4 1.4 0 0 1 0 2l-7 7a1.4 1.4 0 0 1-2 0z" /><circle cx="8.5" cy="8.5" r="1.5" /></>);
+export const ReceiptIcon = I(<><path d="M6 3.5h12v17l-2.5-1.5-2 1.5-1.5-1.2-1.5 1.2-2-1.5L6 20.5z" /><path d="M9 8h6M9 11.5h6M9 15h3.5" /></>);
+export const UploadIcon = I(<><path d="M12 15V4M7.5 8.5L12 4l4.5 4.5" /><path d="M4.5 16.5v2A1.5 1.5 0 0 0 6 20h12a1.5 1.5 0 0 0 1.5-1.5v-2" /></>);

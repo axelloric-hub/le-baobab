@@ -408,6 +408,22 @@ a.navMiniItem:focus-visible {
   border: 1px solid var(--bb-line);
   border-radius: var(--bb-radius-md);
   background: var(--bb-surface);
+  color: inherit;
+  text-decoration: none;
+  transition: border-color var(--bb-dur-fast) var(--bb-ease-standard);
+}
+
+a.course:hover {
+  border-color: rgba(111, 44, 14, 0.25);
+}
+
+a.course:focus-visible {
+  outline: none;
+  box-shadow: var(--bb-focus-ring);
+}
+
+.course + .course {
+  margin-top: 8px;
 }
 
 .course + .course {

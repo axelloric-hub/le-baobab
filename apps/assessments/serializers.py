@@ -13,7 +13,10 @@ class ChoicePublicSerializer(serializers.ModelSerializer):
 
 
 class QuestionPublicSerializer(serializers.ModelSerializer):
-    choices = ChoicePublicSerializer(many=True, read_only=True)
+    choices = serializers.SerializerMethodField()
+
+    def get_choices(self, q):  # ordre d'affichage stable (position), jamais l'ordre de stockage
+        return ChoicePublicSerializer(q.choices.order_by("position"), many=True).data
 
     class Meta:
         model = Question
@@ -22,7 +25,10 @@ class QuestionPublicSerializer(serializers.ModelSerializer):
 
 
 class QuizPublicSerializer(serializers.ModelSerializer):
-    questions = QuestionPublicSerializer(many=True, read_only=True)
+    questions = serializers.SerializerMethodField()
+
+    def get_questions(self, quiz):
+        return QuestionPublicSerializer(quiz.questions.order_by("position"), many=True).data
 
     class Meta:
         model = Quiz

@@ -5,7 +5,7 @@ from rest_framework import serializers as s
 from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
 
-from apps.core.api import endpoint, get_or_404
+from apps.core.api import endpoint, get_or_404, paginate
 from apps.portfolio import services as P
 from apps.portfolio.models import Portfolio, Project
 from apps.portfolio.selectors import can_view_portfolio
@@ -19,8 +19,20 @@ VIS = ["public", "followers", "friends", "close_friends", "private"]
 
 def _project(p: Project) -> dict:
     return {"id": str(p.pk), "slug": p.slug, "title": p.title, "description": p.description, "role": p.role, "started_on": p.started_on, "ended_on": p.ended_on, "is_featured": p.is_featured,
-            "technologies": [t.slug for t in p.technologies.all()], "links": [{"kind": l.kind, "provider": l.provider, "url": l.url} for l in p.links.all()],
-            "media": [{"kind": m.kind, "url": signed_url(m.storage_key)} for m in p.media.all()]}
+            "technologies": [t.slug for t in p.technologies.all()], "links": [{"id": str(l.pk), "kind": l.kind, "provider": l.provider, "url": l.url} for l in p.links.all()],
+            "media": [{"id": str(m.pk), "kind": m.kind, "url": signed_url(m.storage_key)} for m in sorted(p.media.all(), key=lambda m: m.position)]}
+
+
+def _showcase(p: Project) -> dict:
+    """Projet dans la vitrine : auteur et noms des technologies en plus (une carte se suffit a elle-meme)."""
+    return {**_project(p), "technologies": [{"slug": t.slug, "name": t.name} for t in p.technologies.all()], "owner": user_brief(p.portfolio.user), "created_at": p.created_at}
+
+
+def _showcase_qs(viewer):
+    from apps.portfolio.selectors import visible_portfolios_q
+
+    return (Project.objects.filter(visible_portfolios_q(viewer)).select_related("portfolio__user__profile")
+            .prefetch_related("technologies", "links", "media"))
 
 
 def _full(owner) -> dict:
@@ -120,4 +132,72 @@ def add_certificate(request):
 @endpoint("Supprimer une entree de mon portfolio. kind : projects, experiences, educations, achievements, certificates, repositories.", status=204)
 def delete_entry(request, kind, entry_id):
     P.delete_entry(request.user, kind, entry_id)
+    return Response(status=204)
+
+
+@endpoint("Vitrine Showcase : projets des portfolios que je peux voir (regles de confidentialite du portfolio). Filtres : q (titre, description), tech (slug), featured.",
+          auth="optional", query={"q": s.CharField(required=False, allow_blank=True, max_length=100), "tech": s.SlugField(required=False, max_length=80), "featured": s.BooleanField(required=False),
+                                  "user": s.CharField(required=False, max_length=150)})
+def showcase_projects(request):
+    from django.db.models import Q
+
+    d = request.q
+    qs = _showcase_qs(request.user)
+    if d.get("q"):
+        qs = qs.filter(Q(title__icontains=d["q"]) | Q(description__icontains=d["q"]) | Q(role__icontains=d["q"]))
+    if d.get("tech"):
+        qs = qs.filter(technologies__slug=d["tech"])
+    if d.get("featured"):
+        qs = qs.filter(is_featured=True)
+    if d.get("user"):
+        qs = qs.filter(portfolio__user__username=d["user"])
+    return paginate(request, qs.distinct(), "-created_at", _showcase, 24)
+
+
+@endpoint("Technologies les plus utilisees dans les projets visibles (filtres de la vitrine).", auth="optional")
+def showcase_technologies(request):
+    from django.db.models import Count
+
+    ids = _showcase_qs(request.user).values("pk")
+    rows = (Skill.objects.filter(portfolio_projects__in=ids).annotate(projects=Count("portfolio_projects", distinct=True)).order_by("-projects", "name")[:24])
+    return [{"slug": t.slug, "name": t.name, "projects": t.projects} for t in rows]
+
+
+@endpoint("Detail d'un projet de la vitrine (404 si le portfolio m'est cache) : depots rattaches et autres projets de l'auteur.", auth="optional")
+def showcase_project(request, project_id):
+    p = get_or_404(_showcase_qs(request.user).filter(pk=project_id))
+    owner = p.portfolio.user
+    others = _showcase_qs(request.user).filter(portfolio__user=owner).exclude(pk=p.pk).order_by("-is_featured", "position")[:3]
+    return {**_showcase(p), "is_mine": getattr(request.user, "pk", None) == owner.pk,
+            "repositories": [{"id": str(r.pk), "provider": r.provider, "full_name": r.full_name, "url": r.url, "description": r.description, "language": r.language, "stars": r.stars, "verified": r.verified_at is not None}
+                             for r in p.repositories.all()],
+            "more": [_showcase(o) for o in others]}
+
+
+@endpoint("Modifier un de mes projets. technologies : slugs (remplace la liste).",
+          body={"title": s.CharField(max_length=160, required=False), "description": s.CharField(max_length=10000, required=False, allow_blank=True), "role": s.CharField(max_length=100, required=False, allow_blank=True),
+                "started_on": s.DateField(required=False, allow_null=True), "ended_on": s.DateField(required=False, allow_null=True), "is_featured": s.BooleanField(required=False),
+                "technologies": s.ListField(child=s.CharField(max_length=80), required=False, max_length=30)})
+def update_project(request, project_id):
+    d = dict(request.input)
+    techs = list(Skill.objects.filter(slug__in=d.pop("technologies"))) if "technologies" in d else None
+    P.update_project(request.user, project_id, technologies=techs, **d)
+    return _showcase(_showcase_qs(request.user).get(pk=project_id))
+
+
+@endpoint("Retirer un lien d'un de mes projets.", status=204)
+def remove_link(request, project_id, link_id):
+    P.remove_project_part(request.user, project_id, "links", link_id)
+    return Response(status=204)
+
+
+@endpoint("Retirer une image d'un de mes projets.", status=204)
+def remove_media(request, project_id, media_id):
+    P.remove_project_part(request.user, project_id, "media", media_id)
+    return Response(status=204)
+
+
+@endpoint("Supprimer un de mes projets.", status=204)
+def delete_project(request, project_id):
+    P.delete_entry(request.user, "projects", project_id)
     return Response(status=204)

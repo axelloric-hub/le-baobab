@@ -1,6 +1,8 @@
 """Education : classrooms, cours, contenus, inscriptions, droits d'acces. Un contenu payant renvoie 402 avec la raison ; les fichiers sont servis par URL signee APRES controle d'acces."""
 from __future__ import annotations
 
+from django.db.models import Count, Prefetch, Q, Sum
+from django.utils import timezone
 from rest_framework import serializers as s
 from rest_framework.response import Response
 
@@ -36,8 +38,12 @@ def _classroom(request, slug) -> Classroom:
 def _classroom_json(c: Classroom, request) -> dict:
     uid = _uid(request)
     m = ClassroomMember.objects.filter(classroom=c, user_id=uid).first() if uid else None
-    return {"slug": c.slug, "title": c.title, "description": c.description, "privacy": c.privacy, "is_paid": c.is_paid, "price_minor": c.price_minor, "currency": c.currency,
-            "my_role": m.role if m else None, "my_status": m.status if m else None}
+    counts = Classroom.objects.filter(pk=c.pk).aggregate(members=Count("members", filter=Q(members__status="active"), distinct=True),
+                                                         courses=Count("courses", filter=Q(courses__status="published"), distinct=True))
+    inv = ClassroomInvitation.objects.filter(classroom=c, invited_user_id=uid, status="pending").values_list("pk", "role").first() if uid and not m else None
+    return {"id": str(c.pk), "slug": c.slug, "title": c.title, "description": c.description, "privacy": c.privacy, "is_paid": c.is_paid, "price_minor": c.price_minor, "currency": c.currency,
+            "my_role": m.role if m else None, "my_status": m.status if m else None, "my_invitation": {"id": str(inv[0]), "role": inv[1]} if inv else None, "owner": user_brief(c.owner), "member_count": counts["members"],
+            "course_count": counts["courses"], "created_at": c.created_at}
 
 
 def _course(request, course_id) -> Course:
@@ -51,10 +57,24 @@ def _course(request, course_id) -> Course:
     return c
 
 
+def _course_stats(c: Course) -> dict:
+    """Nombre de modules, de chapitres et duree estimee (annotations de la liste si presentes, sinon une requete)."""
+    if hasattr(c, "n_chapters"):
+        return {"modules": c.n_modules, "chapters": c.n_chapters, "minutes": c.n_minutes or 0}
+    agg = Chapter.objects.filter(module__course=c).aggregate(n=Count("id"), m=Sum("estimated_minutes"))
+    return {"modules": c.modules.count(), "chapters": agg["n"], "minutes": agg["m"] or 0}
+
+
+def _with_stats(qs):
+    return qs.annotate(n_modules=Count("modules", distinct=True), n_chapters=Count("modules__chapters", distinct=True), n_minutes=Sum("modules__chapters__estimated_minutes"))
+
+
 def _course_json(c: Course) -> dict:
-    return {"id": str(c.pk), "classroom": c.classroom.slug, "slug": c.slug, "title": c.title, "description": c.description, "level": c.level, "language": c.language, "status": c.status,
-            "is_free": c.is_free, "price_minor": c.price_minor, "currency": c.currency, "certificate_enabled": c.certificate_enabled, "published_at": c.published_at,
-            "instructors": [i.user.username for i in c.instructors.select_related("user")]}
+    teachers = list(c.instructors.select_related("user__profile"))
+    return {"id": str(c.pk), "classroom": c.classroom.slug, "classroom_title": c.classroom.title, "slug": c.slug, "title": c.title, "description": c.description, "level": c.level,
+            "language": c.language, "status": c.status, "is_free": c.is_free, "price_minor": c.price_minor, "currency": c.currency, "certificate_enabled": c.certificate_enabled,
+            "published_at": c.published_at, "instructors": [i.user.username for i in teachers], "teachers": [{**user_brief(i.user), "role": i.role} for i in teachers],
+            "stats": _course_stats(c)}
 
 
 # ------------------------------------------------------------------ classrooms
@@ -81,10 +101,21 @@ def create_classroom(request):
     return _classroom_json(c, request)
 
 
-@endpoint("Detail d'une classroom.", auth="optional")
+def _classroom_staff(request, c: Classroom) -> bool:
+    uid = _uid(request)
+    return bool(uid) and (request.user.is_staff or ClassroomMember.objects.filter(classroom=c, user_id=uid, status="active", role__in=["owner", "instructor"]).exists())
+
+
+@endpoint("Detail d'une classroom (les enseignants voient aussi les cours en brouillon).", auth="optional")
 def classroom_detail(request, slug):
     c = _classroom(request, slug)
-    return {**_classroom_json(c, request), "courses": [_course_json(x) for x in c.courses.filter(status="published").select_related("classroom")]}
+    staff = _classroom_staff(request, c)
+    uid = _uid(request)
+    member = bool(uid) and ClassroomMember.objects.filter(classroom=c, user_id=uid, status="active").exists()
+    courses = c.courses.all() if staff else c.courses.filter(status="published")
+    if c.privacy != "public" and not (staff or member):
+        courses = c.courses.none()  # le programme d'une classe privee est reserve a ses membres
+    return {**_classroom_json(c, request), "is_staff": staff, "courses": [_course_json(x) for x in _with_stats(courses.select_related("classroom")).order_by("-created_at")]}
 
 
 @endpoint("Rejoindre une classroom (public : immediat ; prive : demande ; sur invitation : invitation requise).", status=201)
@@ -152,7 +183,30 @@ def list_courses(request):
         qs = qs.filter(level=q["level"])
     if q.get("free") is not None:
         qs = qs.filter(is_free=q["free"])
-    return paginate(request, qs, ("-published_at", "-id"), _course_json, 20)
+    return paginate(request, _with_stats(qs), ("-published_at", "-id"), _course_json, 20)
+
+
+@endpoint("Les cours que j'enseigne (enseignant du cours ou de sa classroom), brouillons compris.")
+def my_teaching(request):
+    qs = Course.objects.filter(Q(instructors__user=request.user) | Q(classroom__members__user=request.user, classroom__members__status="active",
+                                                                     classroom__members__role__in=["owner", "instructor"])).filter(classroom__archived_at__isnull=True)
+    qs = Course.objects.filter(pk__in=qs.values("pk")).select_related("classroom")
+    return paginate(request, _with_stats(qs), ("-created_at", "-id"), _course_json, 30)
+
+
+@endpoint("[Enseignant] Modifier les informations d'un cours (titre, description, niveau, langue, certificat).",
+          body={"title": s.CharField(max_length=160, required=False), "description": s.CharField(max_length=10000, required=False, allow_blank=True),
+                "level": s.ChoiceField(choices=["beginner", "intermediate", "advanced"], required=False), "language": s.CharField(max_length=8, required=False),
+                "certificate_enabled": s.BooleanField(required=False)})
+def update_course(request, course_id):
+    c = _course(request, course_id)
+    if not is_course_staff(request.user, c):
+        raise PermissionDeniedError("Reserve aux enseignants du cours.")
+    for name, value in request.input.items():
+        setattr(c, name, value)
+    c.updated_at = timezone.now()
+    c.save(update_fields=[*request.input.keys(), "updated_at"])
+    return _course_json(c)
 
 
 @endpoint("Creer un cours dans une classroom (enseignants).", status=201,
@@ -166,7 +220,8 @@ def create_course(request, slug):
 
 
 def _chapter_json(ch: Chapter, request, with_access: bool) -> dict:
-    out = {"id": str(ch.pk), "position": ch.position, "title": ch.title, "estimated_minutes": ch.estimated_minutes, "is_free": ch.is_free, "price_minor": ch.price_minor, "currency": ch.currency}
+    out = {"id": str(ch.pk), "position": ch.position, "title": ch.title, "estimated_minutes": ch.estimated_minutes, "is_free": ch.is_free, "price_minor": ch.price_minor, "currency": ch.currency,
+           "is_published": ch.is_published}
     if with_access:
         d = access_decision(request.user, ch)
         out["access"] = {"allowed": d.allowed, "reason": d.reason}
@@ -177,14 +232,23 @@ def _chapter_json(ch: Chapter, request, with_access: bool) -> dict:
 def course_outline(request, course_id):
     c = _course(request, course_id)
     staff = is_course_staff(request.user, c)
-    mods = c.modules.all() if staff else c.modules.filter(is_published=True)
+    mods = (c.modules.all() if staff else c.modules.filter(is_published=True)).order_by("position")
     out = []
-    for m in mods.prefetch_related("chapters__module__course__classroom"):
+    chapters = Prefetch("chapters", queryset=Chapter.objects.order_by("position").select_related("module__course__classroom"))
+    for m in mods.prefetch_related(chapters):
         chs = [ch for ch in m.chapters.all() if staff or ch.is_published][:100]
         out.append({"id": str(m.pk), "position": m.position, "title": m.title, "description": m.description, "is_free": m.is_free, "price_minor": m.price_minor, "currency": m.currency,
-                    "chapters": [_chapter_json(ch, request, True) for ch in chs]})
+                    "is_published": m.is_published, "chapters": [_chapter_json(ch, request, True) for ch in chs]})
     enrolled = bool(_uid(request)) and Enrollment.objects.filter(course=c, user=request.user, status__in=["active", "completed"]).exists()
-    return {**_course_json(c), "enrolled": enrolled, "modules": out}
+    if _uid(request):
+        from apps.progress.models import ChapterProgress
+
+        mine = {str(cid): {"status": st, "percent": pct} for cid, st, pct in
+                ChapterProgress.objects.filter(user=request.user, chapter__module__course=c).values_list("chapter_id", "status", "percent")}
+        for m in out:
+            for ch in m["chapters"]:
+                ch["my_progress"] = mine.get(ch["id"])
+    return {**_course_json(c), "enrolled": enrolled, "is_staff": staff, "progress": course_progress(request.user, c) if enrolled else None, "modules": out}
 
 
 @endpoint("[Enseignant] Publier le cours (verifie qu'il est exploitable).")
@@ -262,8 +326,8 @@ def chapter_content(request, chapter_id):
         exc = PaymentRequiredError if d.reason in ("payment_required", "classroom_payment_required") else PermissionDeniedError
         raise exc(REASON_MESSAGES[d.reason], code=d.reason)
     blocks = [{"id": str(b.pk), "position": b.position, "kind": b.kind, "title": b.title, "body": b.body, "url": b.url, "file_url": signed_url(b.storage_key) if b.storage_key else None,
-               "ref_id": str(b.ref_id) if b.ref_id else None, "payload": b.payload, "duration_seconds": b.duration_seconds} for b in ch.blocks.all()]
-    return {"id": str(ch.pk), "title": ch.title, "blocks": blocks}
+               "ref_id": str(b.ref_id) if b.ref_id else None, "payload": b.payload, "duration_seconds": b.duration_seconds} for b in ch.blocks.order_by("position")]
+    return {"id": str(ch.pk), "title": ch.title, "course": str(ch.module.course_id), "module": str(ch.module_id), "estimated_minutes": ch.estimated_minutes, "blocks": blocks}
 
 
 # ------------------------------------------------------------------ inscription, progression
@@ -289,7 +353,7 @@ def my_enrollments(request):
 @endpoint("Ma progression dans un cours (global et par module).")
 def my_progress(request, course_id):
     c = _course(request, course_id)
-    return {"course": course_progress(request.user, c), "modules": [{"id": str(m.pk), "title": m.title, **module_progress(request.user, m)} for m in c.modules.filter(is_published=True)]}
+    return {"course": course_progress(request.user, c), "modules": [{"id": str(m.pk), "title": m.title, **module_progress(request.user, m)} for m in c.modules.filter(is_published=True).order_by("position")]}
 
 
 @endpoint("[Enseignant] Etudiants inscrits.")

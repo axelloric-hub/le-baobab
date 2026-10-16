@@ -39,19 +39,32 @@ class CheckoutSerializer(serializers.Serializer):
 
 
 class OrderItemSerializer(serializers.ModelSerializer):
+    # Nom public de la boutique (jamais son identifiant interne) : cle « shop ».
+    shop = serializers.SerializerMethodField()
+    kind = serializers.CharField(source="product.kind", read_only=True)
+
     class Meta:
         model = OrderItem
-        fields = ("id", "title", "sku", "unit_price_minor", "quantity", "line_total_minor", "discount_minor", "refunded_minor")
+        fields = ("id", "product", "shop", "kind", "title", "sku", "unit_price_minor", "quantity", "line_total_minor", "discount_minor", "refunded_minor")
         read_only_fields = fields
+
+    def get_shop(self, obj) -> dict:
+        return {"slug": obj.store.slug, "name": obj.store.name}
 
 
 class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True, read_only=True)
+    payment = serializers.SerializerMethodField()
 
     class Meta:
         model = Order
-        fields = ("id", "number", "status", "currency", "subtotal_minor", "discount_minor", "total_minor", "created_at", "paid_at", "items")
+        fields = ("id", "number", "status", "currency", "subtotal_minor", "discount_minor", "total_minor", "created_at", "paid_at", "cancelled_at", "items", "payment")
         read_only_fields = fields  # frais plateforme / net vendeur : jamais exposes a l'acheteur
+
+    def get_payment(self, obj) -> dict | None:
+        """Dernier paiement de la commande (fournisseur et etat), pour reprendre un paiement interrompu."""
+        p = obj.payments.order_by("-created_at").first() if hasattr(obj, "payments") else None
+        return {"id": str(p.pk), "provider": p.provider, "status": p.status} if p else None
 
 
 class ReviewInputSerializer(serializers.Serializer):

@@ -70,22 +70,39 @@ export function describe(n: AppNotification): Described {
         tone: "green",
       };
     }
-    case "classroom_invitation":
-      return { text: <>{who} vous invite dans une classe Learn</>, href: ROUTES.feed, Icon: LearnIcon, tone: "brown" };
+    case "classroom_invitation": {
+      const title = str(n.data.classroom_title);
+      return {
+        text: title ? <>{who} vous invite dans la classe <strong>{title}</strong></> : <>{who} vous invite dans une classe Learn</>,
+        href: str(n.data.classroom) ? ROUTES.classroom(str(n.data.classroom)) : `${ROUTES.learn}?onglet=classes`,
+        Icon: LearnIcon,
+        tone: "brown",
+      };
+    }
     case "course_enrollment":
-      return { text: <>{who} s&apos;est inscrit(e) à l&apos;un de vos cours</>, Icon: LearnIcon, tone: "green" };
+      return { text: <>{who} s&apos;est inscrit(e) à l&apos;un de vos cours</>, href: n.target_id ? `${ROUTES.course(n.target_id)}?onglet=eleves` : ROUTES.learn, Icon: LearnIcon, tone: "green" };
     case "assignment_graded": {
       const points = n.data.points;
-      return { text: <>Votre devoir a été noté{points != null ? <> : <strong>{String(points)} points</strong></> : null}</>, Icon: LearnIcon, tone: "green" };
+      return {
+        text: <>Votre devoir a été noté{points != null ? <> : <strong>{String(points)} points</strong></> : null}</>,
+        href: str(n.data.assignment) ? ROUTES.assignment(str(n.data.assignment)) : ROUTES.learn,
+        Icon: LearnIcon,
+        tone: "green",
+      };
     }
     case "certificate_issued":
-      return { text: <>Félicitations : un nouveau certificat vous a été délivré</>, Icon: AwardIcon, tone: "amber" };
+      return { text: <>Félicitations : un nouveau certificat vous a été délivré</>, href: `${ROUTES.learn}?onglet=certificats`, Icon: AwardIcon, tone: "amber" };
     case "order_paid":
-      return { text: <>Votre commande {str(n.data.number) && <strong>{str(n.data.number)}</strong>} est payée</>, Icon: ShopIcon, tone: "green" };
+      return { text: <>Votre commande {str(n.data.number) && <strong>{str(n.data.number)}</strong>} est payée</>, href: n.target_id ? ROUTES.order(n.target_id) : `${ROUTES.shop}?onglet=achats`, Icon: ShopIcon, tone: "green" };
     case "new_sale":
-      return { text: <>Nouvelle vente{str(n.data.number) && <> : commande <strong>{str(n.data.number)}</strong></>}</>, Icon: ShopIcon, tone: "green" };
+      return {
+        text: <>Nouvelle vente{str(n.data.number) && <> : commande <strong>{str(n.data.number)}</strong></>}</>,
+        href: str(n.data.store) ? `${ROUTES.store(str(n.data.store))}?onglet=ventes` : `${ROUTES.shop}?onglet=vendre`,
+        Icon: ShopIcon,
+        tone: "green",
+      };
     case "refund_processed":
-      return { text: <>Votre remboursement a été effectué</>, Icon: ShopIcon, tone: "amber" };
+      return { text: <>Votre remboursement a été effectué</>, href: n.target_id ? ROUTES.order(n.target_id) : `${ROUTES.shop}?onglet=achats`, Icon: ShopIcon, tone: "amber" };
     case "application_received":
       return { text: <>{who} a postulé à l&apos;une de vos offres</>, href: job ? ROUTES.jobManage(job) : ROUTES.jobs, Icon: BriefcaseIcon, tone: "brown" };
     case "application_status": {

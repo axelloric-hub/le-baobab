@@ -78,8 +78,11 @@ def course_enrolled(ev):
 
 @subscribe("ClassroomInvitationSent")
 def classroom_invitation(ev):
+    from apps.education.models import Classroom
+
+    c = Classroom.objects.filter(pk=ev.payload["classroom"]).values("slug", "title").first() or {}
     notify(recipient=User.objects.get(pk=ev.payload["to"]), type_code="classroom_invitation", actor=User.objects.get(pk=ev.payload["by"]),
-           target_type="classroom", target_id=ev.payload["classroom"], dedupe_key=f"cinv:{ev.aggregate_id}")
+           target_type="classroom", target_id=ev.payload["classroom"], data={"classroom": c.get("slug"), "classroom_title": c.get("title")}, dedupe_key=f"cinv:{ev.aggregate_id}")
 
 
 # ------------------------------------------------------------------ commerce
@@ -87,8 +90,12 @@ def classroom_invitation(ev):
 def order_paid(ev):
     notify(recipient=User.objects.get(pk=ev.payload["buyer"]), type_code="order_paid", target_type="order", target_id=ev.aggregate_id,
            data={"number": ev.payload["number"], "total": ev.payload["total"], "currency": ev.payload["currency"]}, dedupe_key=f"op:{ev.aggregate_id}")
+    from apps.marketplace.models import Store
+
+    stores = {str(st.owner_id): st.slug for st in Store.objects.filter(pk__in={i["store_id"] for i in ev.payload.get("items", [])})}
     for sid in ev.payload["sellers"]:
-        notify(recipient=User.objects.get(pk=sid), type_code="new_sale", target_type="order", target_id=ev.aggregate_id, data={"number": ev.payload["number"]}, dedupe_key=f"ns:{ev.aggregate_id}:{sid}")
+        notify(recipient=User.objects.get(pk=sid), type_code="new_sale", target_type="order", target_id=ev.aggregate_id, data={"number": ev.payload["number"], "store": stores.get(sid)},
+               dedupe_key=f"ns:{ev.aggregate_id}:{sid}")
 
 
 @subscribe("OrderRefunded")

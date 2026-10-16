@@ -1,6 +1,7 @@
 """Quiz (correction automatique, bonnes reponses jamais exposees) et devoirs (individuels ou en groupe, notes, grille, commentaires)."""
 from __future__ import annotations
 
+from django.db.models import Count
 from rest_framework import serializers as s
 from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
@@ -65,6 +66,16 @@ def add_question(request, quiz_id):
 def publish_quiz(request, quiz_id):
     q = A.set_quiz_published(quiz_id, request.user, request.input["published"])
     return {"id": str(q.pk), "is_published": q.is_published}
+
+
+@endpoint("Quiz d'un cours : tous pour les enseignants, publies seulement pour les inscrits.")
+def course_quizzes(request, course_id):
+    c = _course(request, course_id)
+    qs = Quiz.objects.filter(course=c).annotate(n_questions=Count("questions")).order_by("created_at")
+    if not is_course_staff(request.user, c):
+        qs = qs.filter(is_published=True)
+    return [{"id": str(q.pk), "title": q.title, "is_published": q.is_published, "chapter": str(q.chapter_id) if q.chapter_id else None, "questions": q.n_questions,
+             "pass_percent": q.pass_percent, "max_attempts": q.max_attempts} for q in qs]
 
 
 @endpoint("Lire un quiz (questions et choix SANS les bonnes reponses).")

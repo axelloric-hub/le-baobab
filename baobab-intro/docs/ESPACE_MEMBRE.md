@@ -2,6 +2,7 @@
 
 - **Lot 1** : Accueil, Statuts, Publication.
 - **Lot 2** : Messages, Profil développeur, Notifications et paramètres (voir la section « Lot 2 » plus bas).
+- **Lot 3** : les cinq applications restantes — Communauté, Learn, Showcase, Opportunités, Boutique (voir la section « Lot 3 » plus bas). Plus aucune application n'est « Bientôt ».
 
 Pages réservées aux membres connectés, intégrées à partir des maquettes Stitch et branchées sur l'API réelle. **Aucune donnée de démonstration** : tout ce qui s'affiche vient du serveur ; un bloc sans données ne s'affiche pas (ou affiche un état vide explicite).
 
@@ -26,7 +27,7 @@ Le gabarit (`app/(membre)/layout.tsx` → `components/member/MemberApp.tsx`) vé
 - **Tablette (768–1099 px)** : navigation latérale réduite aux icônes ; les invitations passent en tête du fil.
 - **Mobile (< 768 px)** : barre supérieure compacte + barre d'onglets en bas : Accueil · Explorer · ＋ · Messages (avec le nombre de non-lus) · Moi. Une poignée au-dessus de la barre ouvre le panneau « Toutes les fonctionnalités » (Enregistrés, groupes, cours, tendances, notifications, compte).
 
-Les applications pas encore livrées (Communauté, Learn, Showcase, Opportunités, Boutique) sont affichées **« Bientôt »** et ne sont pas cliquables : aucun lien ne mène à une page 404. Les compteurs de messages et de notifications sont réels. Livrer une application = renseigner son `href` dans `components/member/shell/nav.ts`.
+Les 7 applications sont livrées. Le mécanisme « Bientôt » reste en place pour une application future : une entrée sans `href` dans `components/member/shell/nav.ts` est affichée « Bientôt » et n'est pas cliquable (jamais de lien vers une page 404). Les compteurs de messages et de notifications sont réels.
 
 ## Fonctionnalités
 
@@ -101,6 +102,32 @@ Fichiers `apps/messaging/api.py`, `apps/profiles/api.py`, `apps/notifications/ap
 - Les données de référence (compétences, métiers, pays) sont enregistrées **sans accents** dans la base ; elles s'affichent telles quelles. À corriger côté données.
 - Sur Render (offre gratuite, une seule instance), la couche temps réel est en mémoire : suffisant pour une instance, à passer sur Redis si le service est multiplié.
 
+## Lot 3 — Communauté, Learn, Showcase, Opportunités, Boutique
+
+Mêmes règles que les lots précédents : données réelles uniquement (aucun chiffre inventé : une note sans avis affiche « Pas encore d'avis », une couverture sans image est un motif de la charte), interface en français, montants en unités mineures formatés par `lib/money.ts` (décimales tirées d'`Intl`), onglets dans l'adresse (`?onglet=`), mise en page commune `components/member/ui/Page.module.css`.
+
+| Application | Adresses | Ce qu'on y fait |
+| --- | --- | --- |
+| Communauté | `/groupes`, `/groupes/[slug]` | découvrir, créer, rejoindre (ouvert, sur demande, sur invitation), publier dans un groupe, membres, demandes, invitations, modification et photos |
+| Opportunités | `/opportunites`, `/opportunites/[id]`, `/opportunites/[id]/candidatures`, `/entreprises/[slug]` | offres (emploi, stage, mission), candidature, recrutement (examen, présélection, créneaux, entretien, offre, embauche), missions freelance (propositions, contrat, jalons), entreprises |
+| Learn | `/learn`, `/learn/classes/[slug]`, `/learn/cours/[id]`, `/learn/cours/[id]/[chapitre]`, `/learn/devoirs/[id]`, `/certificats/[code]` (public) | catalogue, classes, cours (modules, chapitres, blocs, quiz, devoirs), progression, certificats vérifiables |
+| Showcase | `/showcase`, `/showcase/projets/[id]` | vitrine des projets (recherche, filtres par technologie, épinglés), mon portfolio (titre, présentation, visibilité), page projet (captures, liens, dépôts, autres projets de l'auteur), modification et suppression |
+| Boutique | `/boutique`, `/boutique/produits/[id]`, `/boutique/panier`, `/boutique/commandes/[id]`, `/boutique/b/[slug]` | catalogue, souhaits, panier (stock, code promo), commande, paiement, licences et téléchargements, avis d'acheteurs, remboursement ; côté vendeur : boutique, produits (offres, images, versions avec empreinte SHA-256, contenu Learn débloqué), publication, codes promo, ventes et revenus |
+
+**Liens entre applications** : un cours ou une classe payants affichent « Acheter l'accès » vers le produit de la Boutique qui les débloque ; les titres de projets du profil mènent à la page Showcase ; les notifications d'invitation de classe, d'inscription, de devoir noté, de certificat, de commande payée, de vente et de remboursement ouvrent la bonne page.
+
+**Paiement** : aucun fournisseur réel (Mobile Money, carte) n'est encore branché ; ils sont affichés « Bientôt disponible ». Si `PAYMENTS_SIMULATION_ENABLED=true` côté serveur, la commande propose un **paiement de test** (réussite ou échec simulés, aucun argent débité) qui déclenche tout le parcours réel : grand livre, licence, accès Learn, notifications. Sinon, la commande reste réservée puis expire. Les commandes gratuites se valident directement.
+
+### Ajouts backend livrés avec le lot 3 — à déployer sur Render
+
+Tests : `tests/test_api_lot3_apps.py` (Communauté, Opportunités, Learn, Showcase, Boutique). Sans redéploiement, ces écrans afficheront des erreurs ou des données incomplètes.
+
+- **Communauté** (`apps/community`) : détail d'un groupe avec mes permissions, création (adresse déjà prise → 409), modification et photos, publications d'un groupe, invitations notifiées.
+- **Opportunités** (`apps/jobs`, `apps/companies`) : mes offres, modification d'une offre, candidature enrichie, mon rôle dans une entreprise.
+- **Learn** (`apps/education`, `apps/assessments`) : statistiques et enseignants d'un cours, cours que j'enseigne, modification d'un cours, plan ordonné avec ma progression, quiz d'un cours, invitation en attente sur la page d'une classe, identifiant des classes.
+- **Showcase** (`apps/portfolio`) : `GET /showcase/projects/` (vitrine filtrée par la confidentialité de chaque portfolio, en une requête), `GET /showcase/projects/{id}/`, `GET /showcase/technologies/`, `PATCH`/`DELETE /me/portfolio/projects/{id}/`, retrait d'un lien ou d'une image ; lien de vérification des certificats corrigé (`/certificats/{code}`).
+- **Boutique** (`apps/marketplace`, `apps/payments`) : fiche produit enrichie (mon achat, mes souhaits, mon avis, contenu débloqué, auteur), filtres `skill`, `target` et `course`, modification d'une boutique, d'un produit et d'une offre (le stock exact n'est montré qu'au vendeur), retrait d'image et de contenu, ventes du vendeur, panier détaillé, commande avec boutique et dernier paiement, `GET /payments/config/` ; notification de vente avec l'adresse de la boutique.
+
 ## Mouvement et accessibilité
 
 - 4 courbes et 4 durées (`--bb-ease-*`, `--bb-dur-*` dans `app/globals.css`) ; `prefers-reduced-motion` réduit toutes les animations ; pas de lecture automatique des vidéos en mode économie de données.
@@ -112,3 +139,5 @@ Fichiers `apps/messaging/api.py`, `apps/profiles/api.py`, `apps/notifications/ap
 Suite de bout en bout Playwright contre le **vrai backend** lancé en local (PostgreSQL, Redis, stockage simulé) : 53 contrôles — inscription → confirmation → `/accueil`, connexion, réactions persistées, sélecteur de réactions, enregistrement, vote, recherche, hashtag, commentaires et réponses, création (texte, code, image avec envoi, sondage, audience personnalisée), modification, suppression, signalement, statuts (lecture, réaction, navigation, création), invitation, déconnexion ; aucune erreur console ; aucun débordement horizontal de 320 à 1920 px.
 
 Lot 2 : 72 contrôles supplémentaires — cloche et panneau, demande d'ami acceptée depuis une notification, tout marquer comme lu, préférence enregistrée, type critique verrouillé ; envoi, accusé de lecture et réception en temps réel, réponse, réaction, modification, suppression pour tous, message de code, pièce jointe, nouvelle conversation directe et de groupe ; abonnement, onglets du profil, demande d'ami envoyée puis annulée, bouton Message, modification de la bio, du métier et des compétences, ajout et suppression d'une expérience ; recherche de personnes ; conversation mobile en plein écran ; aucun débordement de 320 à 1920 px ; aucune erreur console. Les suites précédentes (lot 1 : 53, formulaires mobiles : 32, panneau mobile : 50, site public) et les 454 tests backend passent toujours.
+
+Lot 3 : 309 contrôles de bout en bout supplémentaires, un scénario par application — Communauté 47, Opportunités 61, Learn 69, Showcase 44, Boutique 88 (achat complet avec code promo et paiement de test, licence, avis, remboursement, ventes, formation Learn vendue) ; aucune erreur console ; aucun débordement de 320 à 1920 px. Backend : 473 tests (`DJANGO_SETTINGS_MODULE=config.settings.testing python manage.py test`). `next build` et `tsc` sans erreur.

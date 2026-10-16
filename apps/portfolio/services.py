@@ -101,7 +101,7 @@ def add_platform_certificate(user, certificate_id) -> CertificateEntry:
     if CertificateEntry.objects.filter(user=user, platform_certificate_ref=cert.pk).exists():
         raise ConflictError("Certificat deja ajoute.", code="duplicate")
     return CertificateEntry.objects.create(user=user, name=cert.course.title, issuer="LE BAOBAB", issued_on=cert.issued_at.date(), platform_certificate_ref=cert.pk,
-                                           credential_url=f"/verify/{cert.verification_code}")
+                                           credential_url=f"/certificats/{cert.verification_code}")
 
 
 def update_portfolio(user, **fields) -> Portfolio:
@@ -138,5 +138,46 @@ def add_project_media(user, project_id, *, storage_key: str, kind: str = "image"
 
     project = Project.objects.select_related("portfolio").get(pk=project_id)
     _owned(user, project)
-    pos = (ProjectMedia.objects.filter(project=project).count())
+    pos = ProjectMedia.objects.filter(project=project).count()
+    if pos >= 12:
+        raise DomainError("12 medias au plus par projet.", code="too_many_media")
     return ProjectMedia.objects.create(project=project, kind=kind, storage_key=storage_key, position=pos)
+
+
+_PROJECT_FIELDS = {"title", "description", "role", "started_on", "ended_on", "is_featured"}
+
+
+@transaction.atomic
+def update_project(user, project_id, *, technologies=None, **fields) -> Project:
+    """Modifie UN de mes projets (le filtre de proprietaire est dans la requete : le projet d'un autre est introuvable)."""
+    from rest_framework.exceptions import NotFound
+
+    project = Project.objects.select_for_update().filter(pk=project_id, portfolio__user=user).first()
+    if project is None:
+        raise NotFound()
+    for k, v in fields.items():
+        if k in _PROJECT_FIELDS:
+            setattr(project, k, v)
+    if project.started_on and project.ended_on and project.ended_on < project.started_on:
+        raise DomainError("La date de fin precede la date de debut.", code="invalid_dates")
+    project.save()
+    if technologies is not None:
+        project.technologies.set(technologies)
+    return project
+
+
+@transaction.atomic
+def remove_project_part(user, project_id, part: str, part_id) -> None:
+    """Retire un lien ou une image d'un de mes projets ; les positions des medias restent contigues."""
+    from rest_framework.exceptions import NotFound
+
+    from apps.portfolio.models import ProjectMedia
+
+    model = {"links": ProjectLink, "media": ProjectMedia}[part]
+    deleted, _ = model.objects.filter(pk=part_id, project_id=project_id, project__portfolio__user=user).delete()
+    if not deleted:
+        raise NotFound()
+    if part == "media":
+        for i, m in enumerate(ProjectMedia.objects.filter(project_id=project_id).order_by("position")):
+            if m.position != i:
+                ProjectMedia.objects.filter(pk=m.pk).update(position=i)

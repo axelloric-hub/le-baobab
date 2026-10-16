@@ -93,7 +93,10 @@ export function useUpdateMe(username: string) {
 /** Portfolio : ajout et suppression d'entrées. */
 export function usePortfolioMutations(username: string) {
   const client = useQueryClient();
-  const refresh = () => void client.invalidateQueries({ queryKey: peopleKeys.portfolio(username) });
+  const refresh = () => {
+    void client.invalidateQueries({ queryKey: peopleKeys.portfolio(username) });
+    void client.invalidateQueries({ queryKey: ["showcase"] });
+  };
   return {
     add: useMutation({
       mutationFn: ({ kind, body }: { kind: string; body: Record<string, unknown> }) => authed(`/me/portfolio/${kind}/`, { method: "POST", body }),

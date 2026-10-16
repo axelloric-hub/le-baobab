@@ -22,6 +22,20 @@ export const ROUTES = {
   job: (id: string) => `/opportunites/${id}`,
   jobManage: (id: string) => `/opportunites/${id}/candidatures`,
   company: (slug: string) => `/entreprises/${encodeURIComponent(slug)}`,
+  showcase: "/showcase",
+  showcaseProject: (id: string) => `/showcase/projets/${id}`,
+  shop: "/boutique",
+  product: (id: string) => `/boutique/produits/${id}`,
+  cart: "/boutique/panier",
+  order: (id: string) => `/boutique/commandes/${id}`,
+  store: (slug: string) => `/boutique/b/${encodeURIComponent(slug)}`,
+  learn: "/learn",
+  course: (id: string) => `/learn/cours/${id}`,
+  lesson: (courseId: string, chapterId: string) => `/learn/cours/${courseId}/${chapterId}`,
+  classroom: (slug: string) => `/learn/classes/${encodeURIComponent(slug)}`,
+  assignment: (id: string) => `/learn/devoirs/${id}`,
+  /** Vérification publique d'un certificat (sans compte). */
+  certificate: (code: string) => `/certificats/${encodeURIComponent(code)}`,
   /** Accueil forcé pour un membre déjà inscrit qui veut revoir la présentation. */
   discover: "/?decouvrir=1",
 } as const;

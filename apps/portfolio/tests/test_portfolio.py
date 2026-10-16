@@ -77,7 +77,7 @@ class PortfolioTests(BaobabTestCase):
         with self.assertRaises(PermissionDeniedError):
             P.add_platform_certificate(other, cert.pk)  # le certificat d'un autre ne se copie pas
         entry = P.add_platform_certificate(self.owner, cert.pk)
-        self.assertEqual((entry.issuer, entry.credential_url), ("LE BAOBAB", "/verify/BAO-TESTCODE0001"))
+        self.assertEqual((entry.issuer, entry.credential_url), ("LE BAOBAB", "/certificats/BAO-TESTCODE0001"))
         with self.assertRaises(ConflictError):
             P.add_platform_certificate(self.owner, cert.pk)
         from django.utils import timezone

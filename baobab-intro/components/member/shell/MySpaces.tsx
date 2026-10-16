@@ -41,7 +41,7 @@ export function MyCoursesSection({ idPrefix = "nav" }: { idPrefix?: string }) {
       {courses.data.map((enrollment) => {
         const percent = Math.round(enrollment.progress.percent);
         return (
-          <div key={enrollment.course.id} className={styles.course}>
+          <Link key={enrollment.course.id} href={ROUTES.course(enrollment.course.id)} className={styles.course}>
             <span className={styles.courseTitle}>{enrollment.course.title}</span>
             <span className={styles.courseMeta}>Progression&nbsp;: {percent}&nbsp;%</span>
             <span
@@ -54,7 +54,7 @@ export function MyCoursesSection({ idPrefix = "nav" }: { idPrefix?: string }) {
             >
               <span style={{ width: `${percent}%` }} />
             </span>
-          </div>
+          </Link>
         );
       })}
     </section>

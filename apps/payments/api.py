@@ -14,11 +14,17 @@ from apps.payments.models import LedgerEntry, Payment, Refund
 from apps.payments.serializers import PaymentSerializer, RefundSerializer
 
 
+@endpoint("Moyens de paiement ouverts. `simulation` : le paiement de test est disponible (phase de test, aucun fournisseur reel branche).", auth="optional")
+def config(request):
+    return {"simulation": bool(settings.PAYMENTS_SIMULATION_ENABLED), "providers": [{"code": c, "label": l, "live": False} for c, l in Payment.Provider.choices if c != "manual"]}
+
+
 @endpoint("Initier le paiement d'une de mes commandes (idempotent). Le fournisseur reel n'est pas branche : voir /payments/{id}/simulate/ en phase de test.", status=201,
           body={"order": s.UUIDField(), "provider": s.ChoiceField(choices=[c[0] for c in Payment.Provider.choices])})
 def start(request):
     pay = P.start_payment(request.user, request.input["order"], request.input["provider"])
-    return {**PaymentSerializer(pay).data, "provider_ref": pay.provider_ref}
+    # `simulation` : le parcours de test est disponible (aucun fournisseur reel n'est encore branche).
+    return {**PaymentSerializer(pay).data, "provider_ref": pay.provider_ref, "simulation": bool(settings.PAYMENTS_SIMULATION_ENABLED)}
 
 
 @endpoint("[PHASE DE TEST] Simuler le resultat d'un paiement 'manual' (reussite ou echec). Retourne 404 si PAYMENTS_SIMULATION_ENABLED est desactive.", body={"outcome": s.ChoiceField(choices=["succeeded", "failed"], default="succeeded")})

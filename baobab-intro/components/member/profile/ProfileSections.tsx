@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { ROUTES } from "@/lib/routes";
 import { useMemo, useState } from "react";
 import { usePortfolioMutations } from "@/features/people/mutations";
 import { LEVEL_COLORS, SKILL_LEVELS, useSkillNames } from "@/features/people/reference";
@@ -128,7 +130,11 @@ export function ProjectsCard({
                 <article className={styles.repo}>
                   <div className={styles.repoHead}>
                     <ProjectIcon aria-hidden="true" />
-                    <h3 className={styles.repoName}>{item.p.title}</h3>
+                    <h3 className={styles.repoName}>
+                      <Link href={ROUTES.showcaseProject(item.p.id)} style={{ color: "inherit" }}>
+                        {item.p.title}
+                      </Link>
+                    </h3>
                     {item.p.is_featured && <span className={styles.repoBadge}>Épinglé</span>}
                   </div>
                   {item.p.role && <p className={styles.repoDesc}>Rôle : {item.p.role}</p>}

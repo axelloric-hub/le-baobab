@@ -2,6 +2,7 @@ from apps.core.api import route
 from apps.payments import api
 
 urlpatterns = [
+    route("payments/config/", GET=api.config),
     route("payments/start/", POST=api.start),
     route("payments/<uuid:payment_id>/simulate/", POST=api.simulate),
     route("payments/webhooks/<slug:provider>/", POST=api.webhook),

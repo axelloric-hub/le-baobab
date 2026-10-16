@@ -364,6 +364,14 @@
   box-shadow: var(--bb-focus-ring);
 }
 
+.choice > svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  color: var(--bb-brown-700);
+}
+
 .choice input {
   margin-top: 3px;
   accent-color: var(--bb-brown-700);
